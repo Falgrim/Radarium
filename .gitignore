@@ -23,3 +23,5 @@ yarn-error.log
 /.zed
 /dev
 /.env
+/session.madeline
+/*.log

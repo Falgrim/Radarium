@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\MoonShine\Resources\ConfigurationResource;
 use MoonShine\Providers\MoonShineApplicationServiceProvider;
 use MoonShine\MoonShine;
 use MoonShine\Menu\MenuGroup;
@@ -48,11 +49,13 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
                     static fn() => __('moonshine::ui.resource.role_title'),
                     new MoonShineUserRoleResource()
                 ),
+                MenuItem::make('Настройки', new ConfigurationResource(), 'heroicons.cog'),
             ]),
 
-            MenuItem::make('Documentation', 'https://moonshine-laravel.com/docs')
-                ->badge(fn() => 'Check')
-                ->blank(),
+            MenuGroup::make('Боты', [
+                //MenuItem::make('Список ботов', new ClientResource(), 'heroicons.users'),
+                //MenuItem::make('Логи', new ClientLinkResource(), 'heroicons.users'),
+            ], 'heroicons.users'),
         ];
     }
 

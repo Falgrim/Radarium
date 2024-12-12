@@ -5,7 +5,7 @@ use MoonShine\Forms\LoginForm;
 use MoonShine\Http\Middleware\Authenticate;
 use MoonShine\Http\Middleware\SecurityHeadersMiddleware;
 use MoonShine\Models\MoonshineUser;
-use MoonShine\MoonShineLayout;
+use App\MoonShine\MoonShineLayout;
 use MoonShine\Pages\ProfilePage;
 
 return [
@@ -13,8 +13,8 @@ return [
     'namespace' => 'App\MoonShine',
 
     'title' => env('MOONSHINE_TITLE', 'Исполнители'),
-    'logo' => env('MOONSHINE_LOGO'),
-    'logo_small' => env('MOONSHINE_LOGO_SMALL'),
+    'logo' => env('MOONSHINE_LOGO', 'images/logo.jpg'),
+    'logo_small' => env('MOONSHINE_LOGO_SMALL', 'images/logo.jpg'),
 
     'route' => [
         'domain' => env('MOONSHINE_URL', ''),
