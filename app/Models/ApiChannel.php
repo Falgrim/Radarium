@@ -21,6 +21,7 @@ class ApiChannel extends Model
         'channel_source',
         'options',
         'status',
+        'last_post_id',
         'created_at',
         'updated_at',
     ];

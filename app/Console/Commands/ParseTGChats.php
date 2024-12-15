@@ -2,6 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\ApiChannelSourceEnum;
+use App\Infrastructures\Facades\Repositories;
+use App\Models\ApiChannel;
+use App\Models\ApiChannelPost;
 use Illuminate\Console\Command;
 
 class ParseTGChats extends Command
@@ -25,31 +30,95 @@ class ParseTGChats extends Command
      */
     public function handle()
     {
-        $settings = (new \danog\MadelineProto\Settings\AppInfo)
-            ->setApiId(25969424)
-            ->setApiHash('4a6a2be56a49a7439059a74aab4d3e33');
+        $channels = ApiChannel::where('channel_source', ApiChannelSourceEnum::Telegram)->get();
 
-        $logSettings = (new \danog\MadelineProto\Settings\Logger)
-            ->setLevel(0);
+        if (!count($channels)) {
+            $this->warn('Нет списка каналов для парсинга');
+            return 1;
+        }
 
-        $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $MadelineProto->updateSettings($logSettings);
-        $MadelineProto->start();
+        $cronCountPosts = Repositories::setting()->findByName('cron_count_posts');
 
-        $messages = $MadelineProto->messages->getHistory([
-            'peer'          => 'https://t.me/PetrashevBIM_HR/53129',
-            //'peer'  => '251968498',
-            'offset_id'     => 0,
-            'offset_date'   => 0,
-            'add_offset'    => 0,
-            'limit'         => 20,
-            'max_id'        => 0,
-            'min_id'        => 0,
-            'hash'          => 0,
-        ]);
+        foreach ($channels as $channel) {
+            if (!count($channel->options) OR !isset($channel->options['api_id']) OR !isset($channel->options['api_hash'])) {
+                $this->warn('Канал ID'.$channel->id.': нет api_id и/или api_hash');
+                continue;
+            }
 
-        /* Сообщения, сортировка по дате (новые сверху) */
-        $messages = array_reverse($messages['messages']);
-        //print_r($messages);
+            $settings = (new \danog\MadelineProto\Settings\AppInfo)
+                ->setApiId($channel->options['api_id'])
+                ->setApiHash($channel->options['api_hash']);
+
+            $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
+
+            $settings = (new \danog\MadelineProto\Settings\Logger)
+                ->setLevel(0);
+            $MadelineProto->updateSettings($settings);
+
+            $MadelineProto->start();
+
+            $params = [
+                'peer'          => $channel->link,
+                'offset_id'     => 0,
+                'offset_date'   => strtotime('-10 days'),
+                'add_offset'    => 0,
+                'limit'         => $cronCountPosts?->value ?? 50,
+                'max_id'        => 0,
+                'min_id'        => $channel->last_post_id ?? 0,
+                'hash'          => 0,
+            ];
+            print_r($params);
+            $messages = $MadelineProto->messages->getHistory($params);
+
+            /* Сообщения, сортировка по дате (новые сверху) */
+            $messages = array_reverse($messages['messages']);
+
+            $countMsg = count($messages);
+            if (count($messages)) {
+                if (isset($channel->options['reply_to_msg_id'])) {
+                    foreach ($messages as $key => $message) {
+                        if (
+                            !isset($message['reply_to']) or
+                            !isset($message['reply_to']['reply_to_msg_id']) or
+                            $message['reply_to']['reply_to_msg_id'] != $channel->options['reply_to_msg_id']
+                        ) {
+                            unset($messages[$key]);
+                        }
+                    }
+                }
+            }
+
+            if ($countMsgFiltered = count($messages)) {
+                $lastPostId = last($messages)['id'] ?? null;
+                foreach ($messages as $message) {
+
+                    $this->info('Add ID: '.$message['id']);
+
+                    $post = ApiChannelPost::updateOrCreate([
+                        'api_channel_id' => $channel->id,
+                        'post_id' => $message['id']
+                    ], [
+                        'api_channel_id'    => $channel->id,
+                        'user_login'        => '',
+                        'user_login_id'     => $message['from_id'],
+                        'post_id'           => $message['id'],
+                        'post_date'         => (new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s"),
+                        'post'              => trim($message['message']),
+                        'ai_parse_status'   => ApiChannelPostStatusEnum::InQueue,
+                    ]);
+
+                    $this->info('Создан новый пост: '.$post->id);
+                }
+
+                if (!is_null($lastPostId)) {
+                    $channel->last_post_id = $lastPostId;
+                    $channel->save();
+                }
+            }
+
+            $this->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
+        }
+
+        $this->info('Завершено');
     }
 }

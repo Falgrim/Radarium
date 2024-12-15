@@ -132,7 +132,7 @@ class ApiChannelResource extends ModelResource
             ->offValue(ApiChannelStatusEnum::Disabled->value);
 
         $fields[] = Json::make('Опции для обработки', 'options')
-            ->hint('Технические параметры для доп. настройки')
+            ->hint('Технические параметры для доп. настройки<br />Для Telegram обязательны параметры: api_id, api_hash, reply_id (если требуется брать данные только из одного чата канала/группы)')
             ->keyValue();
 
         return $fields;

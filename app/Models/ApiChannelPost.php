@@ -13,6 +13,7 @@ class ApiChannelPost extends Model
     protected $fillable = [
         'api_channel_id',
         'user_login',
+        'user_login_id',
         'post_id',
         'post_date',
         'post',
