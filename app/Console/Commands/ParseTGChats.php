@@ -7,6 +7,7 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
+use App\Models\ApiPostUser;
 use Illuminate\Console\Command;
 
 class ParseTGChats extends Command
@@ -52,7 +53,7 @@ class ParseTGChats extends Command
             $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
 
             $settings = (new \danog\MadelineProto\Settings\Logger)
-                ->setLevel(0);
+                ->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
             $MadelineProto->updateSettings($settings);
 
             $MadelineProto->start();
@@ -88,18 +89,34 @@ class ParseTGChats extends Command
                 }
             }
 
+            //$MadelineProto->report('1111');
+
             if ($countMsgFiltered = count($messages)) {
                 $lastPostId = last($messages)['id'] ?? null;
                 foreach ($messages as $message) {
-
                     $this->info('Add ID: '.$message['id']);
+
+                    $userInfo = $MadelineProto->getInfo($message['from_id']);
+
+                    $userData = [];
+                    if (isset($userInfo['User'])) {
+                        $userData = [
+                            'first_name'    => $userInfo['User']['first_name'] ?? null,
+                            'last_name'    => $userInfo['User']['last_name'] ?? null,
+                            'username'      => $userInfo['User']['username'],
+                            'user_id'       => $userInfo['user_id'],
+                            'user_type'     => $userInfo['type'],
+                            'phone'         => $userInfo['User']['phone'] ?? null,
+                            'last_online'   => isset($userInfo['User']['status']['was_online']) ? (new \DateTime())->setTimestamp($userInfo['User']['status']['was_online'])->format("Y-m-d H:i:s") : null,
+                        ];
+                    }
 
                     $post = ApiChannelPost::updateOrCreate([
                         'api_channel_id' => $channel->id,
                         'post_id' => $message['id']
                     ], [
                         'api_channel_id'    => $channel->id,
-                        'user_login'        => '',
+                        'user_login'        => $userData['username'] ?? '',
                         'user_login_id'     => $message['from_id'],
                         'post_id'           => $message['id'],
                         'post_date'         => (new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s"),
@@ -108,6 +125,23 @@ class ParseTGChats extends Command
                     ]);
 
                     $this->info('Создан новый пост: '.$post->id);
+
+                    if (count($userData)) {
+                        $user = ApiPostUser::updateOrCreate([
+                            'user_id' => $message['from_id'],
+                            'channel_source' => $channel->channel_source,
+                        ], [
+                            'user_id' => $message['from_id'],
+                            'channel_source' => $channel->channel_source,
+                            'first_name'    => $userData['first_name'],
+                            'username'      => $userData['username'],
+                            'user_type'     => $userData['user_type'],
+                            'phone'         => $userData['phone'],
+                            'last_online_date' => $userData['last_online'],
+                        ]);
+
+                        $this->info('Создан новый пользователь: '.$user->id);
+                    }
                 }
 
                 if (!is_null($lastPostId)) {
