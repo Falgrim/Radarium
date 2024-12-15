@@ -12,6 +12,7 @@ use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostIndexPage;
 use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostFormPage;
 use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostDetailPage;
 
+use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Text;
 use MoonShine\Resources\ModelResource;
@@ -26,7 +27,7 @@ class ApiChannelPostResource extends ModelResource
 
     protected string $title = 'Лог обработки сообщений';
 
-    protected string $sortColumn = 'created_ad';
+    protected string $sortColumn = 'created_at';
 
     protected string $sortDirection = 'DESC';
 
@@ -73,12 +74,13 @@ class ApiChannelPostResource extends ModelResource
     public function indexFields(): array
     {
         return [
-            Text::make('Название', 'title'),
-            Text::make('Ссылка', 'link'),
-            Text::make('Описание', 'description'),
-            Text::make('Сервис', 'api_ai_id'),
-            Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-            Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
+            Text::make('ID', 'id'),
+            Text::make('API ID', 'post_id'),
+            Text::make('Логин', 'user_login'),
+            Text::make('Сообщение', 'post', fn($item) => mb_substr($item->post, 0, 50).'...'),
+            Date::make('Дата', 'post_date'),
+            Text::make('Создано', 'created_at'),
+            Text::make('Статус ИИ', 'ai_result_status'),
         ];
     }
 }
