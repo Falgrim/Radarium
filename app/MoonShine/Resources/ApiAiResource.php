@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
-use App\Enum\ApiAiListSourceEnum;
-use App\Enum\ApiAiListStatusEnum;
+use App\Enum\ApiAiSourceEnum;
+use App\Enum\ApiAiStatusEnum;
 use App\Models\Configuration;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\ApiAiList;
+use App\Models\ApiAi;
 
 use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
@@ -28,17 +28,19 @@ use MoonShine\Fields\Field;
 use MoonShine\Components\MoonShineComponent;
 
 /**
- * @extends ModelResource<ApiAiList>
+ * @extends ModelResource<ApiAi>
  */
-class ApiAiListResource extends ModelResource
+class ApiAiResource extends ModelResource
 {
-    protected string $model = ApiAiList::class;
+    protected string $model = ApiAi::class;
 
-    protected string $title = 'API список сервисов';
+    protected string $title = 'Список сервисов ИИ';
 
     protected string $sortColumn = 'title';
 
     protected string $sortDirection = 'ASC';
+
+    public string $column = 'title';
 
     protected bool $isAsync = false;
 
@@ -63,7 +65,7 @@ class ApiAiListResource extends ModelResource
 
     public function getActiveActions(): array
     {
-        return ['create', 'view', 'update', 'delete', 'massDelete'];
+        return ['create', 'view', 'update', 'delete'];
     }
 
     /**
@@ -79,7 +81,7 @@ class ApiAiListResource extends ModelResource
     }
 
     /**
-     * @param ApiAiList $item
+     * @param ApiAi $item
      *
      * @return array<string, string[]|string>
      * @see https://laravel.com/docs/validation#available-validation-rules
@@ -89,8 +91,8 @@ class ApiAiListResource extends ModelResource
         return [
             'title' => ['required', 'string', 'min:3'],
             'description' => ['required', 'string', 'min:3'],
-            'api_source' => Rule::enum(ApiAiListSourceEnum::class),
-            'status' => Rule::enum(ApiAiListStatusEnum::class),
+            'api_source' => Rule::enum(ApiAiSourceEnum::class),
+            'status' => Rule::enum(ApiAiStatusEnum::class),
         ];
     }
 
@@ -99,8 +101,8 @@ class ApiAiListResource extends ModelResource
         return [
             Text::make('Название', 'title'),
             Text::make('Описание', 'description'),
-            Enum::make('API сервис', 'api_source')->attach(ApiAiListSourceEnum::class),
-            Enum::make('Статус', 'status')->attach(ApiAiListStatusEnum::class),
+            Enum::make('API сервис', 'api_source')->attach(ApiAiSourceEnum::class),
+            Enum::make('Статус', 'status')->attach(ApiAiStatusEnum::class),
         ];
     }
 
@@ -109,10 +111,10 @@ class ApiAiListResource extends ModelResource
         $fields = [];
         $fields[] = Text::make('Название', 'title');
         $fields[] = Text::make('Описание', 'description');
-        $fields[] = Enum::make('API сервис', 'api_source')->attach(ApiAiListSourceEnum::class);
+        $fields[] = Enum::make('API сервис', 'api_source')->attach(ApiAiSourceEnum::class);
         $fields[] = Switcher::make('Статус', 'status')
-            ->onValue(ApiAiListStatusEnum::Active->value)
-            ->offValue(ApiAiListStatusEnum::Disabled->value);
+            ->onValue(ApiAiStatusEnum::Active->value)
+            ->offValue(ApiAiStatusEnum::Disabled->value);
         $fields[] = Json::make('Опции для запуска', 'options')
             ->hint('Технические параметры для доп. настройки')
             ->keyValue();

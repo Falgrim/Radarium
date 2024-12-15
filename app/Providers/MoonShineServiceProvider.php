@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\MoonShine\Resources\ApiAiListResource;
+use App\MoonShine\Resources\ApiAiResource;
+use App\MoonShine\Resources\ApiChannelResource;
 use App\MoonShine\Resources\ConfigurationResource;
 use MoonShine\Providers\MoonShineApplicationServiceProvider;
 use MoonShine\MoonShine;
@@ -54,7 +55,8 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
             ]),
 
             MenuGroup::make('API', [
-                MenuItem::make('Список сервисов', new ApiAiListResource(), 'heroicons.users'),
+                MenuItem::make('Список сервисов ИИ', new ApiAiResource(), 'heroicons.users'),
+                MenuItem::make('Список источников', new ApiChannelResource(), 'heroicons.users'),
                 //MenuItem::make('Логи', new ClientLinkResource(), 'heroicons.users'),
             ], 'heroicons.users'),
         ];

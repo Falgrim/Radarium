@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use App\Enum\ApiAiListSourceEnum;
-use App\Enum\ApiAiListStatusEnum;
+use App\Enum\ApiAiSourceEnum;
+use App\Enum\ApiAiStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ApiAiList extends Model
+class ApiAi extends Model
 {
     use HasFactory;
 
@@ -41,8 +42,13 @@ class ApiAiList extends Model
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'date_balance' => 'datetime:Y-m-d H:i:s',
             'options' => 'array',
-            'status' => ApiAiListStatusEnum::class,
-            'api_source' => ApiAiListSourceEnum::class,
+            'status' => ApiAiStatusEnum::class,
+            'api_source' => ApiAiSourceEnum::class,
         ];
+    }
+
+    public function channels(): HasMany
+    {
+        return $this->hasMany(ApiChannel::class);
     }
 }

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('api_ai_lists', function (Blueprint $table) {
+        Schema::create('api_ais', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->string('description');

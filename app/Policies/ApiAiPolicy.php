@@ -2,13 +2,13 @@
 
 namespace App\Policies;
 
-use App\Models\ApiAiList;
+use App\Models\ApiAi;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use MoonShine\Models\MoonshineUser;
 use MoonShine\Models\MoonshineUserRole;
 
-class ApiAiListPolicy
+class ApiAiPolicy
 {
     use HandlesAuthorization;
 
@@ -17,7 +17,7 @@ class ApiAiListPolicy
         return true;
     }
 
-    public function view(MoonshineUser $user, ApiAiList $model)
+    public function view(MoonshineUser $user, ApiAi $model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -35,7 +35,7 @@ class ApiAiListPolicy
         return false;
     }
 
-    public function update(MoonshineUser $user, ApiAiList $model)
+    public function update(MoonshineUser $user, ApiAi $model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -44,7 +44,7 @@ class ApiAiListPolicy
         return false;
     }
 
-    public function delete(MoonshineUser $user, ApiAiList $model)
+    public function delete(MoonshineUser $user, ApiAi $model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -58,7 +58,7 @@ class ApiAiListPolicy
         return false;
     }
 
-    public function restore(MoonshineUser $user, ApiAiList $model)
+    public function restore(MoonshineUser $user, ApiAi $model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -67,7 +67,7 @@ class ApiAiListPolicy
         return false;
     }
 
-    public function forceDelete(MoonshineUser $user, ApiAiList $model)
+    public function forceDelete(MoonshineUser $user, ApiAi $model)
     {
         return false;
     }

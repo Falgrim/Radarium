@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Models;
+
+use App\Enum\ApiChannelSourceEnum;
+use App\Enum\ApiChannelStatusEnum;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ApiChannel extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'link',
+        'description',
+        'ai_promt',
+        'api_ai_id',
+        'channel_source',
+        'options',
+        'status',
+        'created_at',
+        'updated_at',
+    ];
+
+    protected $dates = [
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime:Y-m-d H:i:s',
+            'updated_at' => 'datetime:Y-m-d H:i:s',
+            'options' => 'array',
+            'status' => ApiChannelStatusEnum::class,
+            'channel_source' => ApiChannelSourceEnum::class,
+        ];
+    }
+
+    public function api_ai(): BelongsTo
+    {
+        return $this->belongsTo(ApiAi::class);
+    }
+}

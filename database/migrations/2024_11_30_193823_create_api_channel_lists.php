@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('api_channel_lists', function (Blueprint $table) {
+        Schema::create('api_channels', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->string('link');
             $table->string('description');
             $table->text('ai_promt')->nullable();
-            $table->smallInteger('api_bot_list_id')->default(0);
-            $table->string('api_source')->comment('Тип АПИ сервиса, например: telegram, vk')->nullable();
+            $table->smallInteger('api_ai_id')->default(0);
+            $table->string('channel_source')->comment('Тип АПИ сервиса, например: telegram, vk')->nullable();
             $table->json('options')->nullable();
             $table->smallInteger('status')->default(1);
             $table->timestamps();

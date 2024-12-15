@@ -2,13 +2,15 @@
 
 namespace App\Enum;
 
-enum ApiAiListSourceEnum:string {
-    case YandexGTP4 = 'yandexgtp4';
+enum ApiChannelStatusEnum:int {
+    case Active = 1;
+    case Disabled = 0;
 
     public function toString(): ?string
     {
         return match ($this) {
-            self::YandexGTP4    => 'Яндекс GPT 4',
+            self::Active    => 'Активно',
+            self::Disabled  => 'Отключено',
         };
     }
 
@@ -20,7 +22,8 @@ enum ApiAiListSourceEnum:string {
     public function getColor(): ?string
     {
         return match ($this) {
-            self::YandexGTP4    => 'success',
+            self::Active    => 'success',
+            self::Disabled  => 'yellow',
         };
     }
 }

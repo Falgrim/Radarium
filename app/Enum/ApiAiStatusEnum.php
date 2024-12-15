@@ -2,7 +2,7 @@
 
 namespace App\Enum;
 
-enum ApiAiListStatusEnum:int {
+enum ApiAiStatusEnum:int {
     case Active = 1;
     case Disabled = 0;
 
