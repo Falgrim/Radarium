@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Enum\ApiAiSourceEnum;
+use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannel;
 
+use Illuminate\Validation\Rule;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Json;
 use MoonShine\Fields\Relationships\BelongsTo;
@@ -84,7 +87,15 @@ class ApiChannelResource extends ModelResource
      */
     public function rules(Model $item): array
     {
-        return [];
+        return [
+            'title' => ['required', 'string', 'min:3'],
+            'link' => ['required', 'url:http,https'],
+            'description' => ['string', 'min:3'],
+            'ai_promt' => ['required', 'string', 'min:10'],
+            'api_ai_id' => ['exists:App\Models\ApiAi,id'],
+            'channel_source' => Rule::enum(ApiChannelSourceEnum::class),
+            'status' => Rule::enum(ApiChannelStatusEnum::class),
+        ];
     }
 
     public function indexFields(): array

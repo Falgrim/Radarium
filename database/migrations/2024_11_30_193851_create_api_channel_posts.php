@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('api_channel_posts', function (Blueprint $table) {
             $table->id();
-            $table->integer('api_channel_list_id');
+            $table->integer('api_channel_id');
             $table->string('user_login');
             $table->string('post_id');
             $table->dateTime('post_date');
             $table->text('post');
-            $table->smallInteger('ai_status')->default(0);
+            $table->smallInteger('ai_parse_status')->default(0);
             $table->json('ai_result')->nullable();
             $table->dateTime('ai_date')->nullable();
             $table->timestamps();
