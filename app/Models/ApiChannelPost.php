@@ -6,6 +6,8 @@ use App\Enum\ApiChannelPostStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ApiChannelPost extends Model
 {
@@ -49,8 +51,13 @@ class ApiChannelPost extends Model
         ];
     }
 
-    public function apiUser(): BelongsTo
+    public function channel(): BelongsTo
     {
-        return $this->belongsTo(ApiPostUser::class, 'api_post_user_id', 'id');
+        return $this->belongsTo(ApiChannel::class);
+    }
+
+    public function apiUser(): HasOne
+    {
+        return $this->HasOne(ApiPostUser::class, 'api_post_user_id', 'id');
     }
 }

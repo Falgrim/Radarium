@@ -61,14 +61,14 @@ class ParseTGChats extends Command
             $params = [
                 'peer'          => $channel->link,
                 'offset_id'     => 0,
-                'offset_date'   => strtotime('-10 days'),
+                'offset_date'   => strtotime('-30 days'),
                 'add_offset'    => 0,
                 'limit'         => $cronCountPosts?->value ?? 50,
                 'max_id'        => 0,
                 'min_id'        => $channel->last_post_id ?? 0,
                 'hash'          => 0,
             ];
-            print_r($params);
+
             $messages = $MadelineProto->messages->getHistory($params);
 
             /* Сообщения, сортировка по дате (новые сверху) */

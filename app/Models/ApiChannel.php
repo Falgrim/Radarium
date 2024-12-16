@@ -7,6 +7,7 @@ use App\Enum\ApiChannelStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ApiChannel extends Model
 {
@@ -50,5 +51,10 @@ class ApiChannel extends Model
     public function api_ai(): BelongsTo
     {
         return $this->belongsTo(ApiAi::class);
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(ApiChannelPost::class);
     }
 }

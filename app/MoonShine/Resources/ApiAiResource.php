@@ -116,7 +116,7 @@ class ApiAiResource extends ModelResource
             ->onValue(ApiAiStatusEnum::Active->value)
             ->offValue(ApiAiStatusEnum::Disabled->value);
         $fields[] = Json::make('Опции для запуска', 'options')
-            ->hint('Технические параметры для доп. настройки')
+            ->hint('Технические параметры для доп. настройки<br />Для '.ApiAiSourceEnum::YandexGTP4->toString().' обязательны параметры: Bearer и Folder_id (подробнее: https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2)')
             ->keyValue();
 
         return $fields;
