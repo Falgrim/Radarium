@@ -6,6 +6,8 @@ use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ApiPostUser extends Model
 {
@@ -45,5 +47,10 @@ class ApiPostUser extends Model
             'channel_source' => ApiChannelSourceEnum::class,
             'external_info' => 'array',
         ];
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(ApiChannelPost::class, 'id', 'api_post_user_id');
     }
 }

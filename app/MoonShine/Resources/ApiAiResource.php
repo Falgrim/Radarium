@@ -34,7 +34,7 @@ class ApiAiResource extends ModelResource
 {
     protected string $model = ApiAi::class;
 
-    protected string $title = 'Список сервисов ИИ';
+    protected string $title = 'Сервисы ИИ';
 
     protected string $sortColumn = 'title';
 

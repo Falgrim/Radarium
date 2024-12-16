@@ -4,17 +4,29 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannelPost;
 use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostIndexPage;
 use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostFormPage;
 use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostDetailPage;
 
+use Illuminate\Validation\Rule;
+use MoonShine\Fields\Checkbox;
 use MoonShine\Fields\Date;
+use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
+use MoonShine\Fields\ID;
+use MoonShine\Fields\Number;
+use MoonShine\Fields\Phone;
+use MoonShine\Fields\Relationships\HasMany;
+use MoonShine\Fields\Relationships\HasOne;
+use MoonShine\Fields\Switcher;
 use MoonShine\Fields\Text;
+use MoonShine\Fields\Textarea;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Pages\Page;
 
@@ -25,7 +37,7 @@ class ApiChannelPostResource extends ModelResource
 {
     protected string $model = ApiChannelPost::class;
 
-    protected string $title = 'Лог обработки сообщений';
+    protected string $title = 'История сообщений';
 
     protected string $sortColumn = 'created_at';
 
@@ -68,19 +80,75 @@ class ApiChannelPostResource extends ModelResource
      */
     public function rules(Model $item): array
     {
-        return [];
+        return [
+            'post' => ['required', 'string', 'min:10'],
+            'ai_parse_status' => Rule::enum(ApiChannelPostStatusEnum::class),
+        ];
     }
 
-    public function indexFields(): array
+    public function filters(): array
     {
         return [
             Text::make('ID', 'id'),
             Text::make('API ID', 'post_id'),
             Text::make('Логин', 'user_login'),
-            Text::make('Сообщение', 'post', fn($item) => mb_substr($item->post, 0, 50).'...'),
-            Date::make('Дата', 'post_date'),
-            Text::make('Создано', 'created_at'),
-            Text::make('Статус ИИ', 'ai_result_status'),
+            Date::make('Дата', 'post_date')->withTime(),
+            Date::make('Создан', 'created_at')->withTime(),
         ];
+    }
+
+    public function indexFields(): array
+    {
+        return [
+            Text::make('ID', 'id')->sortable(),
+            Text::make('API ID', 'post_id')->sortable(),
+            Text::make('Логин', 'user_login')->sortable(),
+            Text::make('Сообщение', 'post', fn($item) => mb_substr($item->post, 0, 100).'...'),
+            Date::make('Дата', 'post_date')->withTime()->sortable(),
+            Date::make('Создан', 'created_at')->withTime()->sortable(),
+            Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),
+        ];
+    }
+
+    public function detailFields(): array
+    {
+        return [
+            Text::make('ID', 'id'),
+            Text::make('API ID', 'post_id'),
+            Text::make('Логин', 'user_login'),
+            Text::make('Сообщение', 'post'),
+            Date::make('Дата', 'post_date')->withTime(),
+            Date::make('Создан', 'created_at')->withTime(),
+            Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class),
+
+            HasOne::make('Аккаунт', 'apiUser', resource: new ApiPostUserResource())->fields([
+                Text::make('ID', 'id'),
+                Text::make('Source ID', 'user_id'),
+                Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+                Text::make('Логин', 'username'),
+                Text::make('Имя', 'first_name'),
+                Text::make('Фамилия', 'last_name'),
+                Text::make('Телефон', 'phone'),
+                Text::make('Тип профиля', 'user_type'),
+                Date::make('Онлайн', 'last_online_date')->withTime(),
+                Date::make('Создан', 'created_at')->withTime(),
+            ]),
+        ];
+    }
+
+    public function formFields(): array
+    {
+        $fields = [];
+
+        $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = Text::make('API ID', 'post_id')->disabled()->readonly();
+        $fields[] = Text::make('Логин', 'user_login');
+        $fields[] = Textarea::make('Сообщение', 'post')->customAttributes(['autocomplete' => 'off']);
+        $fields[] = Date::make('Дата', 'post_date')->withTime()->disabled()->readonly();
+        $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
+        $fields[] = Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)
+            ->hint('Вы можете сбросить параметр статуса, чтобы система повторно проверила сообщение.');
+
+        return $fields;
     }
 }

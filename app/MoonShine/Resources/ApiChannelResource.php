@@ -33,7 +33,7 @@ class ApiChannelResource extends ModelResource
 {
     protected string $model = ApiChannel::class;
 
-    protected string $title = 'Список источников';
+    protected string $title = 'Источники сообщений';
 
     protected string $sortColumn = 'channel_source';
 

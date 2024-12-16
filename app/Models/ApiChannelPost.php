@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enum\ApiChannelPostStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ApiChannelPost extends Model
 {
@@ -20,6 +21,7 @@ class ApiChannelPost extends Model
         'ai_parse_status',
         'ai_result',
         'ai_date',
+        'api_post_user_id',
         'created_at',
         'updated_at',
     ];
@@ -45,5 +47,10 @@ class ApiChannelPost extends Model
             'ai_date' => 'datetime:Y-m-d H:i:s',
             'ai_parse_status' => ApiChannelPostStatusEnum::class,
         ];
+    }
+
+    public function apiUser(): BelongsTo
+    {
+        return $this->belongsTo(ApiPostUser::class, 'api_post_user_id', 'id');
     }
 }

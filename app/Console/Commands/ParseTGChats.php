@@ -111,21 +111,6 @@ class ParseTGChats extends Command
                         ];
                     }
 
-                    $post = ApiChannelPost::updateOrCreate([
-                        'api_channel_id' => $channel->id,
-                        'post_id' => $message['id']
-                    ], [
-                        'api_channel_id'    => $channel->id,
-                        'user_login'        => $userData['username'] ?? '',
-                        'user_login_id'     => $message['from_id'],
-                        'post_id'           => $message['id'],
-                        'post_date'         => (new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s"),
-                        'post'              => trim($message['message']),
-                        'ai_parse_status'   => ApiChannelPostStatusEnum::InQueue,
-                    ]);
-
-                    $this->info('Создан новый пост: '.$post->id);
-
                     if (count($userData)) {
                         $user = ApiPostUser::updateOrCreate([
                             'user_id' => $message['from_id'],
@@ -142,6 +127,22 @@ class ParseTGChats extends Command
 
                         $this->info('Создан новый пользователь: '.$user->id);
                     }
+
+                    $post = ApiChannelPost::updateOrCreate([
+                        'api_channel_id' => $channel->id,
+                        'post_id' => $message['id']
+                    ], [
+                        'api_post_user_id'  => $user?->id ?? 0,
+                        'api_channel_id'    => $channel->id,
+                        'user_login'        => $userData['username'] ?? '',
+                        'user_login_id'     => $message['from_id'],
+                        'post_id'           => $message['id'],
+                        'post_date'         => (new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s"),
+                        'post'              => trim($message['message']),
+                        'ai_parse_status'   => ApiChannelPostStatusEnum::InQueue,
+                    ]);
+
+                    $this->info('Создан новый пост: '.$post->id);
                 }
 
                 if (!is_null($lastPostId)) {
