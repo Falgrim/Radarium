@@ -17,6 +17,7 @@ use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Json;
+use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
@@ -101,6 +102,7 @@ class ApiPostUserResource extends ModelResource
             Text::make('Телефон', 'phone')->sortable(),
             Text::make('Тип профиля', 'user_type')->sortable(),
             Date::make('Онлайн', 'last_online_date')->withTime()->sortable(),
+            HasMany::make('Сообщения', 'posts', resource: new ApiChannelPostResource())->onlyLink(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
     }
@@ -119,7 +121,7 @@ class ApiPostUserResource extends ModelResource
             Date::make('Онлайн', 'last_online_date')->withTime()->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
 
-            HasOne::make('Сообщения', 'posts', resource: new ApiChannelPostResource())->fields([
+            HasMany::make('Сообщения', 'posts', resource: new ApiChannelPostResource())->fields([
                 Text::make('ID', 'id')->sortable(),
                 Text::make('API ID', 'post_id')->sortable(),
                 Text::make('Логин', 'user_login')->sortable(),

@@ -91,6 +91,7 @@ class ApiChannelPostResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('API ID', 'post_id'),
+            Text::make('ID аккаунта', 'api_post_user_id'),
             Text::make('Логин', 'user_login'),
             Date::make('Дата', 'post_date')->withTime(),
             Date::make('Создан', 'created_at')->withTime(),
