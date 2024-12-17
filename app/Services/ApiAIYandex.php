@@ -9,10 +9,19 @@ use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;
 
 // https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2
+// https://yandex.cloud/ru/docs/iam/operations/api-key/create#console_1
+
+/*
+ * 1) Создать сервисный аккаунт
+ * 2) Создать для него API ключ с правами ai.languageModels.user
+ * 3) Задать параметры API в конфиге канала API_KEY_TOKEN
+ * 4) Создать папку или выбрать из ссылки на страницу Yandex Foundation Models
+ * 5) Указать название папки Folder_id
+ */
 
 class ApiAIYandex
 {
-    protected string $bearer;
+    protected string $apiToken;
 
     protected string $folderId;
 
@@ -28,15 +37,15 @@ class ApiAIYandex
 
     public function setConfig(array $config)
     {
-        if (!isset($config['Bearer'])) {
-            throw new Exception('Не указан Bearer параметр');
+        if (!isset($config['API_KEY_TOKEN'])) {
+            throw new Exception('Не указан API_KEY_TOKEN параметр');
         }
 
         if (!isset($config['Folder_id'])) {
             throw new Exception('Не указан Folder_id параметр');
         }
 
-        $this->bearer = $config['Bearer'];
+        $this->apiToken = $config['API_KEY_TOKEN'];
         $this->folderId = $config['Folder_id'];
     }
 
@@ -53,8 +62,8 @@ class ApiAIYandex
     protected function getHeaders()
     {
         return [
-            'Content-Type: application/json',
-            'Authorization: Bearer '.$this->bearer,
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Api-Key '.$this->apiToken,
         ];
     }
 
@@ -79,27 +88,53 @@ class ApiAIYandex
             ],
         ];
         return $json;
-        //return json_encode($json);
     }
 
-    public function sendRequest()
+    public function getResult()
+    {
+        $result = $this->sendRequest();
+        $aiText = $this->parseResponse($result);
+
+        print_r($aiText);
+        exit();
+        return $aiText;
+    }
+
+    protected function parseResponse(array $data)
+    {
+        if (!isset($data['alternatives'])) {
+            throw new \Exception('В ответе отсутствует параметр alternatives');
+        }
+
+        if (!isset($data['alternatives'][0]['message'])) {
+            throw new \Exception('В ответе отсутствует параметр alternatives.0.message');
+        }
+
+        $jsonText = $data['alternatives'][0]['message']['text'];
+        if (!$jsonText) {
+            throw new \Exception('Пустой ответ: '.json_encode($data));
+        }
+
+        $jsonText = str_replace('```', '', $jsonText);
+
+        return json_decode($jsonText, true);
+    }
+
+    protected function sendRequest()
     {
         $headers = $this->getHeaders();
         $json = $this->generateJson();
 
-        $response = Http::post($this->url, $json)->withHeaders($headers);
-
-        print_r($response);
-        exit();
+        $response = Http::withHeaders($headers)->post($this->url, $json);
 
         if ($response->status() !== 200) {
-            //throw new MedBotException('Не удалось создать клиента: '.($response->json()['message'] ?? $response->json()['code']));
+            throw new \Exception('Не удалось отправить запрос: '.$response->body());
         }
 
-        if ($response->json()['code'] != 'create_client') {
-            //throw new MedBotException('Не удалось создать клиента: '.($response->json()['message'] ?? $response->json()['code']));
+        if (!$response->json()['result']) {
+            throw new \Exception('Не удалось получить ответ: '.$response->body());
         }
 
-        return $response->json();
+        return $response->json()['result'];
     }
 }

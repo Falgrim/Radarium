@@ -53,7 +53,7 @@ class ApiChannelPost extends Model
 
     public function channel(): BelongsTo
     {
-        return $this->belongsTo(ApiChannel::class);
+        return $this->belongsTo(ApiChannel::class, 'api_channel_id', 'id');
     }
 
     public function apiUser(): HasOne

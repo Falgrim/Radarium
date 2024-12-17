@@ -102,8 +102,8 @@ class ParseTGChats extends Command
                     if (isset($userInfo['User'])) {
                         $userData = [
                             'first_name'    => $userInfo['User']['first_name'] ?? null,
-                            'last_name'    => $userInfo['User']['last_name'] ?? null,
-                            'username'      => $userInfo['User']['username'],
+                            'last_name'     => $userInfo['User']['last_name'] ?? null,
+                            'username'      => $userInfo['User']['username'] ?? '',
                             'user_id'       => $userInfo['user_id'],
                             'user_type'     => $userInfo['type'],
                             'phone'         => $userInfo['User']['phone'] ?? null,
