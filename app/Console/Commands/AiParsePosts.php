@@ -5,10 +5,12 @@ namespace App\Console\Commands;
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\SpecialistStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\Specialist;
 use App\Services\ApiAIYandex;
 use Illuminate\Console\Command;
 
@@ -43,6 +45,8 @@ class AiParsePosts extends Command
             return 1;
         }
 
+        $this->info('Найдено постов: '.count($posts));
+
         foreach ($posts as $post) {
             try {
                 $promt = $post->channel->ai_promt;
@@ -55,7 +59,27 @@ class AiParsePosts extends Command
                     $ApiAIYandex->setText($post->post);
                     $result = $ApiAIYandex->getResult();
 
-                    print_r($result);
+                    if (count($result['json'])) {
+                        // Удаляем старое резюме, на случай повторного прогона поста
+                        Specialist::where('api_channel_post_id', $post->id)->delete();
+
+                        $result['json']['api_post_user_id'] = $post->apiUser->id;
+                        $result['json']['api_channel_post_id'] = $post->id;
+                        $result['json']['status'] = SpecialistStatusEnum::InModeration;
+                        Specialist::create($result['json']);
+
+                        $post->ai_result = $result['origin'];
+                        $post->ai_date = now();
+                        $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
+                        $post->save();
+
+                        $this->info('Создан специалист (резюме)');
+                    } else {
+                        $post->ai_date = now();
+                        $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
+                        $post->save();
+                        $this->warn('По специалисту не найдены данные');
+                    }
                 } else {
                     $this->warn('Неизвестный источник для');
                 }
@@ -64,14 +88,10 @@ class AiParsePosts extends Command
                 $post->ai_date = now();
                 $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
                 $post->save();
+                continue;
             }
         }
 
         $this->info('Завершено');
-    }
-
-    public function addSpecialistData(array $aiResult)
-    {
-
     }
 }

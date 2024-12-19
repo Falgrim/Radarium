@@ -35,6 +35,24 @@ class ApiAIYandex
     {
     }
 
+    protected function getKeyRows()
+    {
+        return [
+            'Опыт работы по специальности'  => ['id' => 'experience', 'type' => 'string'],
+            'Владение ПО'                   => ['id' => 'soft_experience', 'type' => 'string'],
+            'Образование'                   => ['id' => 'education', 'type' => 'string'],
+            'Требуемый график работы'       => ['id' => 'work_schedule', 'type' => 'string'],
+            'Общая продолжительность работы (за проект)'    => ['id' => 'total_work_project', 'type' => 'string'],
+            'Тип работы'                    => ['id' => 'type_of_work', 'type' => 'string'],
+            'Желаемая оплата за час'        => ['id' => 'price_by_hour', 'type' => 'price'],
+            'Желаемая оплата за проект'     => ['id' => 'price_by_project', 'type' => 'price'],
+            'Желаемая оплата за месяц'      => ['id' => 'price_by_month', 'type' => 'price'],
+            'О себе'                        => ['id' => 'about', 'type' => 'string'],
+            'Спец. требования'              => ['id' => 'spec_requirements', 'type' => 'string'],
+            'Ссылка на резюме'              => ['id' => 'link_resume', 'type' => 'string'],
+        ];
+    }
+
     public function setConfig(array $config)
     {
         if (!isset($config['API_KEY_TOKEN'])) {
@@ -59,7 +77,7 @@ class ApiAIYandex
         $this->text = $text;
     }
 
-    protected function getHeaders()
+    protected function getHeaders(): array
     {
         return [
             'Content-Type' => 'application/json',
@@ -67,7 +85,7 @@ class ApiAIYandex
         ];
     }
 
-    protected function generateJson()
+    protected function generateJson(): array
     {
         $json = [
             'modelUri' => 'gpt://'.$this->folderId.'/yandexgpt/rc',
@@ -90,17 +108,36 @@ class ApiAIYandex
         return $json;
     }
 
-    public function getResult()
+    public function getResult(): array
     {
         $result = $this->sendRequest();
+        print_r($result);
         $aiText = $this->parseResponse($result);
 
-        print_r($aiText);
-        exit();
-        return $aiText;
+        $keyRows = $this->getKeyRows();
+        $modelRows = [];
+        foreach ($keyRows as $id => $row) {
+            $modelRows[$row['id']] = $aiText[$id] ?? null;
+            if (is_null($modelRows[$row['id']])) {
+                continue;
+            }
+
+            if ($row['type'] == 'string') {
+                if(is_array($modelRows[$row['id']])) {
+                    $modelRows[$row['id']] = implode('-|||-', $modelRows[$row['id']]);
+                }
+                $modelRows[$row['id']] = trim($modelRows[$row['id']]);
+            } elseif ($row['type'] == 'price') {
+                $modelRows[$row['id']] = (int)$modelRows[$row['id']]*100; // Сумма в копейках
+            } elseif ($row['type'] == 'integer') {
+                $modelRows[$row['id']] = (int)$modelRows[$row['id']];
+            }
+        }
+
+        return ['origin' => $result['alternatives'][0]['message']['text'], 'json' => $modelRows];
     }
 
-    protected function parseResponse(array $data)
+    protected function parseResponse(array $data): array
     {
         if (!isset($data['alternatives'])) {
             throw new \Exception('В ответе отсутствует параметр alternatives');

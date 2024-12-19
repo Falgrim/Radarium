@@ -9,6 +9,7 @@ use App\MoonShine\Resources\ApiChannelPostResource;
 use App\MoonShine\Resources\ApiChannelResource;
 use App\MoonShine\Resources\ApiPostUserResource;
 use App\MoonShine\Resources\ConfigurationResource;
+use App\MoonShine\Resources\SpecialistResource;
 use MoonShine\Providers\MoonShineApplicationServiceProvider;
 use MoonShine\MoonShine;
 use MoonShine\Menu\MenuGroup;
@@ -59,8 +60,12 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
             MenuGroup::make('API', [
                 MenuItem::make('Сервисы ИИ', new ApiAiResource(), 'heroicons.users'),
                 MenuItem::make('Источники сообщений', new ApiChannelResource(), 'heroicons.users'),
-                MenuItem::make('История сообщений', new ApiChannelPostResource(), 'heroicons.users'),
-                MenuItem::make('История аккаунтов', new ApiPostUserResource(), 'heroicons.users'),
+                MenuItem::make('Cообщения/Посты', new ApiChannelPostResource(), 'heroicons.users'),
+            ], 'heroicons.users'),
+
+            MenuGroup::make('Специалисты', [
+                MenuItem::make('Аккаунты', new ApiPostUserResource(), 'heroicons.users'),
+                MenuItem::make('Специалисты (резюме)', new SpecialistResource(), 'heroicons.users'),
             ], 'heroicons.users'),
         ];
     }

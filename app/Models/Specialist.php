@@ -2,28 +2,35 @@
 
 namespace App\Models;
 
-use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\SpecialistStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ApiChannelPost extends Model
+class Specialist extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
-        'api_channel_id',
-        'user_login',
-        'user_login_id',
-        'post_id',
-        'post_date',
-        'post',
-        'ai_parse_status',
-        'ai_result',
-        'ai_date',
         'api_post_user_id',
+        'api_channel_post_id',
+        'experience',
+        'soft_experience',
+        'education',
+        'work_schedule',
+        'total_work_project',
+        'type_of_work',
+        'price_by_hour',
+        'price_by_project',
+        'price_by_month',
+        'about',
+        'spec_requirements',
+        'link_resume',
+        'status',
         'created_at',
         'updated_at',
     ];
@@ -31,8 +38,6 @@ class ApiChannelPost extends Model
     protected $dates = [
         'created_at',
         'updated_at',
-        'post_date',
-        'ai_date',
     ];
 
     /**
@@ -45,24 +50,17 @@ class ApiChannelPost extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
-            'post_date' => 'datetime:Y-m-d H:i:s',
-            'ai_date' => 'datetime:Y-m-d H:i:s',
-            'ai_parse_status' => ApiChannelPostStatusEnum::class,
+            'status' => SpecialistStatusEnum::class,
         ];
     }
 
-    public function channel(): BelongsTo
-    {
-        return $this->belongsTo(ApiChannel::class, 'api_channel_id', 'id');
-    }
-
-    public function apiUser(): HasOne
+    public function user(): HasOne
     {
         return $this->HasOne(ApiPostUser::class, 'id', 'api_post_user_id');
     }
 
-    public function specialist(): HasOne
+    public function post(): BelongsTo
     {
-        return $this->HasOne(Specialist::class, 'api_channel_post_id', 'id');
+        return $this->belongsTo(ApiChannelPost::class, 'api_channel_post_id', 'id');
     }
 }

@@ -7,6 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
+use App\Enum\SpecialistStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannelPost;
@@ -20,6 +21,7 @@ use MoonShine\Fields\Date;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\ID;
+use MoonShine\Fields\Json;
 use MoonShine\Fields\Number;
 use MoonShine\Fields\Phone;
 use MoonShine\Fields\Relationships\HasMany;
@@ -37,7 +39,7 @@ class ApiChannelPostResource extends ModelResource
 {
     protected string $model = ApiChannelPost::class;
 
-    protected string $title = 'История сообщений';
+    protected string $title = 'Cообщения/Посты';
 
     protected string $sortColumn = 'created_at';
 
@@ -121,6 +123,26 @@ class ApiChannelPostResource extends ModelResource
             Date::make('Дата', 'post_date')->withTime(),
             Date::make('Создан', 'created_at')->withTime(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class),
+            Text::make('Ответ ИИ', 'ai_result'),
+            Date::make('Запрос к ИИ', 'ai_date')->withTime(),
+
+            HasOne::make('ИИ', 'specialist', resource: new SpecialistResource())->fields([
+                Text::make('ID', 'id'),
+                Text::make('Опыт работы по специальности', 'experience'),
+                Text::make('Владение ПО', 'soft_experience'),
+                Text::make('Образование', 'education'),
+                Text::make('Требуемый график работы', 'work_schedule'),
+                Text::make('Общая продолжительность работы - проекта', 'total_work_project'),
+                Text::make('Тип работы', 'type_of_work'),
+                Text::make('Желаемая оплата за час', 'price_by_hour'),
+                Text::make('Желаемая оплата общая сумма выплат за проект', 'price_by_project'),
+                Text::make('Желаемая оплата фиксированная оплата за период времени (месяц)', 'price_by_month'),
+                Text::make('О себе', 'about'),
+                Text::make('Спец. требования', 'spec_requirements'),
+                Text::make('Ссылка на резюме', 'link_resume'),
+                Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+                Date::make('Создан', 'created_at')->withTime(),
+            ]),
 
             HasOne::make('Аккаунт', 'apiUser', resource: new ApiPostUserResource())->fields([
                 Text::make('ID', 'id'),
