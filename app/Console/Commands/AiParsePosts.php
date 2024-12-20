@@ -13,6 +13,7 @@ use App\Models\ApiPostUser;
 use App\Models\Specialist;
 use App\Services\ApiAIYandex;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class AiParsePosts extends Command
 {
@@ -63,7 +64,7 @@ class AiParsePosts extends Command
                         // Удаляем старое резюме, на случай повторного прогона поста
                         Specialist::where('api_channel_post_id', $post->id)->delete();
 
-                        $result['json']['api_post_user_id'] = $post->apiUser->id;
+                        $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                         $result['json']['api_channel_post_id'] = $post->id;
                         $result['json']['status'] = SpecialistStatusEnum::InModeration;
                         Specialist::create($result['json']);
@@ -81,13 +82,16 @@ class AiParsePosts extends Command
                         $this->warn('По специалисту не найдены данные');
                     }
                 } else {
-                    $this->warn('Неизвестный источник для');
+                    $this->warn('Неизвестный источник');
                 }
             } catch (\Exception $e) {
                 $this->error($e->getMessage());
+                Log::channel('post_ai')->error($e->getMessage());
+
                 $post->ai_date = now();
                 $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
                 $post->save();
+
                 continue;
             }
         }

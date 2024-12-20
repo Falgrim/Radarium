@@ -13,6 +13,7 @@ use App\MoonShine\Pages\ApiPostUser\ApiPostUserIndexPage;
 use App\MoonShine\Pages\ApiPostUser\ApiPostUserFormPage;
 use App\MoonShine\Pages\ApiPostUser\ApiPostUserDetailPage;
 
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
@@ -37,13 +38,15 @@ class ApiPostUserResource extends ModelResource
 
     protected string $sortDirection = 'DESC';
 
-    public string $column = 'created_at';
+    protected string $column = 'id';
 
     protected bool $isAsync = false;
 
     protected bool $editInModal = false;
 
     protected bool $withPolicy = true;
+
+    protected bool $stickyTable = true;
 
     public function getActiveActions(): array
     {
@@ -125,7 +128,7 @@ class ApiPostUserResource extends ModelResource
                 Text::make('ID', 'id')->sortable(),
                 Text::make('API ID', 'post_id')->sortable(),
                 Text::make('Логин', 'user_login')->sortable(),
-                Text::make('Сообщение', 'post', fn($item) => mb_substr($item->post, 0, 100).'...'),
+                Text::make('Сообщение', 'post', fn($item) => Str::limit($item->post, 100)),
                 Date::make('Дата', 'post_date')->withTime()->sortable(),
                 Date::make('Создано', 'created_at')->withTime()->sortable(),
                 Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),

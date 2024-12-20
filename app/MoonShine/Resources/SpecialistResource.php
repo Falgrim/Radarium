@@ -12,6 +12,7 @@ use App\Models\ApiPostUser;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Specialist;
 
+use Illuminate\Support\Str;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Relationships\BelongsTo;
@@ -45,6 +46,8 @@ class SpecialistResource extends ModelResource
     protected bool $editInModal = false;
 
     protected bool $withPolicy = true;
+
+    protected bool $stickyTable = true;
 
     public function getActiveActions(): array
     {
@@ -89,7 +92,7 @@ class SpecialistResource extends ModelResource
                 Date::make('Дата', 'post_date'),
                 Date::make('Создан', 'created_at'),
             ]),
-            Text::make('О себе', 'about'),
+            Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
             Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class)->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];

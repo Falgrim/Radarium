@@ -4,11 +4,14 @@ namespace App\Console\Commands;
 
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\ApiChannelStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ParseTGChats extends Command
 {
@@ -31,7 +34,9 @@ class ParseTGChats extends Command
      */
     public function handle()
     {
-        $channels = ApiChannel::where('channel_source', ApiChannelSourceEnum::Telegram)->get();
+        $channels = ApiChannel::where('channel_source', ApiChannelSourceEnum::Telegram)
+            ->where('status', ApiChannelStatusEnum::Active)
+            ->get();
 
         if (!count($channels)) {
             $this->warn('Нет списка каналов для парсинга');
@@ -39,6 +44,7 @@ class ParseTGChats extends Command
         }
 
         $cronCountPosts = Repositories::setting()->findByName('cron_count_posts');
+        $minLengthPost = Repositories::setting()->findByName('min_length_post');
 
         foreach ($channels as $channel) {
             if (!count($channel->options) OR !isset($channel->options['api_id']) OR !isset($channel->options['api_hash'])) {
@@ -83,8 +89,18 @@ class ParseTGChats extends Command
                             !isset($message['reply_to']['reply_to_msg_id']) or
                             $message['reply_to']['reply_to_msg_id'] != $channel->options['reply_to_msg_id']
                         ) {
+                            $this->info('Сообщение пропущено из-за проверки на reply_to_msg_id');
                             unset($messages[$key]);
                         }
+                    }
+                }
+            }
+
+            if ($minLengthPost?->value) {
+                foreach ($messages as $key => $message) {
+                    if (Str::length($message['message']) < $minLengthPost?->value) {
+                        $this->info('Сообщение пропущено из-за ограничения мин. длины '.$minLengthPost?->value.': '.Str::length($message['message']));
+                        unset($messages[$key]);
                     }
                 }
             }
@@ -151,6 +167,7 @@ class ParseTGChats extends Command
                 }
             }
 
+            Log::channel('crm_service')->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
             $this->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
         }
 

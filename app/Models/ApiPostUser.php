@@ -51,6 +51,6 @@ class ApiPostUser extends Model
 
     public function posts(): HasMany
     {
-        return $this->hasMany(ApiChannelPost::class, 'id', 'api_post_user_id');
+        return $this->hasMany(ApiChannelPost::class, 'api_post_user_id', 'id');
     }
 }

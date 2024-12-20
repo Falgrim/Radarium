@@ -11,10 +11,11 @@ use App\Enum\SpecialistStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannelPost;
-use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostIndexPage;
-use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostFormPage;
-use App\MoonShine\Pages\ApiChannelPost\ApiChannelPostDetailPage;
+use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostIndexPage;
+use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostFormPage;
+use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostDetailPage;
 
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use MoonShine\Fields\Checkbox;
 use MoonShine\Fields\Date;
@@ -24,6 +25,7 @@ use MoonShine\Fields\ID;
 use MoonShine\Fields\Json;
 use MoonShine\Fields\Number;
 use MoonShine\Fields\Phone;
+use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Switcher;
@@ -45,7 +47,7 @@ class ApiChannelPostResource extends ModelResource
 
     protected string $sortDirection = 'DESC';
 
-    public string $column = 'post_id';
+    protected string $column = 'post_id';
 
     protected bool $isAsync = false;
 
@@ -53,25 +55,11 @@ class ApiChannelPostResource extends ModelResource
 
     protected bool $withPolicy = true;
 
+    protected bool $stickyTable = true;
+
     public function getActiveActions(): array
     {
         return ['view', 'update', 'delete', 'massDelete'];
-    }
-
-    /**
-     * @return list<Page>
-     */
-    public function pages(): array
-    {
-        return [
-            ApiChannelPostIndexPage::make($this->title()),
-            ApiChannelPostFormPage::make(
-                $this->getItemID()
-                    ? __('moonshine::ui.edit')
-                    : __('moonshine::ui.add')
-            ),
-            ApiChannelPostDetailPage::make(__('moonshine::ui.show')),
-        ];
     }
 
     /**
@@ -92,7 +80,8 @@ class ApiChannelPostResource extends ModelResource
     {
         return [
             Text::make('ID', 'id'),
-            Text::make('API ID', 'post_id'),
+            BelongsTo::make('Источник', 'channel', resource: new ApiChannelResource()),
+            Text::make('API ID', 'channel'),
             Text::make('ID аккаунта', 'api_post_user_id'),
             Text::make('Логин', 'user_login'),
             Date::make('Дата', 'post_date')->withTime(),
@@ -104,9 +93,10 @@ class ApiChannelPostResource extends ModelResource
     {
         return [
             Text::make('ID', 'id')->sortable(),
+            BelongsTo::make('Источник', 'channel', resource: new ApiChannelResource())->sortable(),
             Text::make('API ID', 'post_id')->sortable(),
             Text::make('Логин', 'user_login')->sortable(),
-            Text::make('Сообщение', 'post', fn($item) => mb_substr($item->post, 0, 100).'...'),
+            Text::make('Сообщение', 'post', fn($item) => Str::limit($item->post, 100)),
             Date::make('Дата', 'post_date')->withTime()->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),
@@ -144,7 +134,7 @@ class ApiChannelPostResource extends ModelResource
                 Date::make('Создан', 'created_at')->withTime(),
             ]),
 
-            HasOne::make('Аккаунт', 'apiUser', resource: new ApiPostUserResource())->fields([
+            HasOne::make('Аккаунт', 'apiPostUser', resource: new ApiPostUserResource())->fields([
                 Text::make('ID', 'id'),
                 Text::make('Source ID', 'user_id'),
                 Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),

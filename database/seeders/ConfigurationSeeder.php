@@ -47,6 +47,16 @@ class ConfigurationSeeder extends Seeder
             'title_hint' => '',
         ];
 
+        $configs[] = [
+            'title' => 'Минимальная длина сообщения для парсинга',
+            'name' => 'min_length_post',
+            'type' => 'string',
+            'value' => 20,
+            'order' => ++$maxOrder,
+            'options' => '',
+            'title_hint' => 'Если сообщение будет меньше установленного лимита, то оно будет пропущено',
+        ];
+
         foreach ($configs as $config) {
             Configuration::updateOrCreate([
                 'name' => $config['name']

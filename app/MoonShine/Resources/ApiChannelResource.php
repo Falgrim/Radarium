@@ -110,6 +110,20 @@ class ApiChannelResource extends ModelResource
         ];
     }
 
+    public function detailFields(): array
+    {
+        return [
+            Text::make('Название', 'title'),
+            Text::make('Ссылка', 'link'),
+            Text::make('Описание', 'description'),
+            Text::make('Сервис', 'api_ai_id'),
+            Text::make('Промт для ИИ', 'ai_promt'),
+            Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+            Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
+            Text::make('Опции для обработки', 'options', fn($item) => $item->options ? json_encode($item->options) : ''),
+        ];
+    }
+
     public function formFields(): array
     {
         $fields = [];

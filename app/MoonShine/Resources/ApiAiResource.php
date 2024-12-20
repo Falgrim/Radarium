@@ -40,7 +40,7 @@ class ApiAiResource extends ModelResource
 
     protected string $sortDirection = 'ASC';
 
-    public string $column = 'title';
+    protected string $column = 'title';
 
     protected bool $isAsync = false;
 
@@ -103,6 +103,17 @@ class ApiAiResource extends ModelResource
             Text::make('Описание', 'description'),
             Enum::make('API сервис', 'api_source')->attach(ApiAiSourceEnum::class),
             Enum::make('Статус', 'status')->attach(ApiAiStatusEnum::class),
+        ];
+    }
+
+    public function detailFields(): array
+    {
+        return [
+            Text::make('Название', 'title'),
+            Text::make('Описание', 'description'),
+            Enum::make('API сервис', 'api_source')->attach(ApiAiSourceEnum::class),
+            Enum::make('Статус', 'status')->attach(ApiAiStatusEnum::class),
+            Text::make('Опции запуска', 'options', fn($item) => $item->options ? json_encode($item->options) : ''),
         ];
     }
 

@@ -56,13 +56,13 @@ class ApiChannelPost extends Model
         return $this->belongsTo(ApiChannel::class, 'api_channel_id', 'id');
     }
 
-    public function apiUser(): HasOne
-    {
-        return $this->HasOne(ApiPostUser::class, 'id', 'api_post_user_id');
-    }
-
     public function specialist(): HasOne
     {
         return $this->HasOne(Specialist::class, 'api_channel_post_id', 'id');
+    }
+
+    public function apiPostUser(): HasOne
+    {
+        return $this->HasOne(ApiPostUser::class, 'id', 'api_post_user_id');
     }
 }

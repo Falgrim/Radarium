@@ -127,6 +127,17 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'post_parser' => [
+            'driver' => 'single',
+            'level' => 'info',
+            'path' => storage_path('logs/post_parser.log'),
+        ],
+
+        'post_ai' => [
+            'driver' => 'single',
+            'level' => 'info',
+            'path' => storage_path('logs/post_ai.log'),
+        ],
     ],
 
 ];
