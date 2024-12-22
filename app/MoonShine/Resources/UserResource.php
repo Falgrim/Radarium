@@ -22,6 +22,7 @@ use MoonShine\Fields\ID;
 use MoonShine\Fields\Field;
 use MoonShine\Components\MoonShineComponent;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rule;
 
 /**
  * @extends ModelResource<User>
@@ -73,8 +74,8 @@ class UserResource extends ModelResource
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
+            'password' => $item->exists ? ['sometimes', 'nullable', 'min:6'] : ['required', 'min:6'],
         ];
     }
 
@@ -105,8 +106,11 @@ class UserResource extends ModelResource
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
         $fields[] = Text::make('Имя', 'name');
         $fields[] = Email::make('Почта', 'email');
-        $fields[] = Password::make('Новый пароль', 'password');
-        $fields[] = PasswordRepeat::make('Подтвердите пароль', 'password_repeat');
+        $fields[] = Password::make('Новый пароль', 'password')
+            ->customAttributes(['autocomplete' => 'new-password'])
+            ->hint('Минимум 6 символов')
+            ->hideOnDetail()
+            ->eye();
         $fields[] = Date::make('Регистрация', 'created_at')->withTime()->disabled()->readonly();
 
         return $fields;
