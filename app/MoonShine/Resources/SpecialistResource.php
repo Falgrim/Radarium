@@ -20,6 +20,7 @@ use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
+use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Decorations\Block;
 use MoonShine\Fields\ID;
@@ -48,6 +49,11 @@ class SpecialistResource extends ModelResource
     protected bool $withPolicy = true;
 
     protected bool $stickyTable = true;
+
+    public function import(): ?ImportHandler
+    {
+        return null;
+    }
 
     public function getActiveActions(): array
     {

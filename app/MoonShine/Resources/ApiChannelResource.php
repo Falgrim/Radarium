@@ -57,11 +57,6 @@ class ApiChannelResource extends ModelResource
         return null;
     }
 
-    public function export(): ?ExportHandler
-    {
-        return null;
-    }
-
     public function getActiveActions(): array
     {
         return ['create', 'view', 'update', 'delete'];

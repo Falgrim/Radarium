@@ -31,6 +31,7 @@ use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Switcher;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
+use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Pages\Page;
 
@@ -60,6 +61,11 @@ class ApiChannelPostResource extends ModelResource
     public function getActiveActions(): array
     {
         return ['view', 'update', 'delete', 'massDelete'];
+    }
+
+    public function import(): ?ImportHandler
+    {
+        return null;
     }
 
     /**
