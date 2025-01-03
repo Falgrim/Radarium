@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
+use App\Enum\IsCompanyEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
@@ -13,21 +14,21 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class ParseTGChats extends Command
+class ParseTelegramComapnyChats extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:tg_parse';
+    protected $signature = 'app:tg_parse:company';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Скрипт парсинга чатов ТГ';
+    protected $description = 'Скрипт парсинга чатов ТГ вакансий';
 
     /**
      * Execute the console command.
@@ -36,6 +37,7 @@ class ParseTGChats extends Command
     {
         $channels = ApiChannel::where('channel_source', ApiChannelSourceEnum::Telegram)
             ->where('status', ApiChannelStatusEnum::Active)
+            ->where('is_company', IsCompanyEnum::Company)
             ->get();
 
         if (!count($channels)) {
@@ -129,11 +131,13 @@ class ParseTGChats extends Command
 
                     if (count($userData)) {
                         $user = ApiPostUser::updateOrCreate([
-                            'user_id' => $message['from_id'],
-                            'channel_source' => $channel->channel_source,
+                            'user_id'       => $message['from_id'],
+                            'channel_source'=> $channel->channel_source,
+                            'is_company'    => $channel->is_company,
                         ], [
-                            'user_id' => $message['from_id'],
-                            'channel_source' => $channel->channel_source,
+                            'is_company'    => $channel->is_company,
+                            'user_id'       => $message['from_id'],
+                            'channel_source'=> $channel->channel_source,
                             'first_name'    => $userData['first_name'],
                             'username'      => $userData['username'],
                             'user_type'     => $userData['user_type'],

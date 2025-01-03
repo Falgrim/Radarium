@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\IsCompanyEnum;
 use App\Enum\SpecialistStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
@@ -15,29 +16,32 @@ use App\Services\ApiAIYandex;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
-class AiParsePosts extends Command
+class AiParsePrivatePosts extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:ai_parse';
+    protected $signature = 'app:ai_parse:private';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Анализ постов в ИИ';
+    protected $description = 'Анализ постов в ИИ для резюме';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $posts = ApiChannelPost::where('ai_parse_status', ApiChannelPostStatusEnum::InQueue)
-            ->orderBy('created_at', 'asc')
+        $posts = ApiChannelPost::select('api_channel_posts.*')
+            ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
+            ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
+            ->where('api_channels.is_company', IsCompanyEnum::Private)
+            ->orderBy('api_channel_posts.created_at', 'asc')
             ->take(10)
             ->get();
 
@@ -51,14 +55,14 @@ class AiParsePosts extends Command
         foreach ($posts as $post) {
             try {
                 $promt = $post->channel->ai_promt;
-                $options = $post->channel->api_ai->options;
+                $options = $post->channel->apiAi->options;
 
-                if ($post->channel->api_ai->api_source === ApiAiSourceEnum::YandexGTP4) {
+                if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
                     $ApiAIYandex = new ApiAIYandex;
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
-                    $result = $ApiAIYandex->getResult();
+                    $result = $ApiAIYandex->getResult(IsCompanyEnum::Private);
 
                     if (count($result['json'])) {
                         // Удаляем старое резюме, на случай повторного прогона поста

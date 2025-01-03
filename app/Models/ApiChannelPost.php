@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enum\ApiChannelPostStatusEnum;
+use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class ApiChannelPost extends Model
 {
     use HasFactory;
+    use ModelTableName;
 
     protected $fillable = [
         'api_channel_id',

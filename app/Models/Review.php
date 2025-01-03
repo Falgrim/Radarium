@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enum\ReviewStatusEnum;
+use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,8 @@ class Review extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    use ModelTableName;
+
     protected $fillable = [
         'specialist_id',
         'text',
@@ -51,10 +54,5 @@ class Review extends Model
     public function specialist(): BelongsTo
     {
         return $this->belongsTo(Specialist::class);
-    }
-
-    public function avrRating()
-    {
-
     }
 }

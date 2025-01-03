@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\IsCompanyEnum;
+use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ApiPostUser extends Model
 {
     use HasFactory;
+    use ModelTableName;
 
     protected $fillable = [
         'user_id',
@@ -23,6 +26,7 @@ class ApiPostUser extends Model
         'phone',
         'last_online_date',
         'external_info',
+        'is_company',
         'created_at',
         'updated_at',
     ];
@@ -45,6 +49,7 @@ class ApiPostUser extends Model
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'last_online_date' => 'datetime:Y-m-d H:i:s',
             'channel_source' => ApiChannelSourceEnum::class,
+            'is_company' => IsCompanyEnum::class,
             'external_info' => 'array',
         ];
     }

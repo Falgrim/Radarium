@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
+use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ApiAi extends Model
 {
     use HasFactory;
+    use ModelTableName;
 
     protected $fillable = [
         'title',

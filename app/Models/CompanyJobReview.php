@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ReviewStatusEnum;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,28 +11,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Specialist extends Model
+class CompanyJobReview extends Model
 {
     use HasFactory;
     use SoftDeletes;
     use ModelTableName;
 
     protected $fillable = [
-        'api_post_user_id',
-        'api_channel_post_id',
-        'experience',
-        'soft_experience',
-        'education',
-        'work_schedule',
-        'total_work_project',
-        'type_of_work',
-        'price_by_hour',
-        'price_by_project',
-        'price_by_month',
-        'about',
-        'spec_requirements',
-        'link_resume',
+        'company_job_id',
+        'text',
+        'can_edit',
         'status',
+        'rating',
         'created_at',
         'updated_at',
     ];
@@ -52,17 +42,17 @@ class Specialist extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
-            'status' => SpecialistStatusEnum::class,
+            'status' => ReviewStatusEnum::class,
         ];
     }
 
-    public function user(): HasOne
+    public function user(): belongsTo
     {
-        return $this->HasOne(ApiPostUser::class, 'id', 'api_post_user_id');
+        return $this->belongsTo(User::class);
     }
 
-    public function post(): BelongsTo
+    public function companyJob(): BelongsTo
     {
-        return $this->belongsTo(ApiChannelPost::class, 'api_channel_post_id', 'id');
+        return $this->belongsTo(CompanyJob::class);
     }
 }

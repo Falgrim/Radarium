@@ -162,7 +162,7 @@ class ApiChannelPostResource extends ModelResource
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
         $fields[] = Text::make('API ID', 'post_id')->disabled()->readonly();
         $fields[] = Text::make('Логин', 'user_login');
-        $fields[] = Textarea::make('Сообщение', 'post')->customAttributes(['autocomplete' => 'off']);
+        $fields[] = Textarea::make('Сообщение', 'post')->customAttributes(['autocomplete' => 'off', 'rows' => '5']);
         $fields[] = Date::make('Дата', 'post_date')->withTime()->disabled()->readonly();
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
         $fields[] = Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTO\MedBotCreateClientDTO;
 use App\DTO\MedBotDeleteClientDTO;
+use App\Enum\IsCompanyEnum;
 use App\Exceptions\MedBotException;
 use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;
@@ -35,22 +36,38 @@ class ApiAIYandex
     {
     }
 
-    protected function getKeyRows()
+    protected function getKeyRows(IsCompanyEnum $isCompany)
     {
-        return [
-            'Опыт работы по специальности'  => ['id' => 'experience', 'type' => 'string'],
-            'Владение ПО'                   => ['id' => 'soft_experience', 'type' => 'string'],
-            'Образование'                   => ['id' => 'education', 'type' => 'string'],
-            'Требуемый график работы'       => ['id' => 'work_schedule', 'type' => 'string'],
-            'Общая продолжительность работы (за проект)'    => ['id' => 'total_work_project', 'type' => 'string'],
-            'Тип работы'                    => ['id' => 'type_of_work', 'type' => 'string'],
-            'Желаемая оплата за час'        => ['id' => 'price_by_hour', 'type' => 'price'],
-            'Желаемая оплата за проект'     => ['id' => 'price_by_project', 'type' => 'price'],
-            'Желаемая оплата за месяц'      => ['id' => 'price_by_month', 'type' => 'price'],
-            'О себе'                        => ['id' => 'about', 'type' => 'string'],
-            'Спец. требования'              => ['id' => 'spec_requirements', 'type' => 'string'],
-            'Ссылка на резюме'              => ['id' => 'link_resume', 'type' => 'string'],
-        ];
+        if ($isCompany === IsCompanyEnum::Company) {
+            return [
+                'Должность'                 => ['id' => 'position', 'type' => 'string'],
+                'Название компании'         => ['id' => 'company_name', 'type' => 'string'],
+                'Предлагаемый оклад (от)'   => ['id' => 'min_price', 'type' => 'price'],
+                'Предлагаемый оклад (до)'   => ['id' => 'max_price', 'type' => 'price'],
+                'Обязанности'               => ['id' => 'duty', 'type' => 'string'],
+                'Требования'                => ['id' => 'requirement', 'type' => 'string'],
+                'График'                    => ['id' => 'work_schedule', 'type' => 'string'],
+                'Тип работы'                => ['id' => 'type_of_work', 'type' => 'string'],
+                'Описание проекта'          => ['id' => 'description', 'type' => 'string'],
+                'Срок найма'                => ['id' => 'period', 'type' => 'string'],
+                'Дополнительные условия'    => ['id' => 'extra_conditions', 'type' => 'string'],
+            ];
+        } elseif ($isCompany === IsCompanyEnum::Private) {
+            return [
+                'Опыт работы по специальности'  => ['id' => 'experience', 'type' => 'string'],
+                'Владение ПО'                   => ['id' => 'soft_experience', 'type' => 'string'],
+                'Образование'                   => ['id' => 'education', 'type' => 'string'],
+                'Требуемый график работы'       => ['id' => 'work_schedule', 'type' => 'string'],
+                'Общая продолжительность работы (за проект)' => ['id' => 'total_work_project', 'type' => 'string'],
+                'Тип работы'                    => ['id' => 'type_of_work', 'type' => 'string'],
+                'Желаемая оплата за час'        => ['id' => 'price_by_hour', 'type' => 'price'],
+                'Желаемая оплата за проект'     => ['id' => 'price_by_project', 'type' => 'price'],
+                'Желаемая оплата за месяц'      => ['id' => 'price_by_month', 'type' => 'price'],
+                'О себе'                        => ['id' => 'about', 'type' => 'string'],
+                'Спец. требования'              => ['id' => 'spec_requirements', 'type' => 'string'],
+                'Ссылка на резюме'              => ['id' => 'link_resume', 'type' => 'string'],
+            ];
+        }
     }
 
     public function setConfig(array $config)
@@ -108,13 +125,13 @@ class ApiAIYandex
         return $json;
     }
 
-    public function getResult(): array
+    public function getResult(IsCompanyEnum $isCompany): array
     {
         $result = $this->sendRequest();
         print_r($result);
         $aiText = $this->parseResponse($result);
 
-        $keyRows = $this->getKeyRows();
+        $keyRows = $this->getKeyRows($isCompany);
         $modelRows = [];
         foreach ($keyRows as $id => $row) {
             $modelRows[$row['id']] = $aiText[$id] ?? null;

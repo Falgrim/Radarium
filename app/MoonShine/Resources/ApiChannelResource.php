@@ -8,6 +8,7 @@ use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
+use App\Enum\IsCompanyEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannel;
 
@@ -90,6 +91,7 @@ class ApiChannelResource extends ModelResource
             'api_ai_id' => ['exists:App\Models\ApiAi,id'],
             'channel_source' => Rule::enum(ApiChannelSourceEnum::class),
             'status' => Rule::enum(ApiChannelStatusEnum::class),
+            'is_company' => Rule::enum(IsCompanyEnum::class),
         ];
     }
 
@@ -99,8 +101,9 @@ class ApiChannelResource extends ModelResource
             Text::make('Название', 'title'),
             Text::make('Ссылка', 'link'),
             Text::make('Описание', 'description'),
-            Text::make('Сервис', 'api_ai_id'),
+            BelongsTo::make('Сервис', 'apiAi'),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+            Enum::make('Тип выборки', 'is_company')->attach(IsCompanyEnum::class),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
         ];
     }
@@ -111,9 +114,10 @@ class ApiChannelResource extends ModelResource
             Text::make('Название', 'title'),
             Text::make('Ссылка', 'link'),
             Text::make('Описание', 'description'),
-            Text::make('Сервис', 'api_ai_id'),
+            BelongsTo::make('Сервис', 'apiAi'),
             Text::make('Промт для ИИ', 'ai_promt'),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+            Enum::make('Тип выборки', 'is_company')->attach(IsCompanyEnum::class),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
             Text::make('Опции для обработки', 'options', fn($item) => $item->options ? json_encode($item->options) : ''),
         ];
@@ -126,12 +130,16 @@ class ApiChannelResource extends ModelResource
         $fields[] = Text::make('Ссылка', 'link')->hint('Укажите ссылку в формате: https://');
         $fields[] = Text::make('Описание', 'description');
 
-        $fields[] = BelongsTo::make('Сервис ИИ', 'api_ai', resource: new ApiAiResource())
+        $fields[] = BelongsTo::make('Сервис ИИ', 'apiAi', resource: new ApiAiResource())
             ->hint('Каким сервисом ИИ будет обработаны сообщения');
+
+        $fields[] = Enum::make('Тип выборки', 'is_company')
+            ->hint('От типа зависит какая сущность в БД будет отвечать за сохранение данных (резюме или вакансия)')
+            ->attach(IsCompanyEnum::class);
 
         $fields[] = Textarea::make('Промт для ИИ', 'ai_promt')
             ->customAttributes(['rows' => '5'])
-            ->hint('Обязательные поля (не меняйте регистр или отступы названия полей, иначе система не сможет сопоставить данные с сущностью в БД):
+            ->hint('Обязательные поля для типа "Частный" (резюме) (не меняйте регистр или отступы названия полей, иначе система не сможет сопоставить данные с сущностью в БД):
             <br >-Опыт работы по специальности;
             <br >-Владение ПО;
             <br >-Образование;
@@ -156,9 +164,8 @@ class ApiChannelResource extends ModelResource
             ->attach(ApiChannelSourceEnum::class)
             ->hint('Выберите какой сервис API будет использован для получения записей из ссылки');
 
-        $fields[] = Switcher::make('Статус', 'status')
-            ->onValue(ApiChannelStatusEnum::Active->value)
-            ->offValue(ApiChannelStatusEnum::Disabled->value);
+        $fields[] = Enum::make('Статус', 'status')
+            ->attach(ApiChannelStatusEnum::class);
 
         $fields[] = Json::make('Опции для обработки', 'options')
             ->hint('Технические параметры для доп. настройки<br />Для Telegram обязательны параметры: api_id, api_hash, reply_id (если требуется брать данные только из одного чата канала/группы)')

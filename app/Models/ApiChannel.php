@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
+use App\Enum\IsCompanyEnum;
+use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ApiChannel extends Model
 {
     use HasFactory;
+    use ModelTableName;
 
     protected $fillable = [
         'title',
@@ -23,6 +26,7 @@ class ApiChannel extends Model
         'options',
         'status',
         'last_post_id',
+        'is_company',
         'created_at',
         'updated_at',
     ];
@@ -45,10 +49,11 @@ class ApiChannel extends Model
             'options' => 'array',
             'status' => ApiChannelStatusEnum::class,
             'channel_source' => ApiChannelSourceEnum::class,
+            'is_company' => IsCompanyEnum::class,
         ];
     }
 
-    public function api_ai(): BelongsTo
+    public function apiAi(): BelongsTo
     {
         return $this->belongsTo(ApiAi::class);
     }
