@@ -3,6 +3,7 @@
 namespace App\Infrastructures\Facades;
 
 use App\Repositories\ConfigurationsRepository;
+use App\Repositories\SpecialistsRepository;
 use Illuminate\Contracts\Container\BindingResolutionException;
 
 class Repositories
@@ -28,5 +29,10 @@ class Repositories
     public static function setting(): ConfigurationsRepository
     {
         return self::getInstance(ConfigurationsRepository::class);
+    }
+
+    public static function specialist(): SpecialistsRepository
+    {
+        return self::getInstance(SpecialistsRepository::class);
     }
 }

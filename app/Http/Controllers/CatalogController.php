@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enum\SpecialistStatusEnum;
+use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
 use App\Models\Specialist;
 use Illuminate\Database\Query\Builder;
@@ -14,21 +15,52 @@ use Illuminate\View\View;
 
 class CatalogController extends Controller
 {
-    public function index()
-    {
-        /*$specialists = DB::table(Specialist::table())
-            //->where('status', '=', SpecialistStatusEnum::Active)
-            ->with('user')
-            ->orderByDesc('created_at')
-            ->paginate(5);*/
+    protected bool $onlyActive = false;
 
-        $specialists = Specialist::with('user')
-            //->where('status', '=', SpecialistStatusEnum::Active)
+    public function index(Request $request)
+    {
+        $experienceList = Repositories::specialist()->getExperienceList($this->onlyActive);
+
+        $validated = $request->validate([
+            'key_word' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:3',
+                'max:50',
+            ],
+            'experience_id' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'alpha_dash:ascii',
+                Rule::in(array_keys($experienceList)),
+            ],
+        ]);
+
+        $specialists = Specialist::with('user');
+
+        if ($this->onlyActive) {
+            $specialists = $specialists->where('status', '=', SpecialistStatusEnum::Active);
+        }
+
+        if (!empty($validated['key_word'])) {
+            $specialists = $specialists->whereAny(['experience', 'about'], 'like', '%'.$validated['key_word'].'%');
+        }
+
+        if (!empty($validated['experience_id'])) {
+            $specialists = $specialists->where('experience', $experienceList[$validated['experience_id']]['value']);
+        }
+
+        $specialists = $specialists
             ->orderByDesc('created_at')
-            ->paginate(5);
+            ->paginate(5)
+            ->withQueryString();
 
         return view('catalog.index', [
-            'specialists' => $specialists,
+            'request'           => $request,
+            'specialists'       => $specialists,
+            'experienceList'    => $experienceList,
         ]);
     }
 
@@ -40,7 +72,9 @@ class CatalogController extends Controller
                 'integer',
                 'min:1',
                 Rule::exists(Specialist::table(), 'id')->where(function (Builder $query) {
-                    //$query->where('status', SpecialistStatusEnum::Active);
+                    if ($this->onlyActive) {
+                        $query->where('status', SpecialistStatusEnum::Active);
+                    }
                 }),
             ],
         ])->validated();
