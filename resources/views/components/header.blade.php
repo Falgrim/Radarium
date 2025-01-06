@@ -12,8 +12,8 @@
         </ul>
 
         <div class="col-md-3 text-end">
-            <button type="button" class="btn btn-outline-primary me-2">Вход</button>
-            <button type="button" class="btn btn-primary">Регистрация</button>
+            <a href="{{ route('login') }}" class="btn btn-outline-primary me-2">Вход</a>
+            <a href="{{ route('register') }}" class="btn btn-primary">Регистрация</a>
         </div>
     </header>
 </div>
