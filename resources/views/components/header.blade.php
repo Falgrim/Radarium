@@ -12,8 +12,17 @@
         </ul>
 
         <div class="col-md-3 text-end">
-            <a href="{{ route('login') }}" class="btn btn-outline-primary me-2">Вход</a>
-            <a href="{{ route('register') }}" class="btn btn-primary">Регистрация</a>
+            @if(Auth::check())
+                <a href="{{ route('dashboard') }}" class="btn btn-outline-primary me-2">{{ Auth::user()->name }}</a>
+                <!-- Authentication -->
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button onclick="event.preventDefault(); this.closest('form').submit();" class="btn btn-outline-primary me-2">{{ __('Выйти') }}</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="btn btn-outline-primary me-2">Вход</a>
+                <a href="{{ route('register') }}" class="btn btn-primary">Регистрация</a>
+            @endif
         </div>
     </header>
 </div>
