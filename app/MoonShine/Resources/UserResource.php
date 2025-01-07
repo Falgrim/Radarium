@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources;
 
 use App\Enum\ApiChannelSourceEnum;
+use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 
@@ -13,6 +14,7 @@ use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Password;
 use MoonShine\Fields\PasswordRepeat;
+use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Text;
 use MoonShine\Handlers\ImportHandler;
@@ -74,6 +76,7 @@ class UserResource extends ModelResource
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
             'password' => $item->exists ? ['sometimes', 'nullable', 'min:6'] : ['required', 'min:6'],
         ];
@@ -83,6 +86,7 @@ class UserResource extends ModelResource
     {
         return [
             Text::make('ID', 'id')->sortable(),
+            BelongsTo::make('Роль', 'userRole', resource: new UserRoleResource())->badge('purple')->sortable(),
             Text::make('Имя', 'name')->sortable(),
             Email::make('Почта', 'email')->sortable(),
             Date::make('Регистрация', 'created_at')->withTime()->sortable(),
@@ -104,6 +108,7 @@ class UserResource extends ModelResource
         $fields = [];
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = BelongsTo::make('Роль', 'userRole');
         $fields[] = Text::make('Имя', 'name');
         $fields[] = Email::make('Почта', 'email');
         $fields[] = Password::make('Новый пароль', 'password')
