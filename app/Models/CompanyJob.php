@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CompanyJob extends Model
 {
-    use HasFactory;
     use SoftDeletes;
     use ModelTableName;
 
@@ -32,6 +31,8 @@ class CompanyJob extends Model
         'period',
         'extra_conditions',
         'status',
+        'ai_type',
+        'ai_reason',
         'created_at',
         'updated_at',
     ];

@@ -33,6 +33,8 @@ class Specialist extends Model
         'spec_requirements',
         'link_resume',
         'status',
+        'ai_type',
+        'ai_reason',
         'created_at',
         'updated_at',
     ];

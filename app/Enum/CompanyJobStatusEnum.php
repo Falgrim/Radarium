@@ -4,7 +4,10 @@ namespace App\Enum;
 
 enum CompanyJobStatusEnum:int {
     case Active = 2;
+
     case Disabled = 0;
+
+    case Error = 3;
 
     case InModeration = 1;
 
@@ -14,6 +17,7 @@ enum CompanyJobStatusEnum:int {
             self::Active    => 'Активно',
             self::Disabled  => 'Отключено',
             self::InModeration  => 'Ожидает модерации',
+            self::Error  => 'Ошибка',
         };
     }
 
@@ -28,6 +32,7 @@ enum CompanyJobStatusEnum:int {
             self::Active    => 'success',
             self::Disabled  => 'yellow',
             self::InModeration  => 'info',
+            self::Error  => 'danger',
         };
     }
 }

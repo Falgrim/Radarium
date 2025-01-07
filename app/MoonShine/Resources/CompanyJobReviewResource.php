@@ -7,11 +7,11 @@ namespace App\MoonShine\Resources;
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\SpecialistStatusEnum;
-use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Review;
+use App\Models\CompanyJobReview;
 
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
@@ -27,13 +27,13 @@ use MoonShine\Fields\Field;
 use MoonShine\Components\MoonShineComponent;
 
 /**
- * @extends ModelResource<Review>
+ * @extends ModelResource<CompanyJobReview>
  */
-class ReviewResource extends ModelResource
+class CompanyJobReviewResource extends ModelResource
 {
-    protected string $model = Review::class;
+    protected string $model = CompanyJobReview::class;
 
-    protected string $title = 'Отзывы (резюме)';
+    protected string $title = 'Отзывы (вакансии)';
 
     protected string $sortColumn = 'created_at';
 
@@ -64,7 +64,7 @@ class ReviewResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Пользователь ID', 'user_id'),
-            Text::make('Специалист ID', 'specialist_id'),
+            Text::make('Вакансия ID', 'company_job_id'),
             Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5),
             Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class),
@@ -85,7 +85,7 @@ class ReviewResource extends ModelResource
     }
 
     /**
-     * @param Review $item
+     * @param CompanyJobReview $item
      *
      * @return array<string, string[]|string>
      * @see https://laravel.com/docs/validation#available-validation-rules
@@ -109,13 +109,13 @@ class ReviewResource extends ModelResource
                 Text::make('Имя', 'name'),
                 Email::make('Почта', 'email'),
             ]),
-            HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->fields([
+            HasOne::make('Специалист', 'companyJob', resource: new CompanyJobResource())->fields([
                 Text::make('ID', 'id'),
-                Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
+                Text::make('Описание', 'description', fn($item) => Str::limit($item->description, 100)),
                 Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
                 Date::make('Создан', 'created_at')->withTime(),
             ]),
-            Text::make('Отзыв', 'text', fn($item) => Str::limit($item->about, 100)),
+            Text::make('Отзыв', 'text', fn($item) => Str::limit($item->text, 100)),
             Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5)->stars(),
             Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class)->sortable(),
@@ -132,9 +132,9 @@ class ReviewResource extends ModelResource
                 Text::make('Имя', 'name'),
                 Email::make('Почта', 'email'),
             ]),
-            HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->fields([
+            HasOne::make('Вакансия', 'companyJob', resource: new CompanyJobResource())->fields([
                 Text::make('ID', 'id'),
-                Text::make('О себе', 'about'),
+                Text::make('Описание', 'description'),
                 Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
                 Date::make('Создан', 'created_at')->withTime(),
             ]),

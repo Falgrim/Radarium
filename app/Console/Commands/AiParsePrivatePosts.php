@@ -70,7 +70,13 @@ class AiParsePrivatePosts extends Command
 
                         $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                         $result['json']['api_channel_post_id'] = $post->id;
-                        $result['json']['status'] = SpecialistStatusEnum::InModeration;
+
+                        if ($result['json']['ai_type'] != 'резюме') {
+                            $result['json']['status'] = SpecialistStatusEnum::Error;
+                        } else {
+                            $result['json']['status'] = SpecialistStatusEnum::InModeration;
+                        }
+
                         Specialist::create($result['json']);
 
                         $post->ai_result = $result['origin'];

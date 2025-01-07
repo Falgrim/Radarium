@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CompanyJobReview extends Model
 {
-    use HasFactory;
     use SoftDeletes;
     use ModelTableName;
 

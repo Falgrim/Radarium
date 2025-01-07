@@ -60,24 +60,25 @@ class AiParseCompanyPosts extends Command
                 $options = $post->channel->apiAi->options;
 
                 if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
-                    print_r($promt);
-                    print_r($post->post);
-
                     $ApiAIYandex = new ApiAIYandex;
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
                     $result = $ApiAIYandex->getResult(IsCompanyEnum::Company);
 
-                    exit();
-
-                    /*if (count($result['json'])) {
+                    if (count($result['json'])) {
                         // Удаляем старое резюме, на случай повторного прогона поста
                         CompanyJob::where('api_channel_post_id', $post->id)->delete();
 
                         $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                         $result['json']['api_channel_post_id'] = $post->id;
-                        $result['json']['status'] = CompanyJobStatusEnum::InModeration;
+
+                        if ($result['json']['ai_type'] != 'вакансия') {
+                            $result['json']['status'] = CompanyJobStatusEnum::Error;
+                        } else {
+                            $result['json']['status'] = CompanyJobStatusEnum::InModeration;
+                        }
+
                         CompanyJob::create($result['json']);
 
                         $post->ai_result = $result['origin'];
@@ -85,13 +86,13 @@ class AiParseCompanyPosts extends Command
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
-                        $this->info('Создан специалист (резюме)');
+                        $this->info('Создана вакансия');
                     } else {
                         $post->ai_date = now();
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
                         $post->save();
-                        $this->warn('По специалисту не найдены данные');
-                    }*/
+                        $this->warn('По вакансии не найдены данные');
+                    }
                 } else {
                     $this->warn('Неизвестный источник');
                 }
@@ -99,9 +100,9 @@ class AiParseCompanyPosts extends Command
                 $this->error($e->getMessage());
                 Log::channel('post_ai')->error($e->getMessage());
 
-                /*$post->ai_date = now();
+                $post->ai_date = now();
                 $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
-                $post->save();*/
+                $post->save();
 
                 continue;
             }

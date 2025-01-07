@@ -40,6 +40,8 @@ class ApiAIYandex
     {
         if ($isCompany === IsCompanyEnum::Company) {
             return [
+                'Тип сообщения'             => ['id' => 'ai_type', 'type' => 'string'],
+                'Почему такой тип'          => ['id' => 'ai_reason', 'type' => 'string'],
                 'Должность'                 => ['id' => 'position', 'type' => 'string'],
                 'Название компании'         => ['id' => 'company_name', 'type' => 'string'],
                 'Предлагаемый оклад (от)'   => ['id' => 'min_price', 'type' => 'price'],
@@ -54,6 +56,8 @@ class ApiAIYandex
             ];
         } elseif ($isCompany === IsCompanyEnum::Private) {
             return [
+                'Тип сообщения'                 => ['id' => 'ai_type', 'type' => 'string'],
+                'Почему такой тип'              => ['id' => 'ai_reason', 'type' => 'string'],
                 'Опыт работы по специальности'  => ['id' => 'experience', 'type' => 'string'],
                 'Владение ПО'                   => ['id' => 'soft_experience', 'type' => 'string'],
                 'Образование'                   => ['id' => 'education', 'type' => 'string'],
@@ -128,7 +132,6 @@ class ApiAIYandex
     public function getResult(IsCompanyEnum $isCompany): array
     {
         $result = $this->sendRequest();
-        print_r($result);
         $aiText = $this->parseResponse($result);
 
         $keyRows = $this->getKeyRows($isCompany);
@@ -171,7 +174,7 @@ class ApiAIYandex
 
         $jsonText = str_replace('```', '', $jsonText);
 
-        return json_decode($jsonText, true);
+        return json_decode(trim($jsonText), true);
     }
 
     protected function sendRequest()

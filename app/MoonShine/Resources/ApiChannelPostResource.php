@@ -7,6 +7,8 @@ namespace App\MoonShine\Resources;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
+use App\Enum\CompanyJobStatusEnum;
+use App\Enum\IsCompanyEnum;
 use App\Enum\SpecialistStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Model;
@@ -111,7 +113,52 @@ class ApiChannelPostResource extends ModelResource
 
     public function detailFields(): array
     {
-        return [
+        if ($this->item->channel->is_company === IsCompanyEnum::Company) {
+            $aiData = [
+                HasOne::make('ИИ. Вакансия', 'companyJob', resource: new CompanyJobResource())->fields([
+                    Text::make('ID', 'id'),
+                    Text::make('Тип сообщения', 'ai_type'),
+                    Text::make('Подробнее о типе', 'ai_reason'),
+                    Text::make('Название компании', 'company_name'),
+                    Text::make('Должность', 'position'),
+                    Text::make('Предлагаемый оклад (мин.)', 'min_price'),
+                    Text::make('Предлагаемый оклад (макс.)', 'max_price'),
+                    Text::make('Обязанности', 'duty'),
+                    Text::make('Требования', 'requirement'),
+                    Text::make('График', 'work_schedule'),
+                    Text::make('Тип работы', 'type_of_work'),
+                    Text::make('Описание проекта', 'description'),
+                    Text::make('Срок найма', 'period'),
+                    Text::make('Доп. условия', 'extra_conditions'),
+                    Enum::make('Статус', 'status')->attach(CompanyJobStatusEnum::class),
+                    Date::make('Создан', 'created_at')->withTime(),
+                ])
+            ];
+        } else {
+            $aiData = [
+                HasOne::make('ИИ. Специалист (резюме)', 'specialist', resource: new SpecialistResource())->fields([
+                    Text::make('ID', 'id'),
+                    Text::make('Тип сообщения', 'ai_type'),
+                    Text::make('Подробнее о типе', 'ai_reason'),
+                    Text::make('Опыт работы по специальности', 'experience'),
+                    Text::make('Владение ПО', 'soft_experience'),
+                    Text::make('Образование', 'education'),
+                    Text::make('Требуемый график работы', 'work_schedule'),
+                    Text::make('Общая продолжительность работы - проекта', 'total_work_project'),
+                    Text::make('Тип работы', 'type_of_work'),
+                    Text::make('Желаемая оплата за час', 'price_by_hour'),
+                    Text::make('Желаемая оплата общая сумма выплат за проект', 'price_by_project'),
+                    Text::make('Желаемая оплата фиксированная оплата за период времени (месяц)', 'price_by_month'),
+                    Text::make('О себе', 'about'),
+                    Text::make('Спец. требования', 'spec_requirements'),
+                    Text::make('Ссылка на резюме', 'link_resume'),
+                    Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+                    Date::make('Создан', 'created_at')->withTime(),
+                ])
+            ];
+        }
+
+        $result = [
             Text::make('ID', 'id'),
             Text::make('API ID', 'post_id'),
             Text::make('Логин', 'user_login'),
@@ -121,38 +168,26 @@ class ApiChannelPostResource extends ModelResource
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class),
             Text::make('Ответ ИИ', 'ai_result'),
             Date::make('Запрос к ИИ', 'ai_date')->withTime(),
-
-            HasOne::make('ИИ', 'specialist', resource: new SpecialistResource())->fields([
-                Text::make('ID', 'id'),
-                Text::make('Опыт работы по специальности', 'experience'),
-                Text::make('Владение ПО', 'soft_experience'),
-                Text::make('Образование', 'education'),
-                Text::make('Требуемый график работы', 'work_schedule'),
-                Text::make('Общая продолжительность работы - проекта', 'total_work_project'),
-                Text::make('Тип работы', 'type_of_work'),
-                Text::make('Желаемая оплата за час', 'price_by_hour'),
-                Text::make('Желаемая оплата общая сумма выплат за проект', 'price_by_project'),
-                Text::make('Желаемая оплата фиксированная оплата за период времени (месяц)', 'price_by_month'),
-                Text::make('О себе', 'about'),
-                Text::make('Спец. требования', 'spec_requirements'),
-                Text::make('Ссылка на резюме', 'link_resume'),
-                Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
-                Date::make('Создан', 'created_at')->withTime(),
-            ]),
-
-            HasOne::make('Аккаунт', 'apiPostUser', resource: new ApiPostUserResource())->fields([
-                Text::make('ID', 'id'),
-                Text::make('Source ID', 'user_id'),
-                Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-                Text::make('Логин', 'username'),
-                Text::make('Имя', 'first_name'),
-                Text::make('Фамилия', 'last_name'),
-                Text::make('Телефон', 'phone'),
-                Text::make('Тип профиля', 'user_type'),
-                Date::make('Онлайн', 'last_online_date')->withTime(),
-                Date::make('Создан', 'created_at')->withTime(),
-            ]),
         ];
+
+        $result = array_merge($result, $aiData);
+
+        $result = array_merge($result, [
+                HasOne::make('Аккаунт', 'apiPostUser', resource: new ApiPostUserResource())->fields([
+                    Text::make('ID', 'id'),
+                    Text::make('Source ID', 'user_id'),
+                    Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+                    Text::make('Логин', 'username'),
+                    Text::make('Имя', 'first_name'),
+                    Text::make('Фамилия', 'last_name'),
+                    Text::make('Телефон', 'phone'),
+                    Text::make('Тип профиля', 'user_type'),
+                    Date::make('Онлайн', 'last_online_date')->withTime(),
+                    Date::make('Создан', 'created_at')->withTime(),
+                ]),
+            ]);
+
+        return $result;
     }
 
     public function formFields(): array
