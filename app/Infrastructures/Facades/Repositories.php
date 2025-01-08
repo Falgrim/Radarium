@@ -4,6 +4,7 @@ namespace App\Infrastructures\Facades;
 
 use App\Repositories\ConfigurationsRepository;
 use App\Repositories\SpecialistsRepository;
+use App\Repositories\UserRolesRepository;
 use Illuminate\Contracts\Container\BindingResolutionException;
 
 class Repositories
@@ -34,5 +35,10 @@ class Repositories
     public static function specialist(): SpecialistsRepository
     {
         return self::getInstance(SpecialistsRepository::class);
+    }
+
+    public static function userRole(): UserRolesRepository
+    {
+        return self::getInstance(UserRolesRepository::class);
     }
 }

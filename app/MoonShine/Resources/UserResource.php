@@ -76,6 +76,7 @@ class UserResource extends ModelResource
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'phone:mobile,RU'],
             'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
             'password' => $item->exists ? ['sometimes', 'nullable', 'min:6'] : ['required', 'min:6'],
@@ -88,6 +89,7 @@ class UserResource extends ModelResource
             Text::make('ID', 'id')->sortable(),
             BelongsTo::make('Роль', 'userRole', resource: new UserRoleResource())->badge('purple')->sortable(),
             Text::make('Имя', 'name')->sortable(),
+            Text::make('Телефон', 'phone')->sortable(),
             Email::make('Почта', 'email')->sortable(),
             Date::make('Регистрация', 'created_at')->withTime()->sortable(),
         ];
@@ -96,10 +98,12 @@ class UserResource extends ModelResource
     public function detailFields(): array
     {
         return [
-            Text::make('ID', 'id')->sortable(),
-            Text::make('Имя', 'name')->sortable(),
-            Email::make('Почта', 'email')->sortable(),
-            Date::make('Регистрация', 'created_at')->withTime()->sortable(),
+            Text::make('ID', 'id'),
+            BelongsTo::make('Роль', 'userRole', resource: new UserRoleResource())->badge('purple')->sortable(),
+            Text::make('Имя', 'name'),
+            Text::make('Телефон', 'phone'),
+            Email::make('Почта', 'email'),
+            Date::make('Регистрация', 'created_at')->withTime(),
         ];
     }
 
@@ -110,6 +114,7 @@ class UserResource extends ModelResource
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
         $fields[] = BelongsTo::make('Роль', 'userRole');
         $fields[] = Text::make('Имя', 'name');
+        $fields[] = Text::make('Телефон', 'phone');
         $fields[] = Email::make('Почта', 'email');
         $fields[] = Password::make('Новый пароль', 'password')
             ->customAttributes(['autocomplete' => 'new-password'])

@@ -11,7 +11,8 @@
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.6",
-        "moonshine/moonshine": "^2.23"
+        "moonshine/moonshine": "^2.23",
+        "propaganistas/laravel-phone": "^5.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -80,6 +80,10 @@ class CatalogController extends Controller
         ])->validated();
 
         $specialist = Specialist::where('id', $validated['id'])->firstOrFail();
-        dd($validated['id'], $specialist);
+
+        return view('catalog.specialist_view', [
+            'request'          => $request,
+            'specialist'       => $specialist,
+        ]);
     }
 }
