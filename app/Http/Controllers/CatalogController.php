@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\CompanyJobStatusEnum;
 use App\Enum\SpecialistStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
+use App\Models\CompanyJob;
 use App\Models\Specialist;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -17,7 +19,7 @@ class CatalogController extends Controller
 {
     protected bool $onlyActive = false;
 
-    public function index(Request $request)
+    public function specialists(Request $request)
     {
         $experienceList = Repositories::specialist()->getExperienceList($this->onlyActive);
 
@@ -57,7 +59,7 @@ class CatalogController extends Controller
             ->paginate(5)
             ->withQueryString();
 
-        return view('catalog.index', [
+        return view('catalog.specialists', [
             'request'           => $request,
             'specialists'       => $specialists,
             'experienceList'    => $experienceList,
@@ -84,6 +86,48 @@ class CatalogController extends Controller
         return view('catalog.specialist_view', [
             'request'          => $request,
             'specialist'       => $specialist,
+        ]);
+    }
+
+    public function companyJobs(Request $request)
+    {
+        $companyJobs = CompanyJob::with('apiPostUser');
+
+        if ($this->onlyActive) {
+            $companyJobs = $companyJobs->where('status', '=', CompanyJobStatusEnum::Active);
+        }
+
+        $companyJobs = $companyJobs
+            ->orderByDesc('created_at')
+            ->paginate(5)
+            ->withQueryString();
+
+        return view('catalog.companyjobs', [
+            'request'           => $request,
+            'companyJobs'       => $companyJobs,
+        ]);
+    }
+
+    public function companyJobView(Request $request, string $id)
+    {
+        $validated = Validator::make($request->route()->parameters(), [
+            'id' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::exists(CompanyJob::table(), 'id')->where(function (Builder $query) {
+                    if ($this->onlyActive) {
+                        $query->where('status', CompanyJobStatusEnum::Active);
+                    }
+                }),
+            ],
+        ])->validated();
+
+        $companyJob = CompanyJob::where('id', $validated['id'])->firstOrFail();
+
+        return view('catalog.companyjob_view', [
+            'request'          => $request,
+            'companyJob'       => $companyJob,
         ]);
     }
 }

@@ -8,12 +8,13 @@
 
         <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
             <li><a href="{{ route('index') }}" class="nav-link px-2 link-secondary">Главная</a></li>
-            <li><a href="{{ route('catalog.index') }}" class="nav-link px-2">Каталог</a></li>
+            <li><a href="{{ route('catalog.specialists') }}" class="nav-link px-2">Специалисты</a></li>
+            <li><a href="{{ route('catalog.companyjobs') }}" class="nav-link px-2">Вакансии</a></li>
         </ul>
 
         <div class="col-md-3 text-end">
             @if(Auth::check())
-                <a href="{{ route('dashboard') }}" class="btn btn-outline-primary me-2">{{ Auth::user()->name }}</a>
+                <a href="{{ route('profile.edit') }}" class="btn btn-outline-primary me-2">{{ Auth::user()->name }}</a>
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

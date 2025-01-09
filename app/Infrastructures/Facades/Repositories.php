@@ -2,6 +2,7 @@
 
 namespace App\Infrastructures\Facades;
 
+use App\Repositories\CompanyJobsRepository;
 use App\Repositories\ConfigurationsRepository;
 use App\Repositories\SpecialistsRepository;
 use App\Repositories\UserRolesRepository;
@@ -35,6 +36,11 @@ class Repositories
     public static function specialist(): SpecialistsRepository
     {
         return self::getInstance(SpecialistsRepository::class);
+    }
+
+    public static function companyJobs(): CompanyJobsRepository
+    {
+        return self::getInstance(CompanyJobsRepository::class);
     }
 
     public static function userRole(): UserRolesRepository

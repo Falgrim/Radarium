@@ -13,7 +13,7 @@
         <div class="container">
             <div class="col-md-12 col-lg-12">
                 <h4 class="mb-3">Фильтр исполнителей</h4>
-                <form class="needs-validation {{ $formErrorClass }}" method="GET" action="{{ route('catalog.index') }}" novalidate="">
+                <form class="needs-validation {{ $formErrorClass }}" method="GET" action="{{ route('catalog.specialists') }}" novalidate="">
                     <div class="row g-3">
                         <div class="col-sm-6">
                             <x-input-label for="key_word" class="form-label" :value="__('Ключевое слово в опыте')" />

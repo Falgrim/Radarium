@@ -15,10 +15,12 @@
                     <x-nav-link :href="route('index')" :active="request()->routeIs('index')">
                         {{ __('Главная') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('catalog.index')" :active="request()->routeIs('catalog.index')">
-                        {{ __('Каталог') }}
+                    <x-nav-link :href="route('catalog.specialists')" :active="request()->routeIs('catalog.index')">
+                        {{ __('Специалисты') }}
                     </x-nav-link>
-
+                    <x-nav-link :href="route('catalog.companyjobs')" :active="request()->routeIs('catalog.index')">
+                        {{ __('Вакансии') }}
+                    </x-nav-link>
                 </div>
             </div>
 
