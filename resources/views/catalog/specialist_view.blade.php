@@ -27,10 +27,17 @@
             </div>
         </div>
 
-        <div class="p-5 bg-body-tertiary">
-            <div class="container py-5">
+        <div class="bg-body-tertiary">
+            <div class="container py-3">
                 <h1 class="text-body-emphasis">Отзывы</h1>
+                @foreach ($reviews as $review)
+                    <x-review-row :rowId="$specialist->id" :$review :$request :$errors />
+                @endforeach
+            </div>
+        </div>
 
+        <div class="bg-body-tertiary">
+            <div class="container py-3">
                 <x-review_form :rowId="$specialist->id" :$request :$errors />
             </div>
         </div>

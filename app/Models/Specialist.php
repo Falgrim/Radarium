@@ -67,4 +67,9 @@ class Specialist extends Model
     {
         return $this->belongsTo(ApiChannelPost::class, 'api_channel_post_id', 'id');
     }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
 }
