@@ -18,6 +18,7 @@ class CompanyJobReview extends Model
 
     protected $fillable = [
         'company_job_id',
+        'user_id',
         'text',
         'can_edit',
         'status',

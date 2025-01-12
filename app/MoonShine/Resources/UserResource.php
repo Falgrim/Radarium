@@ -13,6 +13,7 @@ use MoonShine\Fields\Date;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Password;
+use Illuminate\Validation\Rules\Password as ValidPassword;
 use MoonShine\Fields\PasswordRepeat;
 use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
@@ -79,7 +80,7 @@ class UserResource extends ModelResource
             'phone' => ['required', 'phone:mobile,RU'],
             'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
-            'password' => $item->exists ? ['sometimes', 'nullable', 'min:6'] : ['required', 'min:6'],
+            'password' => $item->exists ? ['sometimes', 'nullable', ValidPassword::min(6)] : ['required', ValidPassword::min(6)],
         ];
     }
 

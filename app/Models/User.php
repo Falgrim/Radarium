@@ -58,4 +58,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(UserRole::class);
     }
+
+    /**
+     * @param $permission
+     * @return bool
+     */
+    public function hasPermission(string $permission)
+    {
+        // https://laravel.demiart.ru/guide-to-roles-and-permissions/
+        return true;
+    }
 }

@@ -19,6 +19,7 @@ class Review extends Model
 
     protected $fillable = [
         'specialist_id',
+        'user_id',
         'text',
         'can_edit',
         'status',

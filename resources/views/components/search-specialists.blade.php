@@ -9,7 +9,7 @@
 @endif
 
 <div class="my-5">
-    <div class="p-5 text-center bg-body-tertiary">
+    <div class="p-5 bg-body-tertiary">
         <div class="container">
             <div class="col-md-12 col-lg-12">
                 <h4 class="mb-3">Фильтр исполнителей</h4>

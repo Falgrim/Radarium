@@ -10,6 +10,10 @@ Route::get('/', [IndexController::class, 'index'])->name('index');
 Route::get('/specialists', [CatalogController::class, 'specialists'])->name('catalog.specialists');
 Route::get('/specialists/specialist/{id}', [CatalogController::class, 'specialistView'])->name('catalog.specialist.view');
 
+Route::middleware('auth')->group(function () {
+    Route::post('/specialists/specialist/{id}', [CatalogController::class, 'specialistStoreReview'])->name('catalog.specialist.store');
+});
+
 Route::get('/companyjobs', [CatalogController::class, 'companyJobs'])->name('catalog.companyjobs');
 Route::get('/companyjobs/companyjob/{id}', [CatalogController::class, 'companyJobView'])->name('catalog.companyjob.view');
 
