@@ -69,9 +69,9 @@ class ParseTelegramPrivateChats extends Command
             $params = [
                 'peer'          => $channel->link,
                 'offset_id'     => 0,
-                'offset_date'   => strtotime('-30 days'),
+                'offset_date'   => strtotime('-180 days'),
                 'add_offset'    => 0,
-                'limit'         => $cronCountPosts?->value ?? 50,
+                'limit'         => $cronCountPosts?->value ?? 100,
                 'max_id'        => 0,
                 'min_id'        => $channel->last_post_id ?? 0,
                 'hash'          => 0,
