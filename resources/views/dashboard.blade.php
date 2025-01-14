@@ -1,17 +1,10 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Личный кабинет') }}
-        </h2>
-    </x-slot>
+<x-global-layout>
+    <div class="my-5">
+        <div class="p-5 bg-body-tertiary">
+            <div class="container py-5">
+                <h1 class="text-body-emphasis">{{ __("Вы авторизованы!") }}</h1>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    {{ __("Вы авторизованы!") }}
-                </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-global-layout>
