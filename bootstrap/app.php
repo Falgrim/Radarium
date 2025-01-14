@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,4 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
+    })->withSchedule(function (Schedule $schedule) {
+        Schedule::command('app:tg_parse:private')->hourly()->withoutOverlapping();
+        Schedule::command('app:tg_parse:company')->hourly()->withoutOverlapping();
+        Schedule::command('app:ai_parse:private')->everyTwoHours()->runInBackground()->withoutOverlapping();
+        Schedule::command('app:ai_parse:company')->hourly()->runInBackground()->withoutOverlapping();
     })->create();
