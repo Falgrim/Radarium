@@ -15,11 +15,21 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    private function checkAllowRegistrations(): bool
+    {
+        $cronCountPosts = Repositories::setting()->findByName('allow_registration');
+        return (bool)$cronCountPosts->value;
+    }
+
     /**
      * Display the registration view.
      */
     public function create(Request $request): View
     {
+        if (!$this->checkAllowRegistrations()) {
+            abort(403);
+        }
+
         $userRoleList = Repositories::userRole()->getList();
 
         return view('auth.register', [
@@ -35,6 +45,10 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (!$this->checkAllowRegistrations()) {
+            abort(403);
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'phone:mobile,RU'],
