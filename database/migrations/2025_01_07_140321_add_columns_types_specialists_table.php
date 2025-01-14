@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::table('specialists', function (Blueprint $table) {
             $table->string('ai_type')->default('');
-            $table->text('ai_reason')->default('');
+            $table->text('ai_reason');
         });
 
         Schema::table('company_jobs', function (Blueprint $table) {
             $table->string('ai_type')->default('');
-            $table->text('ai_reason')->default('');
+            $table->text('ai_reason');
         });
     }
 

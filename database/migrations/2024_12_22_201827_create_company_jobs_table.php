@@ -45,7 +45,7 @@ return new class extends Migration
             $table->id();
             $table->integer('user_id');
             $table->integer('company_job_id');
-            $table->text('text')->default('');
+            $table->text('text');
             $table->smallInteger('rating')->default(0);
             $table->tinyInteger('can_edit')->default(1)->comment('Возможность редактировать только 1 раз');
             $table->smallInteger('status')->default(0);
