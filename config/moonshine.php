@@ -91,7 +91,7 @@ return [
         'pipelines' => [],
     ],
     'locales' => [
-        'en',
+        //'en',
         'ru',
     ],
 
