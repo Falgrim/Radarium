@@ -27,6 +27,7 @@ class ApiChannel extends Model
         'status',
         'last_post_id',
         'is_company',
+        'last_date_check',
         'created_at',
         'updated_at',
     ];
@@ -34,6 +35,7 @@ class ApiChannel extends Model
     protected $dates = [
         'created_at',
         'updated_at',
+        'last_date_check',
     ];
 
     /**
@@ -46,6 +48,7 @@ class ApiChannel extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
+            'last_date_check' => 'datetime:Y-m-d H:i:s',
             'options' => 'array',
             'status' => ApiChannelStatusEnum::class,
             'channel_source' => ApiChannelSourceEnum::class,

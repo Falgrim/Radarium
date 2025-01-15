@@ -2,9 +2,6 @@
 
 namespace App\Services;
 
-use App\DTO\MedBotCreateClientDTO;
-use App\DTO\MedBotDeleteClientDTO;
-use App\Exceptions\MedBotException;
 use Faker\Core\DateTime;
 use Illuminate\Support\Facades\Http;
 

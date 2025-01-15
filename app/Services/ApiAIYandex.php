@@ -2,10 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\MedBotCreateClientDTO;
-use App\DTO\MedBotDeleteClientDTO;
 use App\Enum\IsCompanyEnum;
-use App\Exceptions\MedBotException;
 use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;
 

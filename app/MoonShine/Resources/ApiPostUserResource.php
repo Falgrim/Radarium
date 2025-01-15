@@ -17,6 +17,7 @@ use App\MoonShine\Pages\ApiPostUser\ApiPostUserDetailPage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
+use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Json;
 use MoonShine\Fields\Relationships\HasMany;
@@ -100,7 +101,7 @@ class ApiPostUserResource extends ModelResource
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
             Enum::make('Тип аккаунта', 'is_company')->attach(IsCompanyEnum::class),
             Text::make('Логин', 'username'),
-            Date::make('Создан', 'created_at')->withTime(),
+            DateRange::make('Создан', 'created_at')->withTime(),
         ];
     }
 

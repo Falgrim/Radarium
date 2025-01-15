@@ -13,6 +13,7 @@ use App\Models\CompanyJobReview;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
+use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Number;
@@ -68,7 +69,7 @@ class CompanyJobReviewResource extends ModelResource
             Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5),
             Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class),
-            Date::make('Создан', 'created_at')->withTime(),
+            DateRange::make('Создан', 'created_at')->withTime(),
         ];
     }
 

@@ -10,6 +10,7 @@ use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Services\ReadTelegramChats;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -33,7 +34,7 @@ class ParseTelegramComapnyChats extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(ReadTelegramChats $readTelegramChats)
     {
         $channels = ApiChannel::where('channel_source', ApiChannelSourceEnum::Telegram)
             ->where('status', ApiChannelStatusEnum::Active)
@@ -45,141 +46,30 @@ class ParseTelegramComapnyChats extends Command
             return 1;
         }
 
-        $cronCountPosts = Repositories::setting()->findByName('cron_count_posts');
-        $minLengthPost = Repositories::setting()->findByName('min_length_post');
-
         foreach ($channels as $channel) {
-            if (!count($channel->options) OR !isset($channel->options['api_id']) OR !isset($channel->options['api_hash'])) {
-                $this->warn('Канал ID'.$channel->id.': нет api_id и/или api_hash');
-                continue;
-            }
+            $readTelegramChats->read($channel);
 
-            $settings = (new \danog\MadelineProto\Settings\AppInfo)
-                ->setApiId($channel->options['api_id'])
-                ->setApiHash($channel->options['api_hash']);
+            $infoMsg = $readTelegramChats->getInfoMsg();
+            $warnMsg = $readTelegramChats->getWarnMsg();
+            $errorMsg = $readTelegramChats->getErrorMsg();
 
-            $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-
-            $settings = (new \danog\MadelineProto\Settings\Logger)
-                ->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
-            $MadelineProto->updateSettings($settings);
-
-            $MadelineProto->start();
-
-            $params = [
-                'peer'          => $channel->link,
-                //'offset_id'     => $channel->last_post_id ?? 0,
-                'min_id'     => $channel->last_post_id ?? 0,
-                //'add_offset'    => 0,
-                'limit'         => $cronCountPosts?->value ?? 100,
-            ];
-
-            $messages = $MadelineProto->messages->getHistory($params);
-
-            /* Сообщения, сортировка по дате (новые сверху) */
-            $messages = array_reverse($messages['messages']);
-
-            $countMsg = count($messages);
-            if (count($messages)) {
-                if (isset($channel->options['reply_to_msg_id'])) {
-                    foreach ($messages as $key => $message) {
-                        if (
-                            !isset($message['reply_to']) or
-                            !isset($message['reply_to']['reply_to_msg_id']) or
-                            $message['reply_to']['reply_to_msg_id'] != $channel->options['reply_to_msg_id']
-                        ) {
-                            $this->info('Сообщение пропущено из-за проверки на reply_to_msg_id');
-                            unset($messages[$key]);
-                        }
-                    }
+            if (count($infoMsg)) {
+                foreach ($infoMsg as $item) {
+                    $this->info($item);
                 }
             }
 
-            if ($minLengthPost?->value) {
-                foreach ($messages as $key => $message) {
-                    if (Str::length($message['message']) < $minLengthPost?->value) {
-                        $this->info('Сообщение пропущено из-за ограничения мин. длины '.$minLengthPost?->value.': '.Str::length($message['message']));
-                        unset($messages[$key]);
-                    }
+            if (count($warnMsg)) {
+                foreach ($warnMsg as $item) {
+                    $this->warn($item);
                 }
             }
 
-            //$MadelineProto->report('1111');
-
-            if ($countMsgFiltered = count($messages)) {
-                $lastPostId = last($messages)['id'] ?? null;
-                foreach ($messages as $message) {
-                    $this->info('Add ID: '.$message['id']);
-
-                    $userInfo = $MadelineProto->getInfo($message['from_id']);
-
-                    $userData = [];
-                    if (isset($userInfo['User'])) {
-                        $userData = [
-                            'first_name'    => $userInfo['User']['first_name'] ?? null,
-                            'last_name'     => $userInfo['User']['last_name'] ?? null,
-                            'username'      => $userInfo['User']['username'] ?? '',
-                            'user_id'       => $userInfo['user_id'],
-                            'user_type'     => $userInfo['type'],
-                            'phone'         => $userInfo['User']['phone'] ?? null,
-                            'last_online'   => isset($userInfo['User']['status']['was_online']) ? (new \DateTime())->setTimestamp($userInfo['User']['status']['was_online'])->format("Y-m-d H:i:s") : null,
-                        ];
-                    }
-
-                    if (count($userData)) {
-                        $user = ApiPostUser::updateOrCreate([
-                            'user_id'       => $message['from_id'],
-                            'channel_source'=> $channel->channel_source,
-                            'is_company'    => $channel->is_company,
-                        ], [
-                            'is_company'    => $channel->is_company,
-                            'user_id'       => $message['from_id'],
-                            'channel_source'=> $channel->channel_source,
-                            'first_name'    => $userData['first_name'],
-                            'username'      => $userData['username'],
-                            'user_type'     => $userData['user_type'],
-                            'phone'         => $userData['phone'],
-                            'last_online_date' => $userData['last_online'],
-                        ]);
-
-                        if ($user->wasRecentlyCreated === true) {
-                            $this->info('Создан новый пользователь: '.$user->id);
-                        } else {
-                            $this->info('Обновлен пользователь: ' . $user->id);
-                        }
-                    }
-
-                    $post = ApiChannelPost::updateOrCreate([
-                        'api_channel_id' => $channel->id,
-                        'post_id' => $message['id']
-                    ], [
-                        'api_post_user_id'  => $user?->id ?? 0,
-                        'api_channel_id'    => $channel->id,
-                        'user_login'        => $userData['username'] ?? '',
-                        'user_login_id'     => $message['from_id'],
-                        'post_id'           => $message['id'],
-                        'post_date'         => (new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s"),
-                        'post'              => trim($message['message']),
-                        'ai_parse_status'   => ApiChannelPostStatusEnum::InQueue,
-                    ]);
-
-                    if ($post->wasRecentlyCreated === true) {
-                        $this->info('Создан новый пост: ' . $post->id);
-                    } else {
-                        $this->info('Обновлен пост: ' . $post->id);
-                    }
-                }
-
-                if (!is_null($lastPostId)) {
-                    if (!$channel->last_post_id OR $channel->last_post_id < $lastPostId) {
-                        $channel->last_post_id = $lastPostId;
-                        $channel->save();
-                    }
+            if (count($errorMsg)) {
+                foreach ($errorMsg as $item) {
+                    $this->error($item);
                 }
             }
-
-            Log::channel('crm_service')->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
-            $this->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
         }
 
         $this->info('Завершено');
