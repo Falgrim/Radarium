@@ -68,13 +68,10 @@ class ParseTelegramPrivateChats extends Command
 
             $params = [
                 'peer'          => $channel->link,
-                'offset_id'     => 0,
-                'offset_date'   => strtotime('-180 days'),
-                'add_offset'    => 0,
+                //'offset_id'     => $channel->last_post_id ?? 0,
+                'min_id'     => $channel->last_post_id ?? 0,
+                //'add_offset'    => 0,
                 'limit'         => $cronCountPosts?->value ?? 100,
-                'max_id'        => 0,
-                'min_id'        => $channel->last_post_id ?? 0,
-                'hash'          => 0,
             ];
 
             $messages = $MadelineProto->messages->getHistory($params);
@@ -111,6 +108,7 @@ class ParseTelegramPrivateChats extends Command
 
             if ($countMsgFiltered = count($messages)) {
                 $lastPostId = last($messages)['id'] ?? null;
+
                 foreach ($messages as $message) {
                     $this->info('Add ID: '.$message['id']);
 
@@ -143,7 +141,11 @@ class ParseTelegramPrivateChats extends Command
                             'last_online_date' => $userData['last_online'],
                         ]);
 
-                        $this->info('Создан новый пользователь: '.$user->id);
+                        if ($user->wasRecentlyCreated === true) {
+                            $this->info('Создан новый пользователь: '.$user->id);
+                        } else {
+                            $this->info('Обновлен пользователь: ' . $user->id);
+                        }
                     }
 
                     $post = ApiChannelPost::updateOrCreate([
@@ -160,17 +162,24 @@ class ParseTelegramPrivateChats extends Command
                         'ai_parse_status'   => ApiChannelPostStatusEnum::InQueue,
                     ]);
 
-                    $this->info('Создан новый пост: '.$post->id);
+                    if ($post->wasRecentlyCreated === true) {
+                        $this->info('Создан новый пост: ' . $post->id);
+                    } else {
+                        $this->info('Обновлен пост: ' . $post->id);
+                    }
                 }
 
                 if (!is_null($lastPostId)) {
-                    $channel->last_post_id = $lastPostId;
-                    $channel->save();
+                    if (!$channel->last_post_id OR $channel->last_post_id < $lastPostId) {
+                        $channel->last_post_id = $lastPostId;
+                        $channel->save();
+                    }
                 }
             }
 
             Log::channel('crm_service')->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
             $this->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
+            $this->info('Последний ID: '.$channel->last_post_id);
         }
 
         $this->info('Завершено');
