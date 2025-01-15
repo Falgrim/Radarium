@@ -93,7 +93,7 @@ class CatalogController extends Controller
         $validated = $validator->validateWithBag('specialist');
 
         $specialist = Specialist::where('id', $validated['id'])->firstOrFail();
-        $reviews = $specialist->reviews()->orderBy('created_at')->get();
+        $reviews = $specialist->reviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
 
         return view('catalog.specialist_view', [
             'request'          => $request,
