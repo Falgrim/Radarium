@@ -12,6 +12,7 @@ Route::get('/specialists/specialist/{id}', [CatalogController::class, 'specialis
 
 Route::middleware('auth')->group(function () {
     Route::post('/specialists/specialist/{id}', [CatalogController::class, 'specialistStoreReview'])->name('catalog.specialist.store');
+    Route::post('/specialists/specialist/{id}/review', [CatalogController::class, 'specialistEditReview'])->name('catalog.specialist.edit_review');
 });
 
 Route::get('/companyjobs', [CatalogController::class, 'companyJobs'])->name('catalog.companyjobs');

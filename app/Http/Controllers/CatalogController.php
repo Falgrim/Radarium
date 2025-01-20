@@ -195,6 +195,75 @@ class CatalogController extends Controller
         return redirect()->back()->with('success', 'Отзыв добавлен. После модерации он появится на странице исполнителя');
     }
 
+    public function specialistEditReview(Request $request, string $id)
+    {
+        if (Auth::user()->user_role_id !== 2) {
+            abort(403);
+        }
+
+        $validator = Validator::make($request->post(), [
+            'review_id' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::exists(Review::table(), 'id')->where(function (Builder $query) {
+                    $query->where('user_id', Auth::user()->id);
+                    $query->where('can_edit', ReviewCanEditEnum::Allow);
+                    $query->where('status', ReviewStatusEnum::Active);
+                }),
+            ],
+            'text' => [
+                'required',
+                'min:3',
+                'max:500',
+            ],
+            'rating' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:5',
+            ],
+            'extra_row.*.title' => [
+                'sometimes',
+                'required_with:extra_row.*.value',
+                //'required_if:extra_row.*.value,required',
+                'nullable',
+                'distinct:ignore_case',
+                'string',
+                'min:3',
+                'max:100',
+            ],
+            'extra_row.*.value' => [
+                'sometimes',
+                'required_with:extra_row.*.title',
+                'nullable',
+                //'required_if:extra_row.*.title,required',
+                'string',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->messages())->setStatusCode(403);
+        }
+
+        $validated = $validator->validateWithBag('review');
+
+        $review = Review::where('id', $validated['review_id'])->firstOrFail();
+
+        $review->text = $validated['text'];
+        $review->can_edit = ReviewCanEditEnum::Disabled;
+        $review->rating = $validated['rating'];
+        $review->status = ReviewStatusEnum::InModeration;
+        $review->save();
+
+        return response()
+        ->json($review)
+        ->setStatusCode(200)
+        ->header('Content-Type', 'application/json');
+    }
+
     public function companyJobs(Request $request)
     {
         $companyJobs = CompanyJob::with('apiPostUser');
