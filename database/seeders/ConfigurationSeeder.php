@@ -57,6 +57,25 @@ class ConfigurationSeeder extends Seeder
             'title_hint' => 'Если сообщение будет меньше установленного лимита, то оно будет пропущено',
         ];
 
+        $configs[] = [
+            'title' => 'Частота чтения каналов',
+            'name' => 'read_source_cron',
+            'type' => 'select',
+            'value' => 30,
+            'order' => ++$maxOrder,
+            'options' => serialize([
+                10 => 'Каждые 10 минут',
+                30 => 'Каждые 30 минут',
+                60 => 'Каждый час',
+                120 => 'Каждые 2 часа',
+                180 => 'Каждые 3 часа',
+                360 => 'Каждые 6 часов',
+                720 => 'Каждые 12 часов',
+                1440 => 'Каждый день',
+            ]),
+            'title_hint' => 'Выберите как часто вы хотите, чтобы система обновляла информацию о новых сообщениях из источников',
+        ];
+
         foreach ($configs as $config) {
             Configuration::updateOrCreate([
                 'name' => $config['name']

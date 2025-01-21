@@ -1,5 +1,6 @@
 <?php
 
+use App\Infrastructures\Facades\Repositories;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,8 +17,47 @@ return Application::configure(basePath: dirname(__DIR__))
     })->withExceptions(function (Exceptions $exceptions) {
         //
     })->withSchedule(function (Schedule $schedule) {
-        $schedule->command('app:tg_parse:private')->hourly()->withoutOverlapping();
-        $schedule->command('app:tg_parse:company')->hourly()->withoutOverlapping();
-        $schedule->command('app:ai_parse:private')->everyTwoHours()->runInBackground()->withoutOverlapping();
-        $schedule->command('app:ai_parse:company')->hourly()->runInBackground()->withoutOverlapping();
+
+        $readSourceCron = Repositories::setting()->findByName('read_source_cron');
+
+        // Поиск новых постов из источников
+        if ($readSourceCron?->value) {
+            if ($readSourceCron->value <= 59) {
+                // Каждые X минут
+                $schedule->cron('*/'.$readSourceCron->value.' * * * *')
+                    ->withoutOverlapping()
+                    ->group(function (Schedule $schedule) {
+                        $schedule->command('app:tg_parse:private');
+                        $schedule->command('app:tg_parse:company');
+                });
+            } elseif ($readSourceCron->value <= 1439) {
+                // Каждые Х часов
+                $schedule->cron('0 */'.ceil($readSourceCron->value/60).' * * *')
+                    ->withoutOverlapping()
+                    ->group(function (Schedule $schedule) {
+                        $schedule->command('app:tg_parse:private');
+                        $schedule->command('app:tg_parse:company');
+                    });
+            } else {
+                // Каждый день в 00:00
+                $schedule->cron('0 0 * * *')
+                    ->withoutOverlapping()
+                    ->group(function (Schedule $schedule) {
+                        $schedule->command('app:tg_parse:private');
+                        $schedule->command('app:tg_parse:company');
+                    });
+            }
+        } else {
+            $schedule->command('app:tg_parse:private')->hourly()->withoutOverlapping();
+            $schedule->command('app:tg_parse:company')->hourly()->withoutOverlapping();
+        }
+
+        // Отправка запросов в ИИ
+        $schedule->everyThirtyMinutes()
+            ->runInBackground()
+            ->withoutOverlapping()
+            ->group(function (Schedule $schedule) {
+                $schedule->command('app:ai_parse:private');
+                $schedule->command('app:ai_parse:company');
+            });
     })->create();
