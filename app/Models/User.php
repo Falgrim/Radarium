@@ -3,7 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPassword;
 use App\Traits\ModelTableName;
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +19,7 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
     use ModelTableName;
+    use CanResetPassword;
 
     /**
      * The attributes that are mass assignable.
@@ -74,4 +77,9 @@ class User extends Authenticatable
         // https://laravel.demiart.ru/guide-to-roles-and-permissions/
         return true;
     }
+
+    /*public function sendPasswordResetNotification($url)
+    {
+        $this->notify(new ResetPassword($url));
+    }*/
 }
