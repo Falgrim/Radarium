@@ -88,14 +88,14 @@ class SpecialistResource extends ModelResource
         return [
             ID::make()->sortable(),
             HasOne::make('Аккаунт', 'user', resource: new ApiPostUserResource())->fields([
-                Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+                //Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
                 Text::make('Логин', 'username'),
                 Text::make('Имя', 'fio', fn($item) => 'ID ['.$item->id.']: '.trim($item->last_name.' '.$item->first_name)),
-                Date::make('Создан', 'created_at')->withTime(),
+                //Date::make('Создан', 'created_at')->withTime(),
             ]),
             HasOne::make('Пост', 'post', resource: new ApiChannelPostResource())->fields([
-                Text::make('ID', 'id'),
-                Date::make('Дата', 'post_date'),
+                //Text::make('ID', 'id'),
+                Date::make('Дата пуб.', 'post_date'),
                 Date::make('Создан', 'created_at'),
             ]),
             Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
@@ -130,7 +130,7 @@ class SpecialistResource extends ModelResource
                 Text::make('API ID', 'post_id'),
                 Text::make('Логин', 'user_login'),
                 Text::make('Сообщение', 'post'),
-                Date::make('Дата', 'post_date')->withTime(),
+                Date::make('Дата публикации', 'post_date')->withTime(),
                 Date::make('Создан', 'created_at')->withTime(),
                 Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class),
                 Text::make('Ответ ИИ', 'ai_result'),

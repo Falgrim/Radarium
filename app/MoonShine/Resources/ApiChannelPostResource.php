@@ -93,7 +93,7 @@ class ApiChannelPostResource extends ModelResource
             Text::make('API ID', 'channel'),
             Text::make('ID аккаунта', 'api_post_user_id'),
             Text::make('Логин', 'user_login'),
-            DateRange::make('Дата', 'post_date')->withTime(),
+            DateRange::make('Дата публикации', 'post_date')->withTime(),
             DateRange::make('Создан', 'created_at')->withTime(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),
         ];
@@ -107,7 +107,7 @@ class ApiChannelPostResource extends ModelResource
             Text::make('API ID', 'post_id')->sortable(),
             Text::make('Логин', 'user_login')->sortable(),
             Text::make('Сообщение', 'post', fn($item) => Str::limit($item->post, 100)),
-            Date::make('Дата', 'post_date')->withTime()->sortable(),
+            Date::make('Дата публикации', 'post_date')->withTime()->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),
         ];
@@ -165,7 +165,7 @@ class ApiChannelPostResource extends ModelResource
             Text::make('API ID', 'post_id'),
             Text::make('Логин', 'user_login'),
             Text::make('Сообщение', 'post'),
-            Date::make('Дата', 'post_date')->withTime(),
+            Date::make('Дата публикации', 'post_date')->withTime(),
             Date::make('Создан', 'created_at')->withTime(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class),
             Text::make('Ответ ИИ', 'ai_result'),
@@ -200,7 +200,7 @@ class ApiChannelPostResource extends ModelResource
         $fields[] = Text::make('API ID', 'post_id')->disabled()->readonly();
         $fields[] = Text::make('Логин', 'user_login');
         $fields[] = Textarea::make('Сообщение', 'post')->customAttributes(['autocomplete' => 'off', 'rows' => '5']);
-        $fields[] = Date::make('Дата', 'post_date')->withTime()->disabled()->readonly();
+        $fields[] = Date::make('Дата публикации', 'post_date')->withTime()->disabled()->readonly();
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
         $fields[] = Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)
             ->hint('Вы можете сбросить параметр статуса, чтобы система повторно проверила сообщение.');

@@ -12,7 +12,7 @@ enum ReviewStatusEnum:int {
     {
         return match ($this) {
             self::Active    => 'Активно',
-            self::Disabled  => 'Отключено',
+            self::Disabled  => 'Отклонено',
             self::InModeration  => 'Ожидает модерации',
         };
     }

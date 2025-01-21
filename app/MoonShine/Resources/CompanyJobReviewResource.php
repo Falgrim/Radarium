@@ -106,14 +106,14 @@ class CompanyJobReviewResource extends ModelResource
         return [
             ID::make()->sortable(),
             HasOne::make('Пользователь', 'user', resource: new UserResource())->fields([
-                Text::make('ID', 'id'),
+                //Text::make('ID', 'id'),
                 Text::make('Имя', 'name'),
                 Email::make('Почта', 'email'),
             ]),
             HasOne::make('Специалист', 'companyJob', resource: new CompanyJobResource())->fields([
-                Text::make('ID', 'id'),
+                //Text::make('ID', 'id'),
                 Text::make('Описание', 'description', fn($item) => Str::limit($item->description, 100)),
-                Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+                //Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
                 Date::make('Создан', 'created_at')->withTime(),
             ]),
             Text::make('Отзыв', 'text', fn($item) => Str::limit($item->text, 100)),

@@ -106,14 +106,14 @@ class ReviewResource extends ModelResource
         return [
             ID::make()->sortable(),
             HasOne::make('Пользователь', 'user', resource: new UserResource())->fields([
-                Text::make('ID', 'id'),
+                //Text::make('ID', 'id'),
                 Text::make('Имя', 'name'),
                 Email::make('Почта', 'email'),
             ]),
             HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->fields([
-                Text::make('ID', 'id'),
+                //Text::make('ID', 'id'),
                 Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
-                Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+                //Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
                 Date::make('Создан', 'created_at')->withTime(),
             ]),
             Text::make('Отзыв', 'text', fn($item) => Str::limit($item->about, 100)),
