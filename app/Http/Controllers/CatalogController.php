@@ -61,7 +61,7 @@ class CatalogController extends Controller
 
         $specialists = $specialists
             ->orderByDesc('created_at')
-            ->paginate(5)
+            ->paginate(15)
             ->withQueryString();
 
         return view('catalog.specialists', [
@@ -274,7 +274,7 @@ class CatalogController extends Controller
 
         $companyJobs = $companyJobs
             ->orderByDesc('created_at')
-            ->paginate(5)
+            ->paginate(15)
             ->withQueryString();
 
         return view('catalog.companyjobs', [

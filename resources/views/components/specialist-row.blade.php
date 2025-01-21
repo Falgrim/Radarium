@@ -1,61 +1,23 @@
-<div class="accordion-item">
-    <h2 class="accordion-header" id="specialist-id-{{ $specialist->id }}">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#specialist-block-id-{{ $specialist->id }}" aria-expanded="false" aria-controls="specialist-block-id-{{ $specialist->id }}">
-            ID {{ $specialist->id }}. {{ $specialist->user->username }}.
-            <br />Дата обновления: {{ $specialist->created_at }}
-        </button>
-    </h2>
-    <div id="specialist-block-id-{{ $specialist->id }}" class="accordion-collapse collapse" aria-labelledby="specialist-id-{{ $specialist->id }}" data-bs-parent="#{{ $parentId  }}">
-        <div class="accordion-body" style="text-align: left;">
-            <a href="{{ route('catalog.specialist.view', ['id' => $specialist->id]) }}" class="btn btn-primary" type="button">Открыть карточку</a>
-            <dl class="row">
-                <dt class="col-sm-3">Опыт работы по специальности</dt>
-                <dd class="col-sm-9">{{ $specialist->experience }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Владение ПО</dt>
-                <dd class="col-sm-9">{{ $specialist->soft_experience }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Образование</dt>
-                <dd class="col-sm-9">{{ $specialist->education }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Требуемый график работы</dt>
-                <dd class="col-sm-9">{{ $specialist->work_schedule }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Общая продолжительность работы (проект)</dt>
-                <dd class="col-sm-9">{{ $specialist->total_work_project }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Тип работы</dt>
-                <dd class="col-sm-9">{{ $specialist->type_of_work }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Желаемая оплата (за час)</dt>
-                <dd class="col-sm-9">{{ $specialist->price_by_hour }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Желаемая оплата (за проект)</dt>
-                <dd class="col-sm-9">{{ $specialist->price_by_project }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Желаемая оплата (в месяц)</dt>
-                <dd class="col-sm-9">{{ $specialist->price_by_month }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">О себе</dt>
-                <dd class="col-sm-9">{{ $specialist->about }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Спец. требования</dt>
-                <dd class="col-sm-9">{{ $specialist->spec_requirements }}</dd>
-            </dl>
-            <dl class="row">
-                <dt class="col-sm-3">Резюме</dt>
-                <dd class="col-sm-9">{{ $specialist->link_resume }}</dd>
-            </dl>
-        </div>
-    </div>
-</div>
+<tr id="specialist-id-{{ $specialist->id }}">
+    <td>
+        <a href="https://t.me/{{ $specialist->user->username ? $specialist->user->username : $specialist->user->user_id }}" target="_blank">{{ $specialist->user->username ? $specialist->user->username : $specialist->user->user_id }}</a>
+        <a href="{{ route('catalog.specialist.view', ['id' => $specialist->id]) }}" class="btn btn-primary btn-sm">Подробнее</a>
+    </td>
+    <td>{{ trim($specialist->last_name.' '.$specialist->first_name) }}</td>
+    <td>{{ $specialist->experience }}</td>
+    <td>{{ $specialist->created_at }}</td>
+    <td>{{ $specialist->post_date }}</td>
+    <td>{{ $specialist->experience }}</td>
+    <td>{{ $specialist->soft_experience }}</td>
+    <td>{{ $specialist->education }}</td>
+    <td>{{ $specialist->work_schedule }}</td>
+    <td>{{ $specialist->total_work_project }}</td>
+    <td>{{ $specialist->type_of_work }}</td>
+    <td>{{ $specialist->price_by_hour }}</td>
+    <td>{{ $specialist->price_by_project }}</td>
+    <td>{{ $specialist->price_by_month }}</td>
+    <td>{{ $specialist->about }}</td>
+    <td>{{ $specialist->spec_requirements }}</td>
+    <td>{{ $specialist->post?->post }}</td>
+    <td>{{ $specialist->link_resume }}</td>
+</tr>
