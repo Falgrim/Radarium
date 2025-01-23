@@ -33,6 +33,7 @@ class CompanyJob extends Model
         'status',
         'ai_type',
         'ai_reason',
+        'contact_info',
         'created_at',
         'updated_at',
     ];
@@ -64,5 +65,15 @@ class CompanyJob extends Model
     public function apiChannelPost(): BelongsTo
     {
         return $this->belongsTo(ApiChannelPost::class, 'api_channel_post_id', 'id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CompanyJobReview::class);
+    }
+
+    public function specialties(): HasMany
+    {
+        return $this->hasMany(SpecialistSpeciality::class);
     }
 }

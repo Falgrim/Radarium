@@ -9,14 +9,17 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Enum\SpecialistStatusEnum;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\SpecialistSpeciality;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Specialist;
 
 use Illuminate\Support\Str;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
+use MoonShine\Fields\Json;
 use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
+use MoonShine\Fields\Relationships\HasManyThrough;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
@@ -109,6 +112,7 @@ class SpecialistResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Тип сообщения', 'ai_type'),
+            Text::make('Специальность', 'specialities', fn($item) => implode(', ', $item->specialtiesWithTitle())),
             Text::make('Подробнее о типе', 'ai_reason'),
             Text::make('Опыт работы по специальности', 'experience'),
             Text::make('Владение ПО', 'soft_experience'),
@@ -122,6 +126,7 @@ class SpecialistResource extends ModelResource
             Text::make('О себе', 'about'),
             Text::make('Спец. требования', 'spec_requirements'),
             Text::make('Ссылка на резюме', 'link_resume'),
+            Text::make('Контакты из сообщения', 'contact_info'),
             Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
             Date::make('Создан', 'created_at')->withTime(),
 
@@ -157,6 +162,7 @@ class SpecialistResource extends ModelResource
         $fields = [];
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = HasManyThrough::make('Специальность', 'specialtiesTemp', resource: new SpecialistSpecialityResource());
         $fields[] = Textarea::make('Опыт работы по специальности', 'experience')->customAttributes(['rows' => '5']);
         $fields[] = Textarea::make('Владение ПО', 'soft_experience')->customAttributes(['rows' => '5']);
         $fields[] = Textarea::make('Образование', 'education')->customAttributes(['rows' => '5']);
@@ -169,6 +175,7 @@ class SpecialistResource extends ModelResource
         $fields[] = Textarea::make('О себе', 'about')->customAttributes(['rows' => '5']);
         $fields[] = Textarea::make('Спец. требования', 'spec_requirements')->customAttributes(['rows' => '5']);
         $fields[] = Text::make('Ссылка на резюме', 'link_resume');
+        $fields[] = Textarea::make('Контакты из сообщения', 'contact_info');
         $fields[] = Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class);
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
 

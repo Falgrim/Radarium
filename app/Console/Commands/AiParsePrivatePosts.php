@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\DictionaryEnum;
 use App\Enum\IsCompanyEnum;
 use App\Enum\SpecialistStatusEnum;
 use App\Infrastructures\Facades\Repositories;
@@ -12,8 +13,11 @@ use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use App\Models\Specialist;
+use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIYandex;
+use App\Services\Dictionary;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class AiParsePrivatePosts extends Command
@@ -42,7 +46,7 @@ class AiParsePrivatePosts extends Command
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
             ->where('api_channels.is_company', IsCompanyEnum::Private)
             ->orderBy('api_channel_posts.created_at', 'asc')
-            ->take(10)
+            ->take(30)
             ->get();
 
         if (!count($posts)) {
@@ -51,6 +55,8 @@ class AiParsePrivatePosts extends Command
         }
 
         $this->info('Найдено постов: '.count($posts));
+
+        $dictionary = new Dictionary;
 
         foreach ($posts as $post) {
             try {
@@ -68,6 +74,14 @@ class AiParsePrivatePosts extends Command
                         // Удаляем старое резюме, на случай повторного прогона поста
                         Specialist::where('api_channel_post_id', $post->id)->delete();
 
+                        if (isset($result['json']['empty']) AND $result['json']['empty'] === true) {
+                            $post->ai_result = $result['origin'];
+                            $post->ai_date = now();
+                            $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
+                            $post->save();
+                            continue;
+                        }
+
                         $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                         $result['json']['api_channel_post_id'] = $post->id;
 
@@ -77,7 +91,22 @@ class AiParsePrivatePosts extends Command
                             $result['json']['status'] = SpecialistStatusEnum::InModeration;
                         }
 
-                        Specialist::create($result['json']);
+                        $specialistSpecialties = [];
+                        if (isset($result['json']['specialist_specialties'])) {
+                            $specialistSpecialties = array_map('trim', $result['json']['specialist_specialties']);
+                            unset($result['json']['specialist_specialties']);
+                        }
+
+                        $specialist = Specialist::create($result['json']);
+
+                        if (count($specialistSpecialties)) {
+                            $dictionaryArr = [];
+                            foreach ($specialistSpecialties as $specialistSpecialty) {
+                                $dictionaryArr[] = $dictionary->getOrCreate(DictionaryEnum::Speciality, $specialistSpecialty);
+                            }
+
+                            $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $dictionaryArr);
+                        }
 
                         $post->ai_result = $result['origin'];
                         $post->ai_date = now();

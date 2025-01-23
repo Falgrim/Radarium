@@ -50,6 +50,9 @@ class ApiAIYandex
                 'Описание проекта'          => ['id' => 'description', 'type' => 'string'],
                 'Срок найма'                => ['id' => 'period', 'type' => 'string'],
                 'Дополнительные условия'    => ['id' => 'extra_conditions', 'type' => 'string'],
+                'Специальность'             => ['id' => 'company_job_specialties', 'type' => 'array'],
+                'Контакты'                  => ['id' => 'contact_info', 'type' => 'string'],
+                'пропуск'                   => ['id' => 'empty', 'type' => 'bool'],
             ];
         } elseif ($isCompany === IsCompanyEnum::Private) {
             return [
@@ -67,6 +70,9 @@ class ApiAIYandex
                 'О себе'                        => ['id' => 'about', 'type' => 'string'],
                 'Спец. требования'              => ['id' => 'spec_requirements', 'type' => 'string'],
                 'Ссылка на резюме'              => ['id' => 'link_resume', 'type' => 'string'],
+                'Специальность'                 => ['id' => 'specialist_specialties', 'type' => 'array'],
+                'Контакты'                      => ['id' => 'contact_info', 'type' => 'string'],
+                'пропуск'                       => ['id' => 'empty', 'type' => 'bool'],
             ];
         }
     }
@@ -141,13 +147,17 @@ class ApiAIYandex
 
             if ($row['type'] == 'string') {
                 if(is_array($modelRows[$row['id']])) {
-                    $modelRows[$row['id']] = implode('-|||-', $modelRows[$row['id']]);
+                    $modelRows[$row['id']] = implode(';', $modelRows[$row['id']]);
                 }
                 $modelRows[$row['id']] = trim($modelRows[$row['id']]);
             } elseif ($row['type'] == 'price') {
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']]*100; // Сумма в копейках
             } elseif ($row['type'] == 'integer') {
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']];
+            } elseif ($row['type'] == 'array') {
+                $modelRows[$row['id']] = $modelRows[$row['id']];
+            } elseif ($row['type'] == 'bool') {
+                $modelRows[$row['id']] = (bool)$modelRows[$row['id']];
             }
         }
 

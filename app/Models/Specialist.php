@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -35,6 +36,7 @@ class Specialist extends Model
         'status',
         'ai_type',
         'ai_reason',
+        'contact_info',
         'created_at',
         'updated_at',
     ];
@@ -71,5 +73,32 @@ class Specialist extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function specialities(): HasMany
+    {
+        return $this->hasMany(SpecialistSpeciality::class, 'specialist_id', 'id');
+    }
+
+    public function specialtiesWithTitle(): array
+    {
+        $data = $this->through('specialities')->has('dictionarySpeciality')->get();
+        $result = [];
+        foreach ($data as $row) {
+            $result[$row->id] = $row->title;
+        }
+        return $result;
+    }
+
+    public function specialtiesTemp(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            DictionarySpeciality::class,
+            SpecialistSpeciality::class,
+            'dictionary_speciality_id', // Внешний ключ в таблице `SpecialistSpeciality` ...
+            'id', // Внешний ключ в таблице `DictionarySpeciality` ...
+            'id', // Локальный ключ в таблице `Specialist` ...
+            'specialist_id' // Локальный ключ в таблице `SpecialistSpeciality` ...
+        );
     }
 }
