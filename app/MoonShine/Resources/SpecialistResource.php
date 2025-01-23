@@ -175,7 +175,6 @@ class SpecialistResource extends ModelResource
             ->multiple()
             ->nullable()
             ->searchable();
-        //$fields[] = HasManyThrough::make('Специальность', 'specialtiesTemp', resource: new SpecialistSpecialityResource());
         $fields[] = Textarea::make('Опыт работы по специальности', 'experience')->customAttributes(['rows' => '5']);
         $fields[] = Textarea::make('Владение ПО', 'soft_experience')->customAttributes(['rows' => '5']);
         $fields[] = Textarea::make('Образование', 'education')->customAttributes(['rows' => '5']);
