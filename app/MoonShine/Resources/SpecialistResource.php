@@ -9,6 +9,7 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Enum\SpecialistStatusEnum;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\DictionarySpeciality;
 use App\Models\SpecialistSpeciality;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Specialist;
@@ -21,6 +22,7 @@ use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasManyThrough;
 use MoonShine\Fields\Relationships\HasOne;
+use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
 use MoonShine\Handlers\ImportHandler;
@@ -161,8 +163,19 @@ class SpecialistResource extends ModelResource
     {
         $fields = [];
 
+        $dictionarySpeciality = DictionarySpeciality::get();
+        $dictionaryArr = [];
+        foreach ($dictionarySpeciality as $row) {
+            $dictionaryArr[$row['id']] = $row['title'];
+        }
+
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
-        $fields[] = HasManyThrough::make('Специальность', 'specialtiesTemp', resource: new SpecialistSpecialityResource());
+        $fields[] = Select::make('Специальность', 'specialitiesForMoonshine')
+            ->options($dictionaryArr)
+            ->multiple()
+            ->nullable()
+            ->searchable();
+        //$fields[] = HasManyThrough::make('Специальность', 'specialtiesTemp', resource: new SpecialistSpecialityResource());
         $fields[] = Textarea::make('Опыт работы по специальности', 'experience')->customAttributes(['rows' => '5']);
         $fields[] = Textarea::make('Владение ПО', 'soft_experience')->customAttributes(['rows' => '5']);
         $fields[] = Textarea::make('Образование', 'education')->customAttributes(['rows' => '5']);

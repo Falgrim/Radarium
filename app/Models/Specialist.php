@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enum\DictionaryEnum;
 use App\Enum\SpecialistStatusEnum;
+use App\Services\Dictionary;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -75,6 +77,12 @@ class Specialist extends Model
         return $this->hasMany(Review::class);
     }
 
+    // Костыль, чтобы адинка увидела корректно связи при редактировании
+    public function specialitiesForMoonshine(): HasMany
+    {
+        return $this->hasMany(SpecialistSpeciality::class, 'specialist_id', 'id')->select('dictionary_speciality_id as id', 'specialist_id');
+    }
+
     public function specialities(): HasMany
     {
         return $this->hasMany(SpecialistSpeciality::class, 'specialist_id', 'id');
@@ -90,15 +98,27 @@ class Specialist extends Model
         return $result;
     }
 
-    public function specialtiesTemp(): HasManyThrough
+    /**
+     * Метод «booted» модели.
+     */
+    protected static function booted(): void
     {
-        return $this->hasManyThrough(
-            DictionarySpeciality::class,
-            SpecialistSpeciality::class,
-            'dictionary_speciality_id', // Внешний ключ в таблице `SpecialistSpeciality` ...
-            'id', // Внешний ключ в таблице `DictionarySpeciality` ...
-            'id', // Локальный ключ в таблице `Specialist` ...
-            'specialist_id' // Локальный ключ в таблице `SpecialistSpeciality` ...
-        );
+        parent::boot();
+
+        static::creating(function (Specialist $specialist) {
+            if (isset($specialist->specialitiesForMoonshine)) {
+                $dictionary = new Dictionary;
+                $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                unset($specialist->specialitiesForMoonshine);
+            }
+        });
+
+        static::updating(function (Specialist $specialist) {
+            if (isset($specialist->specialitiesForMoonshine)) {
+                $dictionary = new Dictionary;
+                $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                unset($specialist->specialitiesForMoonshine);
+            }
+        });
     }
 }

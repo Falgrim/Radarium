@@ -38,11 +38,11 @@ class Dictionary
             }
 
             SpecialistSpeciality::where('specialist_id', $rowId)
-                ->whereNotIn('dictionary_speciality_id', $dictionaryIds)
+                ->whereNotIn('dictionary_speciality_id', array_values($dictionaryIds))
                 ->delete();
 
             foreach ($dictionaryIds as $dictionaryId) {
-                SpecialistSpeciality::create([
+                SpecialistSpeciality::firstOrCreate([
                     'specialist_id' => $rowId,
                     'dictionary_speciality_id' => $dictionaryId,
                 ]);
