@@ -51,7 +51,7 @@ class ApiAIYandex
                 'Срок найма'                => ['id' => 'period', 'type' => 'string'],
                 'Дополнительные условия'    => ['id' => 'extra_conditions', 'type' => 'string'],
                 'Специальность'             => ['id' => 'company_job_specialties', 'type' => 'array'],
-                'Контакты'                  => ['id' => 'contact_info', 'type' => 'string'],
+                'Контакты'                  => ['id' => 'contact_info', 'type' => 'array_string'],
                 'пропуск'                   => ['id' => 'empty', 'type' => 'bool'],
             ];
         } elseif ($isCompany === IsCompanyEnum::Private) {
@@ -71,7 +71,7 @@ class ApiAIYandex
                 'Спец. требования'              => ['id' => 'spec_requirements', 'type' => 'string'],
                 'Ссылка на резюме'              => ['id' => 'link_resume', 'type' => 'string'],
                 'Специальность'                 => ['id' => 'specialist_specialties', 'type' => 'array'],
-                'Контакты'                      => ['id' => 'contact_info', 'type' => 'string'],
+                'Контакты'                      => ['id' => 'contact_info', 'type' => 'array_string'],
                 'пропуск'                       => ['id' => 'empty', 'type' => 'bool'],
             ];
         }
@@ -136,7 +136,6 @@ class ApiAIYandex
     {
         $result = $this->sendRequest();
         $aiText = $this->parseResponse($result);
-
         $keyRows = $this->getKeyRows($isCompany);
         $modelRows = [];
         foreach ($keyRows as $id => $row) {
@@ -147,7 +146,7 @@ class ApiAIYandex
 
             if ($row['type'] == 'string') {
                 if(is_array($modelRows[$row['id']])) {
-                    $modelRows[$row['id']] = implode(';', $modelRows[$row['id']]);
+                    $modelRows[$row['id']] = implode('; ', $modelRows[$row['id']]);
                 }
                 $modelRows[$row['id']] = trim($modelRows[$row['id']]);
             } elseif ($row['type'] == 'price') {
@@ -156,6 +155,14 @@ class ApiAIYandex
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']];
             } elseif ($row['type'] == 'array') {
                 $modelRows[$row['id']] = $modelRows[$row['id']];
+            } elseif ($row['type'] == 'array_string') {
+                $tmp = [];
+                foreach ($modelRows[$row['id']] as $key => $val) {
+                    if ($val) {
+                        $tmp[] = $key.': '.$val;
+                    }
+                }
+                $modelRows[$row['id']] = implode('; ', $tmp);
             } elseif ($row['type'] == 'bool') {
                 $modelRows[$row['id']] = (bool)$modelRows[$row['id']];
             }

@@ -14,13 +14,14 @@ class Dictionary
 
     }
 
-    public function getOrCreate(DictionaryEnum $dictionary, string $title): int
+    public function getOrCreate(DictionaryEnum $dictionary, string $title, ?string $shortName): int
     {
         if (DictionaryEnum::Speciality === $dictionary) {
             $rowData = DictionarySpeciality::updateOrCreate([
                 'title' => $title,
             ], [
                 'title' => $title,
+                'short_name' => $shortName,
             ]);
         } else {
             throw new \Exception('Выбранный словарь не найден');

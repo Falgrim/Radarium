@@ -107,16 +107,20 @@ class Specialist extends Model
 
         static::creating(function (Specialist $specialist) {
             if (isset($specialist->specialitiesForMoonshine)) {
-                $dictionary = new Dictionary;
-                $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                if ($specialist->specialitiesForMoonshine->count()) {
+                    $dictionary = new Dictionary;
+                    $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                }
                 unset($specialist->specialitiesForMoonshine);
             }
         });
 
         static::updating(function (Specialist $specialist) {
             if (isset($specialist->specialitiesForMoonshine)) {
-                $dictionary = new Dictionary;
-                $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                if ($specialist->specialitiesForMoonshine->count()) {
+                    $dictionary = new Dictionary;
+                    $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                }
                 unset($specialist->specialitiesForMoonshine);
             }
         });

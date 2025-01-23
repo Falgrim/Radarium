@@ -92,6 +92,7 @@ class DictionarySpecialityResource extends ModelResource
         return [
             ID::make()->sortable(),
             Text::make('Специальность', 'title')->sortable(),
+            Text::make('Aббревиатура', 'short_name')->sortable(),
         ];
     }
 
@@ -100,6 +101,7 @@ class DictionarySpecialityResource extends ModelResource
         return [
             ID::make(),
             Text::make('Специальность', 'title'),
+            Text::make('Aббревиатура', 'short_name'),
             Date::make('Создан', 'created_at')->withTime(),
         ];
     }
@@ -110,6 +112,7 @@ class DictionarySpecialityResource extends ModelResource
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
         $fields[] = Text::make('Специальность', 'title');
+        $fields[] = Text::make('Aббревиатура', 'short_name');
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
         return $fields;
     }

@@ -93,7 +93,7 @@ class AiParsePrivatePosts extends Command
 
                         $specialistSpecialties = [];
                         if (isset($result['json']['specialist_specialties'])) {
-                            $specialistSpecialties = array_map('trim', $result['json']['specialist_specialties']);
+                            $specialistSpecialties = $result['json']['specialist_specialties'];
                             unset($result['json']['specialist_specialties']);
                         }
 
@@ -102,7 +102,11 @@ class AiParsePrivatePosts extends Command
                         if (count($specialistSpecialties)) {
                             $dictionaryArr = [];
                             foreach ($specialistSpecialties as $specialistSpecialty) {
-                                $dictionaryArr[] = $dictionary->getOrCreate(DictionaryEnum::Speciality, $specialistSpecialty);
+                                $dictionaryArr[] = $dictionary->getOrCreate(
+                                    DictionaryEnum::Speciality,
+                                    $specialistSpecialty['name'],
+                                    $specialistSpecialty['short_name']
+                                );
                             }
 
                             $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $dictionaryArr);
