@@ -71,6 +71,8 @@ class AiParsePrivatePosts extends Command
                 $options = $post->channel->apiAi->options;
 
                 if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
+                    $this->info('Анализ поста: '.$post->id);
+
                     $ApiAIYandex = new ApiAIYandex;
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
