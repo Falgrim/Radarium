@@ -55,6 +55,7 @@ class CompanyJob extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
+            'post_date' =>'datetime:Y-m-d H:i:s',
             'status' => CompanyJobStatusEnum::class,
         ];
     }
