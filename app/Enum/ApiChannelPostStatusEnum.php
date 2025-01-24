@@ -35,6 +35,7 @@ enum ApiChannelPostStatusEnum:int {
             self::Complete  => 'success',
             self::InQueue   => 'yellow',
             self::Error     => 'danger',
+            self::DontMatch => 'purple',
             self::Empty     => 'yellow',
         };
     }
