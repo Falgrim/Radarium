@@ -4,7 +4,7 @@
         <a href="{{ route('catalog.specialist.view', ['id' => $specialist->id]) }}" class="btn btn-primary btn-sm">Подробнее</a>
     </td>
     <td>{{ trim($specialist->last_name.' '.$specialist->first_name) }}</td>
-    <td>{{ $specialist->experience }}</td>
+    <td>{{ implode(";\r\n", $specialist->specialtiesWithTitle()) }}</td>
     <td>{{ $specialist->created_at }}</td>
     <td>{{ $specialist->post_date }}</td>
     <td>{{ $specialist->experience }}</td>

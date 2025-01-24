@@ -16,6 +16,7 @@ use App\Models\Specialist;
 
 use Illuminate\Support\Str;
 use MoonShine\Fields\Date;
+use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Json;
 use MoonShine\Fields\Relationships\BelongsTo;
@@ -26,6 +27,7 @@ use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
 use MoonShine\Handlers\ImportHandler;
+use MoonShine\QueryTags\QueryTag;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Decorations\Block;
 use MoonShine\Fields\ID;
@@ -88,21 +90,22 @@ class SpecialistResource extends ModelResource
         return [];
     }
 
+    public function filters(): array
+    {
+        return [
+            Text::make('ID', 'id'),
+            //BelongsTo::make('Сообщение', 'post', resource: new ApiChannelPostResource()),
+            DateRange::make('Создан', 'created_at')->withTime(),
+            Enum::make('Статус', 'ai_parse_status')->attach(SpecialistStatusEnum::class),
+        ];
+    }
+
     public function indexFields(): array
     {
         return [
             ID::make()->sortable(),
-            HasOne::make('Аккаунт', 'user', resource: new ApiPostUserResource())->fields([
-                //Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-                Text::make('Логин', 'username'),
-                Text::make('Имя', 'fio', fn($item) => 'ID ['.$item->id.']: '.trim($item->last_name.' '.$item->first_name)),
-                //Date::make('Создан', 'created_at')->withTime(),
-            ]),
-            HasOne::make('Пост', 'post', resource: new ApiChannelPostResource())->fields([
-                //Text::make('ID', 'id'),
-                Date::make('Дата пуб.', 'post_date'),
-                Date::make('Создан', 'created_at'),
-            ]),
+            BelongsTo::make('Аккаунт', 'user', resource: new ApiPostUserResource()),
+            BelongsTo::make('Пост', 'post', resource: new ApiChannelPostResource()),
             Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
             Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class)->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),

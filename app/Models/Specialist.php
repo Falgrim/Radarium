@@ -62,9 +62,9 @@ class Specialist extends Model
         ];
     }
 
-    public function user(): HasOne
+    public function user(): BelongsTo
     {
-        return $this->HasOne(ApiPostUser::class, 'id', 'api_post_user_id');
+        return $this->belongsTo(ApiPostUser::class, 'api_post_user_id','id');
     }
 
     public function post(): BelongsTo
