@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Specialist;
 
 use Illuminate\Support\Str;
+use MoonShine\Fields\Checkbox;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
@@ -105,7 +106,10 @@ class SpecialistResource extends ModelResource
             })->withTime(),*/
             DateRange::make('Дата сообщения', 'post_date')->withTime(),
             DateRange::make('Создан', 'created_at')->withTime(),
-            Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+            Select::make('Статус', 'status')
+                ->options(
+                    SpecialistStatusEnum::getList()
+                ),
         ];
     }
 

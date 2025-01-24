@@ -31,6 +31,7 @@ use MoonShine\Fields\Phone;
 use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
+use MoonShine\Fields\Select;
 use MoonShine\Fields\Switcher;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
@@ -95,7 +96,10 @@ class ApiChannelPostResource extends ModelResource
             Text::make('Логин', 'user_login'),
             DateRange::make('Дата публикации', 'post_date')->withTime(),
             DateRange::make('Создан', 'created_at')->withTime(),
-            Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),
+            Select::make('Статус', 'ai_parse_status')
+                ->options(
+                    ApiChannelPostStatusEnum::getList()
+                ),
         ];
     }
 

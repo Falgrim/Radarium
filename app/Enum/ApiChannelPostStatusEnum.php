@@ -35,4 +35,16 @@ enum ApiChannelPostStatusEnum:int {
             self::Empty     => 'yellow',
         };
     }
+
+    public static function getList(): array
+    {
+        $values = collect(self::cases());
+
+        $result = $values->mapWithKeys(fn ($value): array => [
+            $value->value => method_exists($value, 'toString') ? $value->toString() : $value->value
+        ]);
+        $result->put('', 'Все статусы');
+
+        return $result->toArray();
+    }
 }
