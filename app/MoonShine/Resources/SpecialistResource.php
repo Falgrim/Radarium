@@ -96,7 +96,7 @@ class SpecialistResource extends ModelResource
             Text::make('ID', 'id'),
             //BelongsTo::make('Сообщение', 'post', resource: new ApiChannelPostResource()),
             DateRange::make('Создан', 'created_at')->withTime(),
-            Enum::make('Статус', 'ai_parse_status')->attach(SpecialistStatusEnum::class),
+            Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
         ];
     }
 
