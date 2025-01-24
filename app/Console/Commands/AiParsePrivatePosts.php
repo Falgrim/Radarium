@@ -85,8 +85,6 @@ class AiParsePrivatePosts extends Command
                         // Удаляем старое резюме, на случай повторного прогона поста
                         Specialist::where('api_channel_post_id', $post->id)->delete();
 
-                        print_r($result['json']);
-
                         $post->ai_result = $result['origin'];
                         $post->ai_date = now();
 
