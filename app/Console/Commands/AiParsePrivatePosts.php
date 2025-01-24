@@ -141,7 +141,11 @@ class AiParsePrivatePosts extends Command
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
-                        $this->info('Создан специалист (резюме)');
+                        if ($specialist->status === SpecialistStatusEnum::InModeration) {
+                            $this->info('Создан специалист (резюме)');
+                        } else {
+                            $this->info('Данный пост не является типом резюме');
+                        }
                     } else {
                         $post->ai_date = now();
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
