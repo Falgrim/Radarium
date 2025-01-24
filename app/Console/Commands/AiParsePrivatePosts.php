@@ -54,7 +54,14 @@ class AiParsePrivatePosts extends Command
             return 1;
         }
 
-        $this->info('Найдено постов: '.count($posts));
+        $postsAll = ApiChannelPost::select('api_channel_posts.*')
+            ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
+            ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
+            ->where('api_channels.is_company', IsCompanyEnum::Private)
+            ->orderBy('api_channel_posts.created_at', 'asc')
+            ->count();
+
+        $this->info('В обработку постов: '.count($posts).' из '.$postsAll);
 
         $dictionary = new Dictionary;
 
