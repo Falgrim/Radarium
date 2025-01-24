@@ -117,9 +117,9 @@ class SpecialistResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            BelongsTo::make('Аккаунт', 'user', resource: new ApiPostUserResource()),
-            BelongsTo::make('Пост', 'post', resource: new ApiChannelPostResource()),
-            Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
+            //BelongsTo::make('Аккаунт', 'user', resource: new ApiPostUserResource()),
+            //BelongsTo::make('ID поста', 'post', resource: new ApiChannelPostResource()),
+            Text::make('Пост', 'post', fn($item) => Str::limit($item->post->post, 200)),
             Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),
             Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class)->sortable(),
