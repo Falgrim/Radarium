@@ -106,12 +106,22 @@ class AiParsePrivatePosts extends Command
 
                         if (count($specialistSpecialties)) {
                             $dictionaryArr = [];
-                            foreach ($specialistSpecialties as $specialistSpecialty) {
-                                $dictionaryArr[] = $dictionary->getOrCreate(
-                                    DictionaryEnum::Speciality,
-                                    $specialistSpecialty['name'],
-                                    $specialistSpecialty['short_name']
-                                );
+                            if (is_array($specialistSpecialties[0]['name'])) {
+                                foreach ($specialistSpecialties[0]['name'] as $key => $val) {
+                                    $dictionaryArr[] = $dictionary->getOrCreate(
+                                        DictionaryEnum::Speciality,
+                                        $specialistSpecialties[0]['name'][$key],
+                                        $specialistSpecialties[0]['short_name'][$key]
+                                    );
+                                }
+                            } else {
+                                foreach ($specialistSpecialties as $specialistSpecialty) {
+                                    $dictionaryArr[] = $dictionary->getOrCreate(
+                                        DictionaryEnum::Speciality,
+                                        $specialistSpecialty['name'],
+                                        $specialistSpecialty['short_name']
+                                    );
+                                }
                             }
 
                             $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $dictionaryArr);
