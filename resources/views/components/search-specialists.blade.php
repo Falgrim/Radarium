@@ -22,14 +22,14 @@
                         </div>
 
                         <div class="col-md-6">
-                            <x-input-label for="experience_id" class="form-label" :value="__('Специальность')" />
-                            <select class="form-select" name="experience_id" id="experience_id">
+                            <x-input-label for="speciality_id" class="form-label" :value="__('Специальность')" />
+                            <select class="form-select" name="speciality_id" id="speciality_id">
                                 <option value="">Выберите...</option>
-                                @foreach ($experienceList as $experience)
-                                    <option value="{{ $experience['id'] }}" {{ (collect(old('experience_id', $request['experience_id']))->contains($experience['id'])) ? 'selected':'' }}>{{ $experience['value'] }}</option>
+                                @foreach ($specialitiesList as $speciality)
+                                    <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
                                 @endforeach
                             </select>
-                            <x-input-validate :messages="$errors->get('experience_id')" />
+                            <x-input-validate :messages="$errors->get('speciality_id')" />
                         </div>
                     </div>
 

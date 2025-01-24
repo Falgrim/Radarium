@@ -4,6 +4,7 @@ namespace App\Infrastructures\Facades;
 
 use App\Repositories\CompanyJobsRepository;
 use App\Repositories\ConfigurationsRepository;
+use App\Repositories\DictionarySpecialityRepository;
 use App\Repositories\SpecialistsRepository;
 use App\Repositories\UserRolesRepository;
 use Illuminate\Contracts\Container\BindingResolutionException;
@@ -46,5 +47,10 @@ class Repositories
     public static function userRole(): UserRolesRepository
     {
         return self::getInstance(UserRolesRepository::class);
+    }
+
+    public static function dictionarySpeciality(): DictionarySpecialityRepository
+    {
+        return self::getInstance(DictionarySpecialityRepository::class);
     }
 }

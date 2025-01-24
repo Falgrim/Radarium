@@ -11,6 +11,7 @@ use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
 use App\Models\Review;
 use App\Models\Specialist;
+use App\Models\SpecialistSpeciality;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class CatalogController extends Controller
 
     public function specialists(Request $request)
     {
-        $experienceList = Repositories::specialist()->getExperienceList($this->onlyActive);
+        $specialitiesList = Repositories::dictionarySpeciality()->getList();
 
         $validated = $request->validate([
             'key_word' => [
@@ -36,12 +37,12 @@ class CatalogController extends Controller
                 'min:3',
                 'max:50',
             ],
-            'experience_id' => [
+            'speciality_id' => [
                 'sometimes',
                 'nullable',
                 'string',
                 'alpha_dash:ascii',
-                Rule::in(array_keys($experienceList)),
+                Rule::in(array_keys($specialitiesList)),
             ],
         ]);
 
@@ -55,8 +56,8 @@ class CatalogController extends Controller
             $specialists = $specialists->whereAny(['experience', 'about'], 'like', '%'.$validated['key_word'].'%');
         }
 
-        if (!empty($validated['experience_id'])) {
-            $specialists = $specialists->where('experience', $experienceList[$validated['experience_id']]['value']);
+        if (!empty($validated['speciality_id'])) {
+            $specialists = $specialists->whereRelation('specialities', 'dictionary_speciality_id', $validated['speciality_id']);
         }
 
         $specialists = $specialists
@@ -67,7 +68,7 @@ class CatalogController extends Controller
         return view('catalog.specialists', [
             'request'           => $request,
             'specialists'       => $specialists,
-            'experienceList'    => $experienceList,
+            'specialitiesList'    => $specialitiesList,
         ]);
     }
 
