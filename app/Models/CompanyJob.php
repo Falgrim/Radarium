@@ -34,6 +34,7 @@ class CompanyJob extends Model
         'ai_type',
         'ai_reason',
         'contact_info',
+        'post_date',
         'created_at',
         'updated_at',
     ];
@@ -41,6 +42,7 @@ class CompanyJob extends Model
     protected $dates = [
         'created_at',
         'updated_at',
+        'post_date',
     ];
 
     /**

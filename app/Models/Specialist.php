@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class Specialist extends Model
 {
@@ -39,6 +40,7 @@ class Specialist extends Model
         'ai_type',
         'ai_reason',
         'contact_info',
+        'post_date',
         'created_at',
         'updated_at',
     ];
@@ -46,6 +48,7 @@ class Specialist extends Model
     protected $dates = [
         'created_at',
         'updated_at',
+        'post_date',
     ];
 
     /**
@@ -107,9 +110,11 @@ class Specialist extends Model
 
         static::creating(function (Specialist $specialist) {
             if (isset($specialist->specialitiesForMoonshine)) {
-                if ($specialist->specialitiesForMoonshine->count()) {
+                $specialitiesCount = is_array($specialist->specialitiesForMoonshine) ? count($specialist->specialitiesForMoonshine) : $specialist->specialitiesForMoonshine->count();
+                if ($specialitiesCount) {
+                    $specialities = is_array($specialist->specialitiesForMoonshine) ? $specialist->specialitiesForMoonshine : $specialist->specialitiesForMoonshine->toArray();
                     $dictionary = new Dictionary;
-                    $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                    $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialities);
                 }
                 unset($specialist->specialitiesForMoonshine);
             }
@@ -117,10 +122,19 @@ class Specialist extends Model
 
         static::updating(function (Specialist $specialist) {
             if (isset($specialist->specialitiesForMoonshine)) {
-                if ($specialist->specialitiesForMoonshine->count()) {
-                    $dictionary = new Dictionary;
-                    $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                if (is_array($specialist->specialitiesForMoonshine)) {
+                    if (count($specialist->specialitiesForMoonshine)) {
+                        $dictionary = new Dictionary;
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                    }
+                } else {
+                    if ($specialist->specialitiesForMoonshine->count()) {
+                        $specialities = new Collection($specialist->specialitiesForMoonshine->toArray());
+                        $dictionary = new Dictionary;
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialities->pluck('id')->toArray());
+                    }
                 }
+
                 unset($specialist->specialitiesForMoonshine);
             }
         });

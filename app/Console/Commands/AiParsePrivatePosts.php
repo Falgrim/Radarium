@@ -82,6 +82,7 @@ class AiParsePrivatePosts extends Command
                             continue;
                         }
 
+                        $result['json']['post_date'] = $post->post_date;
                         $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                         $result['json']['api_channel_post_id'] = $post->id;
 

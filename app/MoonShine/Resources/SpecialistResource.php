@@ -11,6 +11,7 @@ use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use App\Models\DictionarySpeciality;
 use App\Models\SpecialistSpeciality;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Specialist;
 
@@ -95,6 +96,14 @@ class SpecialistResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             //BelongsTo::make('Сообщение', 'post', resource: new ApiChannelPostResource()),
+            /*DateRange::make('Дата публикации', 'post_date_publ')->onApply(function(Builder $query, $value, Field $field) {
+                return Specialist::has('post', function (Builder $query) {
+                    global $value;
+                    $query->whereBetween('post_date', [$value['from'], $value['to']]);
+                });
+                //return $query->post()->whereBetween('post_date', [$value['from'], $value['to']]);
+            })->withTime(),*/
+            DateRange::make('Дата сообщения', 'post_date')->withTime(),
             DateRange::make('Создан', 'created_at')->withTime(),
             Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
         ];
@@ -107,6 +116,7 @@ class SpecialistResource extends ModelResource
             BelongsTo::make('Аккаунт', 'user', resource: new ApiPostUserResource()),
             BelongsTo::make('Пост', 'post', resource: new ApiChannelPostResource()),
             Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
+            Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),
             Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class)->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
@@ -117,8 +127,9 @@ class SpecialistResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Тип сообщения', 'ai_type'),
-            Text::make('Специальность', 'specialities', fn($item) => implode(', ', $item->specialtiesWithTitle())),
             Text::make('Подробнее о типе', 'ai_reason'),
+            Date::make('Дата сообщения', 'post_date')->withTime(),
+            Text::make('Специальность', 'specialities', fn($item) => implode(', ', $item->specialtiesWithTitle())),
             Text::make('Опыт работы по специальности', 'experience'),
             Text::make('Владение ПО', 'soft_experience'),
             Text::make('Образование', 'education'),
@@ -173,6 +184,7 @@ class SpecialistResource extends ModelResource
         }
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = Date::make('Дата сообщения', 'post_date')->withTime()->disabled()->readonly();
         $fields[] = Select::make('Специальность', 'specialitiesForMoonshine')
             ->options($dictionaryArr)
             ->multiple()

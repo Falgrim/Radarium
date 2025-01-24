@@ -14,6 +14,7 @@ use App\Models\CompanyJob;
 
 use Illuminate\Support\Str;
 use MoonShine\Fields\Date;
+use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
@@ -81,6 +82,16 @@ class CompanyJobResource extends ModelResource
         return [];
     }
 
+    public function filters(): array
+    {
+        return [
+            Text::make('ID', 'id'),
+            DateRange::make('Дата сообщения', 'post_date')->withTime(),
+            DateRange::make('Создан', 'created_at')->withTime(),
+            Enum::make('Статус', 'status')->attach(CompanyJobStatusEnum::class),
+        ];
+    }
+
     public function indexFields(): array
     {
         return [
@@ -97,7 +108,8 @@ class CompanyJobResource extends ModelResource
                 Date::make('Создан', 'created_at'),
             ]),
             Text::make('Описание', 'description', fn($item) => Str::limit($item->description, 100)),
-            Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class)->sortable(),
+            Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),
+            Enum::make('Статус', 'status')->attach(CompanyJobStatusEnum::class)->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
     }
@@ -108,6 +120,7 @@ class CompanyJobResource extends ModelResource
             Text::make('ID', 'id'),
             Text::make('Тип сообщения', 'ai_type'),
             Text::make('Подробнее о типе', 'ai_reason'),
+            Date::make('Дата сообщения', 'post_date')->withTime(),
             Text::make('Название компании', 'company_name'),
             Text::make('Должность', 'position'),
             Text::make('Предлагаемый оклад (мин.)', 'min_price'),
@@ -154,7 +167,7 @@ class CompanyJobResource extends ModelResource
         $fields = [];
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
-
+        $fields[] = Date::make('Дата сообщения', 'post_date')->withTime()->disabled()->readonly();
         $fields[] = Text::make('Название компании', 'company_name');
         $fields[] = Text::make('Должность', 'position');
         $fields[] = Text::make('Предлагаемый оклад (мин.)', 'min_price');
