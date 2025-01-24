@@ -163,7 +163,7 @@ class ApiAIYandex
 
                 foreach ($arr as $key => $val) {
                     if ($val) {
-                        $tmp[] = $key.': '.$val;
+                        $tmp[] = $key.': '.(is_array($val) ? implode('; ', $val) : $val);
                     }
                 }
                 $modelRows[$row['id']] = implode('; ', $tmp);
