@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'ai' => [
+        'logging' => env('AI_LOGGING', false),
+        'debug' => env('AI_DEBUG', false),
+    ],
 ];

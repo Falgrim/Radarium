@@ -138,6 +138,12 @@ return [
             'level' => 'info',
             'path' => storage_path('logs/post_ai.log'),
         ],
+
+        'ai_debug' => [
+            'driver' => 'single',
+            'level' => 'info',
+            'path' => storage_path('logs/ai_debug.log'),
+        ],
     ],
 
 ];

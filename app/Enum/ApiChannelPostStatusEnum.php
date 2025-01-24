@@ -11,12 +11,15 @@ enum ApiChannelPostStatusEnum:int {
 
     case Empty = 3;
 
+    case DontMatch = 4;
+
     public function toString(): ?string
     {
         return match ($this) {
             self::Complete  => 'Обработано',
             self::InQueue   => 'В очереди',
             self::Error     => 'Ошибка обработки',
+            self::DontMatch => 'Тип выборки не подходит',
             self::Empty     => 'Нет данных',
         };
     }

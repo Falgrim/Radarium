@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enum\IsCompanyEnum;
 use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 // https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2
 // https://yandex.cloud/ru/docs/iam/operations/api-key/create#console_1
@@ -29,16 +30,22 @@ class ApiAIYandex
 
     protected string $url = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion';
 
+    protected bool $aiDebug = false;
+
+    protected bool $aiLogging = false;
+
     public function __construct()
     {
+        $this->aiDebug = config('services.ai.debug');
+        $this->aiLogging = config('services.ai.logging');
     }
 
     protected function getKeyRows(IsCompanyEnum $isCompany)
     {
         if ($isCompany === IsCompanyEnum::Company) {
             return [
-                'Тип сообщения'             => ['id' => 'ai_type', 'type' => 'string'],
-                'Почему такой тип'          => ['id' => 'ai_reason', 'type' => 'string'],
+                'type'             => ['id' => 'ai_type', 'type' => 'string'],
+                'reason'          => ['id' => 'ai_reason', 'type' => 'string'],
                 'Должность'                 => ['id' => 'position', 'type' => 'string'],
                 'Название компании'         => ['id' => 'company_name', 'type' => 'string'],
                 'Предлагаемый оклад (от)'   => ['id' => 'min_price', 'type' => 'price'],
@@ -56,23 +63,22 @@ class ApiAIYandex
             ];
         } elseif ($isCompany === IsCompanyEnum::Private) {
             return [
-                'Тип сообщения'                 => ['id' => 'ai_type', 'type' => 'string'],
-                'Почему такой тип'              => ['id' => 'ai_reason', 'type' => 'string'],
-                'Опыт работы по специальности'  => ['id' => 'experience', 'type' => 'string'],
-                'Владение ПО'                   => ['id' => 'soft_experience', 'type' => 'string'],
-                'Образование'                   => ['id' => 'education', 'type' => 'string'],
-                'Требуемый график работы'       => ['id' => 'work_schedule', 'type' => 'string'],
-                'Общая продолжительность работы (за проект)' => ['id' => 'total_work_project', 'type' => 'string'],
-                'Тип работы'                    => ['id' => 'type_of_work', 'type' => 'string'],
-                'Желаемая оплата за час'        => ['id' => 'price_by_hour', 'type' => 'price'],
-                'Желаемая оплата за проект'     => ['id' => 'price_by_project', 'type' => 'price'],
-                'Желаемая оплата за месяц'      => ['id' => 'price_by_month', 'type' => 'price'],
-                'О себе'                        => ['id' => 'about', 'type' => 'string'],
-                'Спец. требования'              => ['id' => 'spec_requirements', 'type' => 'string'],
-                'Ссылка на резюме'              => ['id' => 'link_resume', 'type' => 'string'],
-                'Специальность'                 => ['id' => 'specialist_specialties', 'type' => 'array'],
-                'Контакты'                      => ['id' => 'contact_info', 'type' => 'array_string'],
-                'пропуск'                       => ['id' => 'empty', 'type' => 'bool'],
+                'type'              => ['id' => 'ai_type', 'type' => 'string'],
+                'reason'            => ['id' => 'ai_reason', 'type' => 'string'],
+                'experience'        => ['id' => 'experience', 'type' => 'string'],
+                'soft_experience'   => ['id' => 'soft_experience', 'type' => 'string'],
+                'education'         => ['id' => 'education', 'type' => 'string'],
+                'work_schedule'     => ['id' => 'work_schedule', 'type' => 'string'],
+                'total_work_project'=> ['id' => 'total_work_project', 'type' => 'string'],
+                'type_of_work'      => ['id' => 'type_of_work', 'type' => 'string'],
+                'price_by_hour'     => ['id' => 'price_by_hour', 'type' => 'price'],
+                'price_by_project'  => ['id' => 'price_by_project', 'type' => 'price'],
+                'price_by_month'    => ['id' => 'price_by_month', 'type' => 'price'],
+                'about'             => ['id' => 'about', 'type' => 'string'],
+                'spec_requirements' => ['id' => 'spec_requirements', 'type' => 'string'],
+                'link_resume'       => ['id' => 'link_resume', 'type' => 'string'],
+                'specialities'      => ['id' => 'specialities', 'type' => 'array'],
+                'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
             ];
         }
     }
@@ -116,7 +122,7 @@ class ApiAIYandex
             'completionOptions' => [
                 'stream' => false,
                 'temperature' => 0.3,
-                'maxTokens' => 1000,
+                'maxTokens' => 1200,
             ],
             'messages' => [
                 [
@@ -137,6 +143,7 @@ class ApiAIYandex
         $result = $this->sendRequest();
         $aiText = $this->parseResponse($result);
         $keyRows = $this->getKeyRows($isCompany);
+
         $modelRows = [];
         foreach ($keyRows as $id => $row) {
             $modelRows[$row['id']] = $aiText[$id] ?? null;
@@ -144,12 +151,7 @@ class ApiAIYandex
                 continue;
             }
 
-            if ($row['type'] == 'string') {
-                if(is_array($modelRows[$row['id']])) {
-                    $modelRows[$row['id']] = implode('; ', $modelRows[$row['id']]);
-                }
-                $modelRows[$row['id']] = trim($modelRows[$row['id']]);
-            } elseif ($row['type'] == 'price') {
+            if ($row['type'] == 'price') {
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']]*100; // Сумма в копейках
             } elseif ($row['type'] == 'integer') {
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']];
@@ -157,7 +159,9 @@ class ApiAIYandex
                 $modelRows[$row['id']] = $modelRows[$row['id']];
             } elseif ($row['type'] == 'array_string') {
                 $tmp = [];
-                foreach ($modelRows[$row['id']] as $key => $val) {
+                $arr = $modelRows[$row['id']][0] ?? $modelRows[$row['id']];
+
+                foreach ($arr as $key => $val) {
                     if ($val) {
                         $tmp[] = $key.': '.$val;
                     }
@@ -165,6 +169,11 @@ class ApiAIYandex
                 $modelRows[$row['id']] = implode('; ', $tmp);
             } elseif ($row['type'] == 'bool') {
                 $modelRows[$row['id']] = (bool)$modelRows[$row['id']];
+            } else {
+                if(is_array($modelRows[$row['id']])) {
+                    $modelRows[$row['id']] = implode('; ', $modelRows[$row['id']]);
+                }
+                $modelRows[$row['id']] = trim($modelRows[$row['id']]);
             }
         }
 
@@ -196,6 +205,7 @@ class ApiAIYandex
         $headers = $this->getHeaders();
         $json = $this->generateJson();
 
+        $this->logging($this->text);
         $response = Http::withHeaders($headers)->post($this->url, $json);
 
         if ($response->status() !== 200) {
@@ -206,6 +216,21 @@ class ApiAIYandex
             throw new \Exception('Не удалось получить ответ: '.$response->body());
         }
 
+        $this->logging($response->json()['result']);
+
         return $response->json()['result'];
+    }
+
+    public function logging(mixed $text, bool $isError = false)
+    {
+        if (!$this->aiLogging) {
+            return false;
+        }
+
+        if ($isError === true) {
+            Log::channel('ai_debug')->error($text);
+        } else {
+            Log::channel('ai_debug')->info($text);
+        }
     }
 }

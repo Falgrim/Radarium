@@ -19,6 +19,7 @@ use App\Services\Dictionary;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AiParsePrivatePosts extends Command
 {
@@ -74,6 +75,7 @@ class AiParsePrivatePosts extends Command
                     $this->info('Анализ поста: '.$post->id);
 
                     $ApiAIYandex = new ApiAIYandex;
+                    $ApiAIYandex->logging('Анализ поста: '.$post->id);
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
@@ -83,11 +85,18 @@ class AiParsePrivatePosts extends Command
                         // Удаляем старое резюме, на случай повторного прогона поста
                         Specialist::where('api_channel_post_id', $post->id)->delete();
 
-                        if (isset($result['json']['empty']) AND $result['json']['empty'] === true) {
-                            $post->ai_result = $result['origin'];
-                            $post->ai_date = now();
-                            $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
+                        print_r($result['json']);
+
+                        $post->ai_result = $result['origin'];
+                        $post->ai_date = now();
+
+                        $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
+
+                        if ($result['json']['ai_type'] != 'резюме' AND $result['json']['ai_type'] != 'предоставление услуги') {
+                            $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
                             $post->save();
+
+                            $this->warn('Тип сообщения: '.$result['json']['ai_type']);
                             continue;
                         }
 
@@ -99,45 +108,29 @@ class AiParsePrivatePosts extends Command
                             $result['json']['contact_info'] = '';
                         }
 
-                        if ($result['json']['ai_type'] != 'резюме') {
-                            $result['json']['status'] = SpecialistStatusEnum::Error;
-                        } else {
-                            $result['json']['status'] = SpecialistStatusEnum::InModeration;
-                        }
+                        $result['json']['status'] = SpecialistStatusEnum::InModeration;
 
                         $specialistSpecialties = [];
-                        if (isset($result['json']['specialist_specialties'])) {
-                            $specialistSpecialties = $result['json']['specialist_specialties'];
-                            unset($result['json']['specialist_specialties']);
+                        if (isset($result['json']['specialities'])) {
+                            $specialistSpecialties = $result['json']['specialities'];
+                            unset($result['json']['specialities']);
                         }
 
                         $specialist = Specialist::create($result['json']);
 
                         if (count($specialistSpecialties)) {
                             $dictionaryArr = [];
-                            if (is_array($specialistSpecialties[0]['name'])) {
-                                foreach ($specialistSpecialties[0]['name'] as $key => $val) {
-                                    $dictionaryArr[] = $dictionary->getOrCreate(
-                                        DictionaryEnum::Speciality,
-                                        $specialistSpecialties[0]['name'][$key],
-                                        $specialistSpecialties[0]['short_name'][$key] ?? null
-                                    );
-                                }
-                            } else {
-                                foreach ($specialistSpecialties as $specialistSpecialty) {
-                                    $dictionaryArr[] = $dictionary->getOrCreate(
-                                        DictionaryEnum::Speciality,
-                                        $specialistSpecialty['name'],
-                                        is_array($specialistSpecialty['short_name']) ? $specialistSpecialty['short_name'][0] : $specialistSpecialty['short_name']
-                                    );
-                                }
+                            foreach ($specialistSpecialties as $specialistSpecialty) {
+                                $dictionaryArr[] = $dictionary->getOrCreate(
+                                    DictionaryEnum::Speciality,
+                                    $specialistSpecialty['name'],
+                                    $specialistSpecialty['short_name']
+                                );
                             }
 
                             $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $dictionaryArr);
                         }
 
-                        $post->ai_result = $result['origin'];
-                        $post->ai_date = now();
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
@@ -147,7 +140,6 @@ class AiParsePrivatePosts extends Command
                             $this->info('Данный пост не является типом резюме');
                         }
                     } else {
-                        $post->ai_date = now();
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
                         $post->save();
                         $this->warn('По специалисту не найдены данные');
@@ -157,8 +149,9 @@ class AiParsePrivatePosts extends Command
                 }
             } catch (\Exception $e) {
                 $this->error($e->getMessage());
-                Log::channel('post_ai')->error($e->getMessage());
+                $ApiAIYandex->logging($e->getMessage(), true);
 
+                $post->ai_result = $e->getMessage();
                 $post->ai_date = now();
                 $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
                 $post->save();
