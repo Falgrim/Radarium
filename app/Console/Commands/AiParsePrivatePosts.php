@@ -118,7 +118,7 @@ class AiParsePrivatePosts extends Command
                                     $dictionaryArr[] = $dictionary->getOrCreate(
                                         DictionaryEnum::Speciality,
                                         $specialistSpecialties[0]['name'][$key],
-                                        $specialistSpecialties[0]['short_name'][$key]
+                                        $specialistSpecialties[0]['short_name'][$key] ?? null
                                     );
                                 }
                             } else {
@@ -126,7 +126,7 @@ class AiParsePrivatePosts extends Command
                                     $dictionaryArr[] = $dictionary->getOrCreate(
                                         DictionaryEnum::Speciality,
                                         $specialistSpecialty['name'],
-                                        $specialistSpecialty['short_name']
+                                        is_array($specialistSpecialty['short_name']) ? $specialistSpecialty['short_name'][0] : $specialistSpecialty['short_name']
                                     );
                                 }
                             }
