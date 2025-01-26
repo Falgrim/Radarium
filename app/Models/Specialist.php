@@ -115,7 +115,7 @@ class Specialist extends Model
                 if ($specialitiesCount) {
                     $specialities = is_array($specialist->specialitiesForMoonshine) ? $specialist->specialitiesForMoonshine : $specialist->specialitiesForMoonshine->toArray();
                     $dictionary = new Dictionary;
-                    $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialities);
+                    $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $specialities);
                 }
                 unset($specialist->specialitiesForMoonshine);
             }
@@ -126,13 +126,13 @@ class Specialist extends Model
                 if (is_array($specialist->specialitiesForMoonshine)) {
                     if (count($specialist->specialitiesForMoonshine)) {
                         $dictionary = new Dictionary;
-                        $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialist->specialitiesForMoonshine);
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $specialist->specialitiesForMoonshine);
                     }
                 } else {
                     if ($specialist->specialitiesForMoonshine->count()) {
                         $specialities = new Collection($specialist->specialitiesForMoonshine->toArray());
                         $dictionary = new Dictionary;
-                        $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $specialities->pluck('id')->toArray());
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $specialities->pluck('id')->toArray());
                     }
                 }
 

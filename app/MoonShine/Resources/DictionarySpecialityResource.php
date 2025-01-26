@@ -87,6 +87,14 @@ class DictionarySpecialityResource extends ModelResource
         return [];
     }
 
+    public function search(): array
+    {
+        return [
+            'title' => ['required', 'string', 'min:2', 'max:100'],
+            'short_name' => ['sometimes', 'required', 'string', 'min:1', 'max:50'],
+        ];
+    }
+
     public function indexFields(): array
     {
         return [

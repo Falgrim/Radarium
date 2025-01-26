@@ -8,6 +8,7 @@ use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\SpecialistStatusEnum;
+use App\Models\DictionarySpeciality;
 use App\Models\Specialist;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CompanyJob;
@@ -17,6 +18,7 @@ use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Relationships\HasOne;
+use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
 use MoonShine\Handlers\ImportHandler;
@@ -82,13 +84,21 @@ class CompanyJobResource extends ModelResource
         return [];
     }
 
+    public function search(): array
+    {
+        return ['post.post'];
+    }
+
     public function filters(): array
     {
         return [
             Text::make('ID', 'id'),
             DateRange::make('Дата сообщения', 'post_date')->withTime(),
             DateRange::make('Создан', 'created_at')->withTime(),
-            Enum::make('Статус', 'status')->attach(CompanyJobStatusEnum::class),
+            Select::make('Статус', 'status')
+                ->options(
+                    CompanyJobStatusEnum::getList()
+                ),
         ];
     }
 
@@ -96,18 +106,8 @@ class CompanyJobResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            HasOne::make('Аккаунт', 'apiPostUser', resource: new ApiPostUserResource())->fields([
-                //Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-                Text::make('Логин', 'username'),
-                Text::make('Имя', 'fio', fn($item) => 'ID ['.$item->id.']: '.trim($item->last_name.' '.$item->first_name)),
-                //Date::make('Создан', 'created_at')->withTime(),
-            ]),
-            HasOne::make('Пост', 'apiChannelPost', resource: new ApiChannelPostResource())->fields([
-                //Text::make('ID', 'id'),
-                Date::make('Дата пуб.', 'post_date'),
-                Date::make('Создан', 'created_at'),
-            ]),
-            Text::make('Описание', 'description', fn($item) => Str::limit($item->description, 100)),
+            Text::make('Пост', 'post', fn($item) => Str::limit($item->post->post, 200)),
+            Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),
             Enum::make('Статус', 'status')->attach(CompanyJobStatusEnum::class)->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
@@ -123,6 +123,7 @@ class CompanyJobResource extends ModelResource
             Date::make('Дата сообщения', 'post_date')->withTime(),
             Text::make('Название компании', 'company_name'),
             Text::make('Должность', 'position'),
+            Text::make('Специальность', 'specialities', fn($item) => implode(', ', $item->specialtiesWithTitle())),
             Text::make('Предлагаемый оклад (мин.)', 'min_price'),
             Text::make('Предлагаемый оклад (макс.)', 'max_price'),
             Text::make('Обязанности', 'duty'),
@@ -166,9 +167,20 @@ class CompanyJobResource extends ModelResource
     {
         $fields = [];
 
+        $dictionarySpeciality = DictionarySpeciality::get();
+        $dictionaryArr = [];
+        foreach ($dictionarySpeciality as $row) {
+            $dictionaryArr[$row['id']] = $row['title'];
+        }
+
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
         $fields[] = Date::make('Дата сообщения', 'post_date')->withTime()->disabled()->readonly();
         $fields[] = Text::make('Название компании', 'company_name');
+        $fields[] = Select::make('Специальность', 'specialitiesForMoonshine')
+            ->options($dictionaryArr)
+            ->multiple()
+            ->nullable()
+            ->searchable();
         $fields[] = Text::make('Должность', 'position');
         $fields[] = Text::make('Предлагаемый оклад (мин.)', 'min_price');
         $fields[] = Text::make('Предлагаемый оклад (макс.)', 'max_price');

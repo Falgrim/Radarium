@@ -60,6 +60,11 @@ class CompanyJobReviewResource extends ModelResource
         return null;
     }
 
+    public function search(): array
+    {
+        return ['text'];
+    }
+
     public function filters(): array
     {
         return [

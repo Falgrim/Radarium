@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enum\DictionaryEnum;
 use App\Models\DictionarySpeciality;
+use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use Faker\Core\DateTime;
 use Illuminate\Support\Facades\Http;
@@ -30,21 +31,34 @@ class Dictionary
         return $rowData->id;
     }
 
-    public function updateRelations(DictionaryEnum $dictionary, int $rowId, array $dictionaryIds): void
+    public function updateRelations(DictionaryEnum $dictionary, string $model, int $rowId, array $dictionaryIds): void
     {
+        $rowIdName = '';
+        if ($model === 'specialist') {
+            $rowIdName = 'specialist_id';
+            $modelSpeciality = 'App\Models\SpecialistSpeciality';
+        } elseif ($model === 'companyJob') {
+            $rowIdName = 'company_job_id';
+            $modelSpeciality = 'App\Models\CompanyJobSpeciality';
+        }
+
+        if (!$rowIdName) {
+            throw new \Exception('Модель не найдена');
+        }
+
         if (DictionaryEnum::Speciality === $dictionary) {
             if (!count($dictionaryIds)) {
-                SpecialistSpeciality::where('specialist_id', $rowId)->delete();
+                $modelSpeciality::where($rowIdName, $rowId)->delete();
                 return;
             }
 
-            SpecialistSpeciality::where('specialist_id', $rowId)
+            $modelSpeciality::where($rowIdName, $rowId)
                 ->whereNotIn('dictionary_speciality_id', array_values($dictionaryIds))
                 ->delete();
 
             foreach ($dictionaryIds as $dictionaryId) {
-                SpecialistSpeciality::firstOrCreate([
-                    'specialist_id' => $rowId,
+                $modelSpeciality::firstOrCreate([
+                    $rowIdName => $rowId,
                     'dictionary_speciality_id' => $dictionaryId,
                 ]);
             }

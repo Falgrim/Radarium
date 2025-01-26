@@ -44,8 +44,8 @@ class CompanyJobSpeciality extends Model
         return $this->hasMany(CompanyJob::class);
     }
 
-    public function speciality(): HasOne
+    public function dictionarySpeciality(): HasOne
     {
-        return $this->hasOne(DictionarySpeciality::class);
+        return $this->hasOne(DictionarySpeciality::class, 'id', 'dictionary_speciality_id');
     }
 }

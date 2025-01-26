@@ -44,22 +44,21 @@ class ApiAIYandex
     {
         if ($isCompany === IsCompanyEnum::Company) {
             return [
-                'type'             => ['id' => 'ai_type', 'type' => 'string'],
-                'reason'          => ['id' => 'ai_reason', 'type' => 'string'],
-                'Должность'                 => ['id' => 'position', 'type' => 'string'],
-                'Название компании'         => ['id' => 'company_name', 'type' => 'string'],
-                'Предлагаемый оклад (от)'   => ['id' => 'min_price', 'type' => 'price'],
-                'Предлагаемый оклад (до)'   => ['id' => 'max_price', 'type' => 'price'],
-                'Обязанности'               => ['id' => 'duty', 'type' => 'string'],
-                'Требования'                => ['id' => 'requirement', 'type' => 'string'],
-                'График'                    => ['id' => 'work_schedule', 'type' => 'string'],
-                'Тип работы'                => ['id' => 'type_of_work', 'type' => 'string'],
-                'Описание проекта'          => ['id' => 'description', 'type' => 'string'],
-                'Срок найма'                => ['id' => 'period', 'type' => 'string'],
-                'Дополнительные условия'    => ['id' => 'extra_conditions', 'type' => 'string'],
-                'Специальность'             => ['id' => 'company_job_specialties', 'type' => 'array'],
-                'Контакты'                  => ['id' => 'contact_info', 'type' => 'array_string'],
-                'пропуск'                   => ['id' => 'empty', 'type' => 'bool'],
+                'type'          => ['id' => 'ai_type', 'type' => 'string'],
+                'reason'        => ['id' => 'ai_reason', 'type' => 'string'],
+                'position'      => ['id' => 'position', 'type' => 'string'],
+                'company_name'  => ['id' => 'company_name', 'type' => 'string'],
+                'min_price'     => ['id' => 'min_price', 'type' => 'price'],
+                'max_price'     => ['id' => 'max_price', 'type' => 'price'],
+                'duty'          => ['id' => 'duty', 'type' => 'string'],
+                'requirement'   => ['id' => 'requirement', 'type' => 'string'],
+                'work_schedule' => ['id' => 'work_schedule', 'type' => 'string'],
+                'type_of_work'  => ['id' => 'type_of_work', 'type' => 'string'],
+                'description'   => ['id' => 'description', 'type' => 'string'],
+                'period'        => ['id' => 'period', 'type' => 'string'],
+                'extra_conditions'  => ['id' => 'extra_conditions', 'type' => 'string'],
+                'specialities'      => ['id' => 'specialities', 'type' => 'array'],
+                'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
             ];
         } elseif ($isCompany === IsCompanyEnum::Private) {
             return [

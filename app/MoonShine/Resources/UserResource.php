@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources;
 
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\SpecialistStatusEnum;
 use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 
 use MoonShine\Fields\Date;
+use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Password;
@@ -17,6 +19,7 @@ use Illuminate\Validation\Rules\Password as ValidPassword;
 use MoonShine\Fields\PasswordRepeat;
 use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
+use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
@@ -81,6 +84,21 @@ class UserResource extends ModelResource
             'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
             'password' => $item->exists ? ['sometimes', 'nullable', ValidPassword::min(6)] : ['required', ValidPassword::min(6)],
+        ];
+    }
+
+    public function search(): array
+    {
+        return [];
+    }
+
+    public function filters(): array
+    {
+        return [
+            Text::make('ID', 'id'),
+            Email::make('Почта', 'email'),
+            Text::make('Телефон', 'phone'),
+            DateRange::make('Регистрация', 'created_at')->withTime(),
         ];
     }
 

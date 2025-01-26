@@ -86,6 +86,11 @@ class ApiChannelPostResource extends ModelResource
         ];
     }
 
+    public function search(): array
+    {
+        return ['post'];
+    }
+
     public function filters(): array
     {
         return [

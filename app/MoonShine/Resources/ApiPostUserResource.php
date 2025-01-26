@@ -93,6 +93,11 @@ class ApiPostUserResource extends ModelResource
         ];
     }
 
+    public function search(): array
+    {
+        return [];
+    }
+
     public function filters(): array
     {
         return [

@@ -92,18 +92,15 @@ class SpecialistResource extends ModelResource
         return [];
     }
 
+    public function search(): array
+    {
+        return ['post.post'];
+    }
+
     public function filters(): array
     {
         return [
             Text::make('ID', 'id'),
-            //BelongsTo::make('Сообщение', 'post', resource: new ApiChannelPostResource()),
-            /*DateRange::make('Дата публикации', 'post_date_publ')->onApply(function(Builder $query, $value, Field $field) {
-                return Specialist::has('post', function (Builder $query) {
-                    global $value;
-                    $query->whereBetween('post_date', [$value['from'], $value['to']]);
-                });
-                //return $query->post()->whereBetween('post_date', [$value['from'], $value['to']]);
-            })->withTime(),*/
             DateRange::make('Дата сообщения', 'post_date')->withTime(),
             DateRange::make('Создан', 'created_at')->withTime(),
             Select::make('Статус', 'status')

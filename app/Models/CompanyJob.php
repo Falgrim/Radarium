@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enum\CompanyJobStatusEnum;
+use App\Enum\DictionaryEnum;
+use App\Services\Dictionary;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class CompanyJob extends Model
 {
@@ -60,6 +63,11 @@ class CompanyJob extends Model
         ];
     }
 
+    public function post(): BelongsTo
+    {
+        return $this->belongsTo(ApiChannelPost::class, 'api_channel_post_id', 'id');
+    }
+
     public function apiPostUser(): HasOne
     {
         return $this->HasOne(ApiPostUser::class, 'id', 'api_post_user_id');
@@ -75,8 +83,63 @@ class CompanyJob extends Model
         return $this->hasMany(CompanyJobReview::class);
     }
 
-    public function specialties(): HasMany
+    // Костыль, чтобы адинка увидела корректно связи при редактировании
+    public function specialitiesForMoonshine(): HasMany
     {
-        return $this->hasMany(SpecialistSpeciality::class);
+        return $this->hasMany(CompanyJobSpeciality::class, 'company_job_id', 'id')->select('dictionary_speciality_id as id', 'company_job_id');
+    }
+
+    public function specialities(): HasMany
+    {
+        return $this->hasMany(CompanyJobSpeciality::class, 'company_job_id', 'id');
+    }
+
+    public function specialtiesWithTitle(): array
+    {
+        $data = $this->through('specialities')->has('dictionarySpeciality')->get();
+        $result = [];
+        foreach ($data as $row) {
+            $result[$row->id] = $row->title;
+        }
+        return $result;
+    }
+
+    /**
+     * Метод «booted» модели.
+     */
+    protected static function booted(): void
+    {
+        parent::boot();
+
+        static::creating(function (CompanyJob $companyJob) {
+            if (isset($companyJob->specialitiesForMoonshine)) {
+                $specialitiesCount = is_array($companyJob->specialitiesForMoonshine) ? count($companyJob->specialitiesForMoonshine) : $companyJob->specialitiesForMoonshine->count();
+                if ($specialitiesCount) {
+                    $specialities = is_array($companyJob->specialitiesForMoonshine) ? $companyJob->specialitiesForMoonshine : $companyJob->specialitiesForMoonshine->toArray();
+                    $dictionary = new Dictionary;
+                    $dictionary->updateRelations(DictionaryEnum::Speciality, 'companyJob', $companyJob->id, $specialities);
+                }
+                unset($companyJob->specialitiesForMoonshine);
+            }
+        });
+
+        static::updating(function (CompanyJob $companyJob) {
+            if (isset($companyJob->specialitiesForMoonshine)) {
+                if (is_array($companyJob->specialitiesForMoonshine)) {
+                    if (count($companyJob->specialitiesForMoonshine)) {
+                        $dictionary = new Dictionary;
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'companyJob', $companyJob->id, $companyJob->specialitiesForMoonshine);
+                    }
+                } else {
+                    if ($companyJob->specialitiesForMoonshine->count()) {
+                        $specialities = new Collection($companyJob->specialitiesForMoonshine->toArray());
+                        $dictionary = new Dictionary;
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'companyJob', $companyJob->id, $specialities->pluck('id')->toArray());
+                    }
+                }
+
+                unset($companyJob->specialitiesForMoonshine);
+            }
+        });
     }
 }

@@ -59,7 +59,6 @@ class AiParsePrivatePosts extends Command
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
             ->where('api_channels.is_company', IsCompanyEnum::Private)
-            ->orderBy('api_channel_posts.created_at', 'asc')
             ->count();
 
         $this->info('В обработку постов: '.count($posts).' из '.$postsAll);
@@ -126,7 +125,7 @@ class AiParsePrivatePosts extends Command
                                 );
                             }
 
-                            $dictionary->updateRelations(DictionaryEnum::Speciality, $specialist->id, $dictionaryArr);
+                            $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $dictionaryArr);
                         }
 
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
