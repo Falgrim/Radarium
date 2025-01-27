@@ -96,8 +96,6 @@ class ReadTelegramChats
             }
         }
 
-        //$MadelineProto->report('1111');
-
         if ($countMsgFiltered = count($messages)) {
             $lastPostId = last($messages)['id'] ?? null;
             $lastDate = last($messages)['date'] ?? null;
@@ -105,6 +103,15 @@ class ReadTelegramChats
             foreach ($messages as $message) {
                 if ($this->apiChannel->last_post_id AND $this->apiChannel->last_post_id >= $message['id']) {
                     continue;
+                }
+
+                $postCheck = ApiChannelPost::where('post_id', '!=', $message['id'])
+                    ->where('post', trim($message['message']))
+                    ->orderByDesc('post_date')
+                    ->first();
+
+                if (!is_null($postCheck)) {
+                    $this->setWarnMsg('Дубликат: '.$message['id'].' (БД '.$postCheck->id.')');
                 }
 
                 $this->setInfoMsg('Add ID: '.$message['id']);
@@ -158,7 +165,7 @@ class ReadTelegramChats
                     'post_id'           => $message['id'],
                     'post_date'         => Carbon::createFromTimestamp($message['date'])->toDateTimeString(),
                     'post'              => trim($message['message']),
-                    'ai_parse_status'   => ApiChannelPostStatusEnum::InQueue,
+                    'ai_parse_status'   => is_null($postCheck) ? ApiChannelPostStatusEnum::InQueue : ApiChannelPostStatusEnum::Duplicate,
                 ]);
 
                 if ($post->wasRecentlyCreated === true) {

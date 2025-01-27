@@ -13,6 +13,8 @@ enum ApiChannelPostStatusEnum:int {
 
     case DontMatch = 4;
 
+    case Duplicate = 5;
+
     public function toString(): ?string
     {
         return match ($this) {
@@ -21,6 +23,7 @@ enum ApiChannelPostStatusEnum:int {
             self::Error     => 'Ошибка обработки',
             self::DontMatch => 'Тип выборки не подходит',
             self::Empty     => 'Нет данных',
+            self::Duplicate => 'Повтор',
         };
     }
 
@@ -37,6 +40,7 @@ enum ApiChannelPostStatusEnum:int {
             self::Error     => 'danger',
             self::DontMatch => 'purple',
             self::Empty     => 'yellow',
+            self::Duplicate => 'yellow',
         };
     }
 
