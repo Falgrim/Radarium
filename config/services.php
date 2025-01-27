@@ -39,4 +39,8 @@ return [
         'logging' => env('AI_LOGGING', false),
         'debug' => env('AI_DEBUG', false),
     ],
+
+    'tubus' => [
+        'token' => env('TUBUS_TOKEN', null),
+    ],
 ];

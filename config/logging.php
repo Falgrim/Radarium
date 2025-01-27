@@ -144,6 +144,12 @@ return [
             'level' => 'info',
             'path' => storage_path('logs/ai_debug.log'),
         ],
+
+        'tubus' => [
+            'driver' => 'single',
+            'level' => 'info',
+            'path' => storage_path('logs/tubus.log'),
+        ],
     ],
 
 ];

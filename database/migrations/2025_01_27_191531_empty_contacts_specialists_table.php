@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('specialists', function (Blueprint $table) {
-            $table->text('contact_info')->nullable()->default('')->change();
+            $table->string('contact_info')->nullable()->change();
         });
 
         Schema::table('company_jobs', function (Blueprint $table) {
-            $table->text('contact_info')->nullable()->default('')->change();
+            $table->string('contact_info')->nullable()->change();
         });
     }
 

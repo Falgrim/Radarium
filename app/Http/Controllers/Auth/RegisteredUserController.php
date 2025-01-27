@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserRequest;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -43,26 +44,20 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(UserRequest $request): RedirectResponse
     {
         if (!$this->checkAllowRegistrations()) {
             abort(403);
         }
 
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'phone:mobile,RU'],
-            'user_role_id' => ['exists:App\Models\UserRole,id'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        $validated = $request->validated();
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'user_role_id' => $request->user_role_id,
-            'password' => Hash::make($request->password),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'user_role_id' => $validated['user_role_id'],
+            'password' => Hash::make($validated['password']),
         ]);
 
         event(new Registered($user));

@@ -32,6 +32,7 @@ class User extends Authenticatable
         'phone',
         'password',
         'user_role_id',
+        'tubus_id',
     ];
 
     /**
