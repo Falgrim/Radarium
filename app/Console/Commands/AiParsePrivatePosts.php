@@ -89,7 +89,10 @@ class AiParsePrivatePosts extends Command
 
                         $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
 
-                        if ($result['json']['ai_type'] != 'резюме' AND $result['json']['ai_type'] != 'предоставление услуги') {
+                        if (
+                            $result['json']['ai_type'] != 'резюме' AND
+                            $result['json']['ai_type'] != 'предоставление услуги' AND
+                            $result['json']['ai_type'] != 'предложение услуг') {
                             $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
                             $post->save();
 
