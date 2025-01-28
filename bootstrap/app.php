@@ -60,4 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $schedule->command('app:ai_parse:private');
                 $schedule->command('app:ai_parse:company');
             });
+
+        // Синхронизация с Тубус
+        $schedule->command('app:tubus')->hourly()->withoutOverlapping();
     })->create();
