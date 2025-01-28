@@ -118,6 +118,7 @@ class UserResource extends ModelResource
             Text::make('Имя', 'name')->sortable(),
             Text::make('Телефон', 'phone')->sortable(),
             Email::make('Почта', 'email')->sortable(),
+            Email::make('Tubus ID', 'tubus_id')->sortable(),
             Date::make('Регистрация', 'created_at')->withTime()->sortable(),
         ];
     }
@@ -130,6 +131,7 @@ class UserResource extends ModelResource
             Text::make('Имя', 'name'),
             Text::make('Телефон', 'phone'),
             Email::make('Почта', 'email'),
+            Email::make('Tubus ID', 'tubus_id'),
             Date::make('Регистрация', 'created_at')->withTime(),
         ];
     }
@@ -139,6 +141,7 @@ class UserResource extends ModelResource
         $fields = [];
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = Text::make('Tubus ID', 'tubus_id')->disabled()->readonly();
         $fields[] = BelongsTo::make('Роль', 'userRole');
         $fields[] = Text::make('Имя', 'name');
         $fields[] = Text::make('Телефон', 'phone');

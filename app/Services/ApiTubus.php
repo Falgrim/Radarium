@@ -10,11 +10,9 @@ use Illuminate\Support\Facades\Log;
 
 class ApiTubus
 {
-    protected string $apiToken;
+    protected ?string $apiToken;
 
     protected string $url = 'https://tubus.pro/api';
-
-    protected bool $apiToken = null;
 
     public function __construct()
     {
@@ -24,55 +22,55 @@ class ApiTubus
     protected function getHeaders(): array
     {
         return [
-            'Content-Type' => 'application/json',
+            'Content-Type' => 'text/html; charset=UTF-8',
         ];
     }
 
     public function checkUser(string $phone): array
     {
+        $phone = str_replace('+', '', $phone);
         $data = [
-            'key' => $this->apiToken,
             'phone' => $phone,
         ];
 
-        $result = $this->sendRequest('/user_test.php', $data);
+        $result = $this->sendRequest('/user.php', $data);
 
-        return $result['user'];
+        return $result;
     }
 
-    public function addUser(User $user): bool
+    public function linkUser(User $user): bool
     {
         $data = [
-            'key' => $this->apiToken,
-            'phone' => $user->phone,
+            'phone' => str_replace('+', '', $user->phone),
             'performer_user_id' => $user->id,
         ];
 
-        $result = $this->sendRequest('/user_performer_user_id_test.php', $data);
+        $result = $this->sendRequest('/user_performer_user_id.php', $data);
 
         return $result['status'] === 'ok';
     }
 
     protected function sendRequest(string $method, array $data)
     {
-        $headers = $this->getHeaders();
-        $json = json_encode($data);
-
-        $this->logging($json);
-        $response = Http::withHeaders($headers)->post($this->url.$method, $json);
-
-        if ($response->status() !== 200) {
-            throw new \Exception('Не удалось отправить запрос: '.$response->body());
+        if (is_null($this->apiToken)) {
+            throw new \Exception('Не указан токен для запроса');
         }
 
-        if ($response->status() !== 401) {
+        $data['key'] = $this->apiToken;
+
+        $headers = $this->getHeaders();
+
+        $this->logging($data);
+        $response = Http::withHeaders($headers)->asForm()->post($this->url.$method, $data);
+
+        if ($response->status() === 401) {
             $this->logging($response->body(), true);
             throw new \Exception('Ошибка доступа: '.$response->body());
         }
 
-        if (!$response->json()['phone']) {
+        if ($response->status() !== 200) {
             $this->logging($response->body(), true);
-            throw new \Exception('Не удалось получить ответ: '.$response->body());
+            throw new \Exception('Не удалось отправить запрос: '.$response->body());
         }
 
         $this->logging($response->json());
