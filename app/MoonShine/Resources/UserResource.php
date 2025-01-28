@@ -29,6 +29,7 @@ use MoonShine\Fields\Field;
 use MoonShine\Components\MoonShineComponent;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\Rule;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 /**
  * @extends ModelResource<User>
@@ -70,6 +71,13 @@ class UserResource extends ModelResource
         ];
     }
 
+    public function prepareForValidation(): void
+    {
+        request()?->merge([
+            'phone' => (string) new PhoneNumber(request()?->string('phone')->value(), 'RU'),
+        ]);
+    }
+
     /**
      * @param User $item
      *
@@ -80,7 +88,7 @@ class UserResource extends ModelResource
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'phone:mobile,RU'],
+            'phone' => ['required', 'phone:mobile,RU', 'unique:'.User::class.',phone,'.$item->id],
             'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
             'password' => $item->exists ? ['sometimes', 'nullable', ValidPassword::min(6)] : ['required', ValidPassword::min(6)],
