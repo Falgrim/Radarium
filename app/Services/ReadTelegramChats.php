@@ -61,7 +61,7 @@ class ReadTelegramChats
         $params = [
             'peer'          => $this->apiChannel->link,
             'limit'         => $this->cronCountPosts?->value ?? 100,
-            'offset_date'   => !$this->apiChannel->last_date_check ? strtotime('-30 days') : strtotime($this->apiChannel->last_date_check),
+            'offset_date'   => !$this->apiChannel->last_date_check ? strtotime('2025-01-01 00:00:00') : strtotime($this->apiChannel->last_date_check),
         ];
 
         $messages = $MadelineProto->messages->getHistory($params);

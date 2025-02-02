@@ -16,6 +16,7 @@ class DictionarySpeciality extends Model
     protected $fillable = [
         'title',
         'short_name',
+        'okso_code',
         'created_at',
         'updated_at',
     ];

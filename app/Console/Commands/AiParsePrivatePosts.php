@@ -46,7 +46,7 @@ class AiParsePrivatePosts extends Command
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
             ->where('api_channels.is_company', IsCompanyEnum::Private)
-            ->orderBy('api_channel_posts.created_at', 'asc')
+            ->orderBy('api_channel_posts.post_date', 'asc')
             ->take(30)
             ->get();
 
@@ -92,10 +92,12 @@ class AiParsePrivatePosts extends Command
                         if (
                             $result['json']['ai_type'] != 'резюме' AND
                             $result['json']['ai_type'] != 'предоставление услуги' AND
-                            $result['json']['ai_type'] != 'предложение услуг') {
+                            $result['json']['ai_type'] != 'предложение услуг'
+                        ) {
                             $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
                             $post->save();
 
+                            //$this->info($post->post);
                             $this->warn('Тип сообщения: '.$result['json']['ai_type']);
                             continue;
                         }
@@ -121,10 +123,12 @@ class AiParsePrivatePosts extends Command
                         if (count($specialistSpecialties)) {
                             $dictionaryArr = [];
                             foreach ($specialistSpecialties as $specialistSpecialty) {
+                                $specInfo = $dictionary->parseOkcoString($specialistSpecialty);
                                 $dictionaryArr[] = $dictionary->getOrCreate(
                                     DictionaryEnum::Speciality,
-                                    $specialistSpecialty['name'],
-                                    $specialistSpecialty['short_name']
+                                    $specInfo['name'],
+                                    $specInfo['short_name'],
+                                    $specInfo['code'],
                                 );
                             }
 

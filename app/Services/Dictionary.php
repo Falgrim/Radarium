@@ -8,6 +8,7 @@ use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use Faker\Core\DateTime;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class Dictionary
 {
@@ -15,14 +16,34 @@ class Dictionary
 
     }
 
-    public function getOrCreate(DictionaryEnum $dictionary, string $title, ?string $shortName): int
+    public function parseOkcoString(string $name): array
+    {
+        preg_match('#^([0-9\.]{1,})+\s?\-?\s?(.*)$#', $name, $mathes);
+        return [
+            'code' => $mathes[1] ?? null,
+            'name' => $mathes[2] ?? null,
+            'short_name' => self::acronym($mathes[2]),
+        ];
+    }
+
+    public static function acronym (?string $name)
+    {
+        if (!$name) {
+            return null;
+        }
+        return Str::upper(Str::acronym($name));
+    }
+
+    public function getOrCreate(DictionaryEnum $dictionary, string $title, ?string $shortName, ?string $OksoCode): int
     {
         if (DictionaryEnum::Speciality === $dictionary) {
             $rowData = DictionarySpeciality::updateOrCreate([
                 'title' => $title,
+                'okso_code' => $OksoCode,
             ], [
                 'title' => $title,
                 'short_name' => $shortName,
+                'okso_code' => $OksoCode,
             ]);
         } else {
             throw new \Exception('Выбранный словарь не найден');

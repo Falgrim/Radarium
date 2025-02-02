@@ -131,7 +131,7 @@ class SpecialistResource extends ModelResource
             Text::make('Тип сообщения', 'ai_type'),
             Text::make('Подробнее о типе', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime(),
-            Text::make('Специальность', 'specialities', fn($item) => implode(', ', $item->specialtiesWithTitle())),
+            Text::make('Специальность', 'specialities', fn($item) => implode("; ", $item->specialtiesWithTitle())),
             Text::make('Опыт работы по специальности', 'experience'),
             Text::make('Владение ПО', 'soft_experience'),
             Text::make('Образование', 'education'),
@@ -182,7 +182,7 @@ class SpecialistResource extends ModelResource
         $dictionarySpeciality = DictionarySpeciality::get();
         $dictionaryArr = [];
         foreach ($dictionarySpeciality as $row) {
-            $dictionaryArr[$row['id']] = $row['title'];
+            $dictionaryArr[$row['id']] = trim($row['okso_code'].' '.$row['title']);
         }
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
