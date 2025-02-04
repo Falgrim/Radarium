@@ -107,6 +107,7 @@ class ReadTelegramChats
 
                 $postCheck = ApiChannelPost::where('post_id', '!=', $message['id'])
                     ->where('post', trim($message['message']))
+                    ->where('api_channel_id', $this->apiChannel->id)
                     ->orderByDesc('post_date')
                     ->first();
 
