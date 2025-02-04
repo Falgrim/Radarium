@@ -21,6 +21,7 @@ use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
+use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Decorations\Block;
@@ -55,6 +56,11 @@ class UserResource extends ModelResource
     protected bool $stickyTable = true;
 
     public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
+    public function export(): ?ExportHandler
     {
         return null;
     }

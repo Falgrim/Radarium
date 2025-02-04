@@ -12,6 +12,7 @@ use App\MoonShine\Resources\CompanyJobResource;
 use App\MoonShine\Resources\CompanyJobReviewResource;
 use App\MoonShine\Resources\ConfigurationResource;
 use App\MoonShine\Resources\DictionarySpecialityResource;
+use App\MoonShine\Resources\ReviewCustomFieldResource;
 use App\MoonShine\Resources\ReviewResource;
 use App\MoonShine\Resources\SpecialistResource;
 use App\MoonShine\Resources\UserResource;
@@ -34,7 +35,9 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
      */
     protected function resources(): array
     {
-        return [];
+        return [
+            new ReviewCustomFieldResource(),
+        ];
     }
 
     /**

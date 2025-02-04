@@ -7,6 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\SpecialistStatusEnum;
+use App\Models\ReviewCustomField;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Review;
@@ -17,9 +18,11 @@ use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Number;
+use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\TinyMce;
+use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Decorations\Block;
@@ -56,6 +59,11 @@ class ReviewResource extends ModelResource
     }
 
     public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
+    public function export(): ?ExportHandler
     {
         return null;
     }
@@ -145,6 +153,16 @@ class ReviewResource extends ModelResource
                 Date::make('Создан', 'created_at')->withTime(),
             ]),
             Text::make('Отзыв', 'text'),
+            Text::make('Доп. поле', 'extra_field', function () {
+                $extra = [];
+                if ($this->item->reviewCustomFields->count()) {
+                    foreach ($this->item->reviewCustomFields as $reviewCustomField) {
+                        $extra[] = $reviewCustomField['title'].': '.$reviewCustomField['value'];
+                    }
+                }
+
+                return implode('; ', $extra);
+            }),
             Enum::make('Возможность редактирования', 'can_edit')->attach(ReviewCanEditEnum::class),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5)->stars(),
             Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class),
@@ -161,6 +179,11 @@ class ReviewResource extends ModelResource
         $fields[] = TinyMce::make('Отзыв', 'text')
             ->menubar('')
             ->toolbar('undo redo | bold italic underline strikethrough | numlist bullist');
+
+        if ($this->item->reviewCustomFields->count()) {
+            $fields[] = HasMany::make('Доп. поле', 'reviewCustomFields', resource: new ReviewCustomFieldResource())->async();
+        }
+
         $fields[] = Enum::make('Возможность редактирования', 'can_edit')->attach(ReviewCanEditEnum::class);
         $fields[] = Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5)->stars();
         $fields[] = Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class);

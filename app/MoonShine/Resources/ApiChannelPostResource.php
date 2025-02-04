@@ -35,6 +35,7 @@ use MoonShine\Fields\Select;
 use MoonShine\Fields\Switcher;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
+use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Pages\Page;
@@ -48,7 +49,7 @@ class ApiChannelPostResource extends ModelResource
 
     protected string $title = 'Cообщения/Посты';
 
-    protected string $sortColumn = 'created_at';
+    protected string $sortColumn = 'post_date';
 
     protected string $sortDirection = 'DESC';
 
@@ -62,12 +63,19 @@ class ApiChannelPostResource extends ModelResource
 
     protected bool $stickyTable = true;
 
+    protected bool $columnSelection = true;
+
     public function getActiveActions(): array
     {
         return ['view', 'update', 'delete', 'massDelete'];
     }
 
     public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
+    public function export(): ?ExportHandler
     {
         return null;
     }

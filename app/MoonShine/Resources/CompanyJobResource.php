@@ -21,6 +21,7 @@ use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
+use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Decorations\Block;
@@ -37,7 +38,7 @@ class CompanyJobResource extends ModelResource
 
     protected string $title = 'Вакансии';
 
-    protected string $sortColumn = 'created_at';
+    protected string $sortColumn = 'post_date';
 
     protected string $sortDirection = 'DESC';
 
@@ -51,7 +52,14 @@ class CompanyJobResource extends ModelResource
 
     protected bool $stickyTable = true;
 
+    protected bool $columnSelection = true;
+
     public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
+    public function export(): ?ExportHandler
     {
         return null;
     }
@@ -106,6 +114,7 @@ class CompanyJobResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
+            Text::make('Пользователь', 'username', fn($item) => $item->user->username),
             Text::make('Пост', 'post', fn($item) => Str::limit($item->post->post, 200)),
             Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),

@@ -55,4 +55,9 @@ class CompanyJobReview extends Model
     {
         return $this->belongsTo(CompanyJob::class);
     }
+
+    public function reviewCustomFields(): HasMany
+    {
+        return $this->hasMany(CompanyJobReviewCustomField::class)->orderBy('title');
+    }
 }

@@ -11,6 +11,7 @@ use MoonShine\Fields\Date;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Password;
 use MoonShine\Fields\Text;
+use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Decorations\Block;
@@ -34,6 +35,11 @@ class UserRoleResource extends ModelResource
     protected string $column = 'title';
 
     public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
+    public function export(): ?ExportHandler
     {
         return null;
     }

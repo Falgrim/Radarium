@@ -56,4 +56,9 @@ class Review extends Model
     {
         return $this->belongsTo(Specialist::class);
     }
+
+    public function reviewCustomFields(): HasMany
+    {
+        return $this->hasMany(ReviewCustomField::class)->orderBy('title');
+    }
 }

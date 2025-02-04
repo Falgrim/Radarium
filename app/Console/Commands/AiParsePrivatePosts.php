@@ -124,6 +124,11 @@ class AiParsePrivatePosts extends Command
                             $dictionaryArr = [];
                             foreach ($specialistSpecialties as $specialistSpecialty) {
                                 $specInfo = $dictionary->parseOkcoString($specialistSpecialty);
+
+                                if (!$specInfo['name'] OR !$specInfo['code']) {
+                                    throw new \Exception('Ошибка определения специализации: '.json_encode($specInfo));
+                                }
+
                                 $dictionaryArr[] = $dictionary->getOrCreate(
                                     DictionaryEnum::Speciality,
                                     $specInfo['name'],

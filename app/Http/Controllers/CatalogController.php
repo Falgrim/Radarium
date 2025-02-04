@@ -10,6 +10,7 @@ use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
 use App\Models\Review;
+use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use Illuminate\Database\Query\Builder;
@@ -182,7 +183,7 @@ class CatalogController extends Controller
 
         $specialist = Specialist::where('id', $validatedRoute['id'])->firstOrFail();
 
-        Review::create([
+        $review = Review::create([
             'text'      => $validated['text'],
             'can_edit'  => ReviewCanEditEnum::Allow,
             'status'    => ReviewStatusEnum::InModeration,
@@ -191,7 +192,15 @@ class CatalogController extends Controller
             'user_id'   => Auth::user()->id,
         ]);
 
-        //TODO: добавить сохранение доп. полей
+        if (isset($validated['extra_row']) AND count($validated['extra_row'])) {
+            foreach ($validated['extra_row'] as $item) {
+                ReviewCustomField::create([
+                    'review_id' => $review->id,
+                    'title' => $item['title'],
+                    'value' => $item['value'],
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Отзыв добавлен. После модерации он появится на странице исполнителя');
     }

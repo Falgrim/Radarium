@@ -53,6 +53,11 @@ class ApiAiResource extends ModelResource
         return [];
     }
 
+    public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
     public function export(): ?ExportHandler
     {
         return null;

@@ -28,6 +28,7 @@ use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
+use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\QueryTags\QueryTag;
 use MoonShine\Resources\ModelResource;
@@ -45,7 +46,7 @@ class SpecialistResource extends ModelResource
 
     protected string $title = 'Специалисты (резюме)';
 
-    protected string $sortColumn = 'created_at';
+    protected string $sortColumn = 'post_date';
 
     protected string $sortDirection = 'DESC';
 
@@ -59,7 +60,14 @@ class SpecialistResource extends ModelResource
 
     protected bool $stickyTable = true;
 
+    protected bool $columnSelection = true;
+
     public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
+    public function export(): ?ExportHandler
     {
         return null;
     }
@@ -110,12 +118,32 @@ class SpecialistResource extends ModelResource
         ];
     }
 
+    protected function onBoot(): void
+    {
+        //dd($this, $this->getQuery());
+        if (!is_null($this->getItem())) {
+            $this->formPage()
+                ->setBreadcrumbs([
+                    $this->indexPage()->url() => $this->title(),
+                    '#' => $this->getItem()->last_name.' '.$this->getItem()->first_name.' '.$this->getItem()->middle_name,
+                ]);
+
+            $this->detailPage()->setBreadcrumbs([
+                $this->indexPage()->url() => $this->title(),
+                '#' => $this->getItem()->last_name.' '.$this->getItem()->first_name.' '.$this->getItem()->middle_name,
+            ]);
+        } else {
+            //$this->indexPage()->setTitle($this->title.': '.$this->query()->count());
+        }
+    }
+
     public function indexFields(): array
     {
         return [
             ID::make()->sortable(),
             //BelongsTo::make('Аккаунт', 'user', resource: new ApiPostUserResource()),
             //BelongsTo::make('ID поста', 'post', resource: new ApiChannelPostResource()),
+            Text::make('Пользователь', 'username', fn($item) => $item->user->username),
             Text::make('Пост', 'post', fn($item) => Str::limit($item->post->post, 200)),
             Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),

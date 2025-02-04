@@ -122,6 +122,11 @@ class AiParseCompanyPosts extends Command
                             $dictionaryArr = [];
                             foreach ($companyJobSpecialties as $companyJobSpecialty) {
                                 $specInfo = $dictionary->parseOkcoString($companyJobSpecialty);
+
+                                if (!$specInfo['name'] OR !$specInfo['code']) {
+                                    throw new \Exception('Ошибка определения специализации: '.json_encode($specInfo));
+                                }
+
                                 $dictionaryArr[] = $dictionary->getOrCreate(
                                     DictionaryEnum::Speciality,
                                     $specInfo['name'],

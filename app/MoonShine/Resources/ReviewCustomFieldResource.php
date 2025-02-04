@@ -7,8 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\SpecialistStatusEnum;
-use App\Models\DictionarySpeciality;
-use App\Models\SpecialistSpeciality;
+use App\Models\ReviewCustomField;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Review;
@@ -19,6 +18,7 @@ use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Number;
+use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\TinyMce;
@@ -33,25 +33,30 @@ use MoonShine\Components\MoonShineComponent;
 /**
  * @extends ModelResource<Review>
  */
-class DictionarySpecialityResource extends ModelResource
+class ReviewCustomFieldResource extends ModelResource
 {
-    protected string $model = DictionarySpeciality::class;
+    protected string $model = ReviewCustomField::class;
 
-    protected string $title = 'Специальности';
+    protected string $title = 'Доп. поля';
 
-    protected string $sortColumn = 'title';
+    protected string $sortColumn = 'review_id';
 
-    protected string $sortDirection = 'ASC';
+    protected string $sortDirection = 'DESC';
 
-    public string $column = 'title';
+    public string $column = 'review_id';
 
-    protected bool $isAsync = false;
+    protected bool $isAsync = true;
 
-    protected bool $editInModal = false;
+    protected bool $editInModal = true;
 
     protected bool $withPolicy = true;
 
     protected bool $stickyTable = true;
+
+    public function getActiveActions(): array
+    {
+        return ['view', 'update', 'delete', 'massDelete'];
+    }
 
     public function import(): ?ImportHandler
     {
@@ -63,10 +68,18 @@ class DictionarySpecialityResource extends ModelResource
         return null;
     }
 
+    public function search(): array
+    {
+        return ['text'];
+    }
+
     public function filters(): array
     {
         return [
-            Text::make('Название', 'title'),
+            Text::make('ID', 'id'),
+            Text::make('Отзыв ID', 'review_id')->nullable(),
+            Text::make('Заголовок', 'title')->nullable(),
+            Text::make('Значение', 'value')->nullable(),
         ];
     }
 
@@ -90,15 +103,9 @@ class DictionarySpecialityResource extends ModelResource
      */
     public function rules(Model $item): array
     {
-        return [];
-    }
-
-    public function search(): array
-    {
         return [
-            'title' => ['required', 'string', 'min:2', 'max:100'],
-            'short_name' => ['sometimes', 'required', 'string', 'min:1', 'max:50'],
-            'okso_code' => ['sometimes', 'required', 'string', 'min:1', 'max:50'],
+            'title' => ['required', 'string', 'min:2'],
+            'value' => ['required', 'string', 'min:2'],
         ];
     }
 
@@ -106,9 +113,9 @@ class DictionarySpecialityResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            Text::make('Специальность', 'title')->sortable(),
-            Text::make('Aббревиатура', 'short_name')->sortable(),
-            Text::make('Код ОКСО', 'okso_code')->sortable(),
+            Text::make('Отзыв ID', 'review_id')->sortable(),
+            Text::make('Заголовок', 'title')->sortable(),
+            Text::make('Значение', 'value')->sortable(),
         ];
     }
 
@@ -116,10 +123,9 @@ class DictionarySpecialityResource extends ModelResource
     {
         return [
             ID::make(),
-            Text::make('Специальность', 'title'),
-            Text::make('Aббревиатура', 'short_name'),
-            Text::make('Код ОКСО', 'okso_code'),
-            Date::make('Создан', 'created_at')->withTime(),
+            Text::make('Отзыв ID', 'review_id'),
+            Text::make('Заголовок', 'title'),
+            Text::make('Значение', 'value'),
         ];
     }
 
@@ -128,10 +134,10 @@ class DictionarySpecialityResource extends ModelResource
         $fields = [];
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
-        $fields[] = Text::make('Специальность', 'title');
-        $fields[] = Text::make('Aббревиатура', 'short_name');
-        $fields[] = Text::make('Код ОКСО', 'okso_code');
-        $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
+        $fields[] = Text::make('Отзыв ID', 'review_id')->disabled()->readonly();
+        $fields[] = Text::make('Заголовок', 'title');
+        $fields[] = Text::make('Значение', 'value');
+
         return $fields;
     }
 }
