@@ -114,7 +114,7 @@ class CompanyJobResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            Text::make('Пользователь', 'username', fn($item) => $item->user->username),
+            Text::make('Пользователь', 'username', fn($item) => $item->apiPostUser->username),
             Text::make('Пост', 'post', fn($item) => Str::limit($item->post->post, 200)),
             Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),

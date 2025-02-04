@@ -95,7 +95,7 @@ class AiParseCompanyPosts extends Command
                             $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
                             $post->save();
 
-                            //$this->info($post->post);
+                            $this->info($post->post);
                             $this->warn('Тип сообщения: '.$result['json']['ai_type']);
                             continue;
                         }
