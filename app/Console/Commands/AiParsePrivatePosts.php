@@ -156,6 +156,14 @@ class AiParsePrivatePosts extends Command
                 } else {
                     $this->warn('Неизвестный источник');
                 }
+            } catch (\TypeError $e) {
+                $this->error($e->getMessage());
+                $ApiAIYandex->logging($e->getMessage(), true);
+
+                $post->ai_result = $e->getMessage();
+                $post->ai_date = now();
+                $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
+                $post->save();
             } catch (\Exception $e) {
                 $this->error($e->getMessage());
                 $ApiAIYandex->logging($e->getMessage(), true);
@@ -164,8 +172,6 @@ class AiParsePrivatePosts extends Command
                 $post->ai_date = now();
                 $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
                 $post->save();
-
-                continue;
             }
         }
 
