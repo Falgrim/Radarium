@@ -115,6 +115,7 @@ class CompanyJobResource extends ModelResource
         return [
             ID::make()->sortable(),
             Text::make('Пользователь', 'username', fn($item) => $item->apiPostUser->username),
+            Text::make('Источник', 'source', fn($item) => $item->post->channel->title),
             Text::make('Пост', 'post', fn($item) => Str::limit($item->post->post, 200)),
             Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),
@@ -148,6 +149,7 @@ class CompanyJobResource extends ModelResource
             HasOne::make('Сообщение', 'apiChannelPost', resource: new ApiChannelPostResource())->fields([
                 Text::make('ID', 'id'),
                 Text::make('API ID', 'post_id'),
+                Text::make('Источник', 'source', fn($item) => $item->channel->title),
                 Text::make('Логин', 'user_login'),
                 Text::make('Сообщение', 'post'),
                 Date::make('Дата публикации', 'post_date')->withTime(),

@@ -7,6 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\SpecialistStatusEnum;
+use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use App\Models\DictionarySpeciality;
@@ -62,6 +63,8 @@ class SpecialistResource extends ModelResource
 
     protected bool $columnSelection = true;
 
+    protected array $with = ['post', 'user'];
+
     public function import(): ?ImportHandler
     {
         return null;
@@ -107,10 +110,21 @@ class SpecialistResource extends ModelResource
 
     public function filters(): array
     {
+        $channels = ApiChannel::select('id', 'title')->get()->toArray();
+        $channelSelect = [
+            '' => 'Не выбрано',
+        ];
+        foreach ($channels as $channel) {
+            $channelSelect[$channel['id']] = $channel['title'];
+        }
+
         return [
             Text::make('ID', 'id'),
             DateRange::make('Дата сообщения', 'post_date')->withTime(),
             DateRange::make('Создан', 'created_at')->withTime(),
+            /*Select::make('Источник', 'post.api_channel_id')->options(
+                $channelSelect
+            ),*/
             Select::make('Статус', 'status')
                 ->options(
                     SpecialistStatusEnum::getList()
@@ -144,6 +158,7 @@ class SpecialistResource extends ModelResource
             //BelongsTo::make('Аккаунт', 'user', resource: new ApiPostUserResource()),
             //BelongsTo::make('ID поста', 'post', resource: new ApiChannelPostResource()),
             Text::make('Пользователь', 'username', fn($item) => $item->user->username),
+            Text::make('Источник', 'source', fn($item) => $item->post->channel->title),
             Text::make('Пост', 'post', fn($item) => Str::limit($item->post->post, 200)),
             Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),
@@ -179,6 +194,7 @@ class SpecialistResource extends ModelResource
             HasOne::make('Сообщение', 'post', resource: new ApiChannelPostResource())->fields([
                 Text::make('ID', 'id'),
                 Text::make('API ID', 'post_id'),
+                Text::make('Источник', 'source', fn($item) => $item->channel->title),
                 Text::make('Логин', 'user_login'),
                 Text::make('Сообщение', 'post'),
                 Date::make('Дата публикации', 'post_date')->withTime(),
