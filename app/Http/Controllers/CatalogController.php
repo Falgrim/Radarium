@@ -24,7 +24,7 @@ use Illuminate\View\View;
 
 class CatalogController extends Controller
 {
-    protected bool $onlyActive = false;
+    protected bool $onlyActive = true;
 
     public function specialists(Request $request)
     {
