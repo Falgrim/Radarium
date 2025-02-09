@@ -39,3 +39,29 @@ header {
 .landing_price .card {
 
 }
+
+a.nav-link {
+    color: #fff;
+}
+
+.logout_form {
+    display: inline;
+}
+
+.result_table {
+    font-size: 14px;
+}
+
+.result_table thead th {
+    font-style: italic;
+    font-weight: normal;
+}
+
+.result_table .avatar_row {
+    width: 55px;
+    border-radius: 25px;
+}
+
+.result_table .badge {
+    margin-right: 5px;
+}

@@ -8,6 +8,8 @@
         <title>{{ config('app.name', 'Исполнители') }}</title>
 
         @vite('resources/js/app.js')
+
+        <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
     </head>
     <body>
         <x-header />

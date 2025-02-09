@@ -1,10 +1,30 @@
 <div class="container">
-    <footer class="py-3 my-4">
-        <ul class="nav justify-content-center border-bottom pb-3 mb-3">
-            <li class="nav-item"><a href="{{ route('index') }}" class="nav-link px-2 text-body-secondary">Главная</a></li>
-            <li class="nav-item"><a href="{{ route('catalog.specialists') }}" class="nav-link px-2 text-body-secondary">Специалисты</a></li>
-            <li class="nav-item"><a href="{{ route('catalog.companyjobs') }}" class="nav-link px-2 text-body-secondary">Вакансии</a></li>
-        </ul>
-        <p class="text-center text-body-secondary">© {{ date('Y') }} Исполнители</p>
+    <footer class="row row-cols-1 row-cols-sm-2 row-cols-md-5 py-5 my-5">
+        <div class="col mb-3">
+            <a href="/" class="d-flex align-items-center mb-3 link-body-emphasis text-decoration-none">
+                <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"></use></svg>
+            </a>
+            <p class="text-body-secondary">© {{ date('Y') }} Исполнители</p>
+        </div>
+
+        <div class="col mb-2">
+
+        </div>
+
+        <div class="col mb-4">
+            <h5>Техническая поддержка</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Telegram</a></li>
+                <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Telegram</a></li>
+            </ul>
+        </div>
+
+        <div class="col mb-3">
+            <h5>Предложить идею</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Telegram</a></li>
+                <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Telegram</a></li>
+            </ul>
+        </div>
     </footer>
 </div>

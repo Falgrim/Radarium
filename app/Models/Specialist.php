@@ -81,6 +81,15 @@ class Specialist extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function getAvrRating()
+    {
+        $avg = Specialist::withAvg(Review::table(), 'rating')
+            ->where('id', $this->id)
+            //->where('rating', '>', 0)
+            ->first();
+        return is_null($avg->reviews_avg_rating) ? 0 : number_format($avg->reviews_avg_rating, 1, '.', ' ');
+    }
+
     // Костыль, чтобы адинка увидела корректно связи при редактировании
     public function specialitiesForMoonshine(): HasMany
     {

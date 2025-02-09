@@ -26,6 +26,8 @@ class CatalogController extends Controller
 {
     protected bool $onlyActive = true;
 
+    protected int $onPage = 10;
+
     public function specialists(Request $request)
     {
         $specialitiesList = Repositories::dictionarySpeciality()->getList();
@@ -63,7 +65,7 @@ class CatalogController extends Controller
 
         $specialists = $specialists
             ->orderByDesc('created_at')
-            ->paginate(15)
+            ->paginate($this->onPage)
             ->withQueryString();
 
         return view('catalog.specialists', [
@@ -284,7 +286,7 @@ class CatalogController extends Controller
 
         $companyJobs = $companyJobs
             ->orderByDesc('created_at')
-            ->paginate(15)
+            ->paginate($this->onPage)
             ->withQueryString();
 
         return view('catalog.companyjobs', [
