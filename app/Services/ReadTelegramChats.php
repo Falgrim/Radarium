@@ -89,6 +89,12 @@ class ReadTelegramChats
 
         if ($this->minLengthPost?->value) {
             foreach ($messages as $key => $message) {
+                // Может быть в кейсе: [_] => messageService
+                if (!isset($message['message'])) {
+                    unset($messages[$key]);
+                    continue;
+                }
+
                 if (Str::length($message['message']) < $this->minLengthPost?->value) {
                     $this->setInfoMsg('Сообщение пропущено из-за ограничения мин. длины '.$this->minLengthPost?->value.': '.Str::length($message['message']));
                     unset($messages[$key]);
