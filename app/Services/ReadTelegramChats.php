@@ -95,6 +95,12 @@ class ReadTelegramChats
                     continue;
                 }
 
+                // Игнорируем сообщения от каналов
+                if (!isset($message['from_id'])) {
+                    unset($messages[$key]);
+                    continue;
+                }
+
                 if (Str::length($message['message']) < $this->minLengthPost?->value) {
                     $this->setInfoMsg('Сообщение пропущено из-за ограничения мин. длины '.$this->minLengthPost?->value.': '.Str::length($message['message']));
                     unset($messages[$key]);
@@ -122,7 +128,6 @@ class ReadTelegramChats
                 }
 
                 $this->setInfoMsg('Add ID: '.$message['id']);
-
                 $userInfo = $MadelineProto->getInfo($message['from_id']);
 
                 $userData = [];
