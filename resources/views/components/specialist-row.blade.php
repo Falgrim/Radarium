@@ -28,7 +28,7 @@
         @endif
     </td>
     <td>
-
+        {{ $specialist->soft_experience }}
     </td>
     <td class="text-">
         @if($specialist->post?->post)
@@ -36,7 +36,7 @@
         @endif
     </td>
     <td>
-
+        {{ Str::limit($specialist->lastReview(), 100) }}
     </td>
     <td class="align-middle">
         <a href="{{ route('catalog.specialist.view', ['id' => $specialist->id]) }}" class="btn btn-light btn-sm ">Подробнее</a>

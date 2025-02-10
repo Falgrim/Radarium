@@ -67,6 +67,7 @@ class CatalogController extends Controller
         }
 
         $specialists = $specialists
+            ->with('reviews')
             ->orderByDesc('created_at')
             ->paginate($this->onPage)
             ->withQueryString();

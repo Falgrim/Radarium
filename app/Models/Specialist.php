@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enum\DictionaryEnum;
+use App\Enum\ReviewStatusEnum;
 use App\Enum\SpecialistStatusEnum;
 use App\Services\Dictionary;
 use App\Traits\ModelTableName;
@@ -74,6 +75,16 @@ class Specialist extends Model
     public function post(): BelongsTo
     {
         return $this->belongsTo(ApiChannelPost::class, 'api_channel_post_id', 'id');
+    }
+
+    public function lastReview(): string
+    {
+        $data = Review::where('specialist_id', $this->id)
+            ->where('status', ReviewStatusEnum::Active)
+            ->orderByDesc('created_at')
+            ->first();
+
+        return $data ? $data['text'] : '';
     }
 
     public function reviews(): HasMany
