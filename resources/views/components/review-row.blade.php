@@ -1,22 +1,18 @@
-<div class="card">
-    <div class="card-header">
-        {{ $review->user->name }}
+<div class="row justify-content-betweenpy-2 mt-3">
+    <div class="col-4">
+        {{ $review->created_at->format('d.m.Y') }}
     </div>
-    <div class="card-body">
-        <blockquote class="blockquote mb-0 review-block" data-id="{{ $review->id }}" data-rating="{{ $review->rating }}" data-text="{{ $review->text }}">
-            <div class="review-text">
-                <p class="rating">Оценка: {{ $review->rating }}</p>
-                <p class="text">{!! $review->text !!}</p>
-            </div>
-            <div class="review-from"></div>
-            <footer class="blockquote-footer" style="margin-top: 0;">
-                {{ $review->created_at }}
-                @if(Auth::check() AND $review->can_edit AND $review->user_id === Auth::user()->id)
-                    [<a href="#" class="review-edit"><small>редактировать</small></a>]
-                @endif
-            </footer>
-        </blockquote>
+    <div class="col-8 text-end">
+        {{ $review->rating }}
     </div>
+</div>
+<div class="row mt-2 bg-block-blue pt-3" data-id="{{ $review->id }}" data-rating="{{ $review->rating }}" data-text="{{ $review->text }}">
+    <strong>{{ $review->user->name }}:</strong><br />
+    <p>{!! $review->text !!}</p>
+    @if(Auth::check() AND $review->can_edit AND $review->user_id === Auth::user()->id)
+        <br />
+        [<a href="#" class="review-edit"><small>редактировать</small></a>]
+    @endif
 </div>
 
 @pushOnce('scripts')

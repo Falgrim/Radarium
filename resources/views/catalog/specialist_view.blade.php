@@ -17,54 +17,82 @@
         </div>
     @endif
 
-    <div class="my-5">
-        <div class="p-5 bg-body-tertiary">
-            <div class="container py-5">
-                <h1 class="text-body-emphasis">Исполнитель ID {{ $specialist->id }}</h1>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm table-bordered">
-                        <thead>
-                        <tr>
-                            <th scope="col">Телеграм никнейм</th>
-                            <th scope="col">ФИО</th>
-                            <th scope="col">Заявленные специальности</th>
-                            <th scope="col">Дата попадания в базу</th>
-                            <th scope="col">Дата последнего обнаружения этого объявления в канале</th>
-                            <th scope="col">Опыт работы по специальности</th>
-                            <th scope="col">Владение ПО</th>
-                            <th scope="col">Образование</th>
-                            <th scope="col">Требуемый график работы</th>
-                            <th scope="col">Общая продолжительность работы - проекта</th>
-                            <th scope="col">Тип работы: офис, удаленка, гибрид</th>
-                            <th scope="col">Желаемая оплата за час</th>
-                            <th scope="col">Желаемая оплата - общая сумма выплат за проект</th>
-                            <th scope="col">Желаемая оплата - фиксированная оплата за период времени (месяц)</th>
-                            <th scope="col">О себе</th>
-                            <th scope="col">Спец. требования</th>
-                            <th scope="col">Исходный текст сообщения</th>
-                            <th scope="col">Ссылка на резюме</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            <x-specialist-row :$specialist parent-id="accordionFlushSpecialists" />
-                        </tbody>
-                    </table>
+    <div class="container my-5 profile_page">
+        <h1 class="text-body-emphasis text-center">Карточка специалиста</h1>
+
+        <div class="row mt-3">
+            <div class="col-4">
+                <img src="{{asset('images/avatar.jpg')}}" class="avatar_row">
+                <div class="row bg-block-blue">
+                    @if($specialist->user?->username)
+                        <a href="https://t.me/{{ $specialist->user->username }}" target="_blank">{{ $specialist->user->username }}</a>
+                    @elseif($specialist->user?->user_id)
+                        <a href="tg://user?id=5127911621{{ $specialist->user->user_id }}" target="_blank">{{ $specialist->user->user_id }}</a>
+                    @else
+                        <i>Не известно</i>
+                    @endif
+
+                    @if($specialist->user?->first_name)
+                        <br />{{ trim($specialist->user->last_name.' '.$specialist->user->first_name) }}
+                    @endif
+
+                    @if($specialist->user?->phone)
+                        <br />{{ trim($specialist->phone) }}
+                    @endif
                 </div>
             </div>
-        </div>
-
-        <div class="bg-body-tertiary">
-            <div class="container py-3">
-                <h1 class="text-body-emphasis">Отзывы</h1>
-                @foreach ($reviews as $review)
-                    <x-review-row :rowId="$specialist->id" :$review :$request :$errors />
-                @endforeach
-            </div>
-        </div>
-
-        <div class="bg-body-tertiary">
-            <div class="container py-3">
-                <x-review_form :rowId="$specialist->id" :$request :$errors />
+            <div class="col-8">
+                <div class="row">
+                    <div class="col-6">
+                        <h4>Специализации</h4>
+                        <div class="bg-block-blue">
+                        @if(count($specialist->specialtiesWithTitle()))
+                            <span class="badge text-bg-secondary">{!! implode('</span><br /><span class="badge text-bg-secondary">', $specialist->specialtiesWithTitle()) !!}</span>
+                        @endif
+                        </div>
+                    </div>
+                    <div class="col-6 pr-0.5">
+                        <h4>Теги/профессиональные навыки</h4>
+                        <div class="bg-block-blue">
+                        {{ $specialist->soft_experience }}
+                        </div>
+                    </div>
+                </div>
+                @if($specialist->post?->post)
+                <div class="row mt-3">
+                    <h4>Последнее сообщение</h4>
+                    <div class="col-3 bg-block-blue">
+                        <em>{{ $specialist->post?->post_date->format("d.m.Y") }}</em>
+                    </div>
+                    <div class="col-9 bg-block-blue">
+                        <em>{{ $specialist->post?->post }}</em>
+                    </div>
+                </div>
+                @endif
+                @if($specialist->user?->posts->count())
+                    <div class="row mt-3">
+                        <h4>История сообщений</h4>
+                        @foreach ($specialist->user->posts as $post)
+                        <div class="col-3 bg-block-blue">
+                            <em>{{ $post->post_date->format("d.m.Y") }}</em>
+                        </div>
+                        <div class="col-9 bg-block-blue">
+                            <em>{{ $post->post }}</em>
+                        </div>
+                        @endforeach
+                    </div>
+                @endif
+                @if($reviews->count())
+                <div class="row mt-3">
+                    <h4>Обсуждения и отзывы</h4>
+                    @foreach ($reviews as $review)
+                        <x-review-row :rowId="$specialist->id" :$review :$request :$errors />
+                    @endforeach
+                </div>
+                @endif
+                <div class="row mt-3">
+                    <x-review_form :rowId="$specialist->id" :$request :$errors />
+                </div>
             </div>
         </div>
     </div>

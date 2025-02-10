@@ -65,3 +65,13 @@ a.nav-link {
 .result_table .badge {
     margin-right: 5px;
 }
+
+.profile_page .avatar_row {
+    width: 100%;
+    border-radius: 25%;
+}
+
+.bg-block-blue {
+    background-color: #f3f8ff;
+    padding: 10px;
+}

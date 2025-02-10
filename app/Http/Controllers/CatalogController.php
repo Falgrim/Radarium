@@ -100,7 +100,7 @@ class CatalogController extends Controller
 
         $validated = $validator->validateWithBag('specialist');
 
-        $specialist = Specialist::where('id', $validated['id'])->firstOrFail();
+        $specialist = Specialist::where('id', $validated['id'])->with('post')->firstOrFail();
         $reviews = $specialist->reviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
 
         return view('catalog.specialist_view', [
@@ -200,6 +200,10 @@ class CatalogController extends Controller
 
         if (isset($validated['extra_row']) AND count($validated['extra_row'])) {
             foreach ($validated['extra_row'] as $item) {
+                if (!$item['title']) {
+                    continue;
+                }
+
                 ReviewCustomField::create([
                     'review_id' => $review->id,
                     'title' => $item['title'],
