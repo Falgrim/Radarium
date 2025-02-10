@@ -16,7 +16,7 @@
                 <form class="needs-validation {{ $formErrorClass }}" method="GET" action="{{ route('catalog.specialists') }}" novalidate="">
                     <div class="row g-3">
                         <div class="col-sm-6">
-                            <x-input-label for="key_word" class="form-label" :value="__('Ключевое слово в опыте')" />
+                            <x-input-label for="key_word" class="form-label" :value="__('Ключевое слово')" />
                             <input type="text" class="form-control" name="key_word" id="key_word" placeholder="" value="{{ old('key_word', $request->key_word) }}">
                             <x-input-validate :messages="$errors->get('key_word')" />
                         </div>

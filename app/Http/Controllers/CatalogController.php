@@ -13,7 +13,8 @@ use App\Models\Review;
 use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
-use Illuminate\Database\Query\Builder;
+//use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,7 +57,9 @@ class CatalogController extends Controller
         }
 
         if (!empty($validated['key_word'])) {
-            $specialists = $specialists->whereAny(['experience', 'about'], 'like', '%'.$validated['key_word'].'%');
+            $specialists = $specialists->whereHas('post', function (Builder $query) use ($validated) {
+                $query->where('post', 'like', '%'.$validated['key_word'].'%');
+            });
         }
 
         if (!empty($validated['speciality_id'])) {
@@ -82,7 +85,7 @@ class CatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(Specialist::table(), 'id')->where(function (Builder $query) {
+                Rule::exists(Specialist::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
                     if ($this->onlyActive) {
                         $query->where('status', SpecialistStatusEnum::Active);
                     }
@@ -117,7 +120,7 @@ class CatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(Specialist::table(), 'id')->where(function (Builder $query) {
+                Rule::exists(Specialist::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
                     if ($this->onlyActive) {
                         $query->where('status', SpecialistStatusEnum::Active);
                     }
@@ -218,7 +221,7 @@ class CatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(Review::table(), 'id')->where(function (Builder $query) {
+                Rule::exists(Review::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
                     $query->where('user_id', Auth::user()->id);
                     $query->where('can_edit', ReviewCanEditEnum::Allow);
                     $query->where('status', ReviewStatusEnum::Active);
@@ -302,7 +305,7 @@ class CatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(CompanyJob::table(), 'id')->where(function (Builder $query) {
+                Rule::exists(CompanyJob::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
                     if ($this->onlyActive) {
                         $query->where('status', CompanyJobStatusEnum::Active);
                     }

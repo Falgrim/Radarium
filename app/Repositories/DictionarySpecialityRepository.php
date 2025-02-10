@@ -32,13 +32,13 @@ class DictionarySpecialityRepository extends Repository
         $list = [];
 
         $collection = $this->getQuery()
-            ->select('title', 'id')
-            ->orderBy('title')
+            ->select('title', 'id', 'okso_code')
+            ->orderBy('okso_code')
             ->get();
 
         foreach ($collection as $row) {
             $list[$row->id] = [
-                'value' => $row->title,
+                'value' => $row->okso_code.' '.$row->title,
                 'id'    => $row->id,
             ];
         }
