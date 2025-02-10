@@ -19,11 +19,11 @@
         </div>
     </div>
 
-    <div class="p-5 mb-4 bg-body-tertiary rounded-3">
+    <div class="p-lg-5 p-1 mb-4 bg-body-tertiary rounded-3">
         <div class="container-fluid py-5">
             <h1 class="display-5 fw-bold text-center">Почему мы?</h1>
-            <div class="row p-5 landing_why">
-                <div class="col-6">
+            <div class="row p-lg-5 p-0 landing_why">
+                <div class="col-lg-6 col-md-12">
                     <div class="row">
                         <div class="col-6 landing_why_title">
                             Инновационность
@@ -57,7 +57,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-6">
+                <div class="col-lg-6 col-md-12">
                     <div class="row">
                         <div class="col-6 landing_why_title">
                             Качество
