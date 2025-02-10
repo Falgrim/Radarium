@@ -12,11 +12,19 @@
     <div class="p-5 bg-body-tertiary">
         <div class="container">
             <div class="col-md-12 col-lg-12">
-                <h4 class="mb-3">Фильтр исполнителей</h4>
-                <form class="needs-validation {{ $formErrorClass }}" method="GET" action="{{ route('catalog.specialists') }}" novalidate="">
+                <div class="row justify-content-between border py-2">
+                    <div class="col-4">
+                        Настройки поиска:
+                    </div>
+                    <div class="col-4 text-end">
+                        Свернуть/Развернуть
+                    </div>
+                </div>
+
+                <form class="needs-validation {{ $formErrorClass }} mt-2" method="GET" action="{{ route('catalog.specialists') }}" novalidate="">
                     <div class="row g-3">
                         <div class="col-sm-6">
-                            <x-input-label for="key_word" class="form-label" :value="__('Ключевое слово в опыте')" />
+                            <x-input-label for="key_word" class="form-label" :value="__('Ключевое слово')" />
                             <input type="text" class="form-control" name="key_word" id="key_word" placeholder="" value="{{ old('key_word', $request->key_word) }}">
                             <x-input-validate :messages="$errors->get('key_word')" />
                         </div>
@@ -33,9 +41,7 @@
                         </div>
                     </div>
 
-                    <hr class="my-4">
-
-                    <button class="w-50 btn btn-primary btn-lg" type="submit">Поиск</button>
+                    <button class="w-10 btn btn-primary mt-3" type="submit">Поиск</button>
                 </form>
             </div>
         </div>
