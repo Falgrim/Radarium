@@ -38,7 +38,7 @@ class CatalogController extends Controller
                 'sometimes',
                 'nullable',
                 'string',
-                'min:3',
+                'min:2',
                 'max:50',
             ],
             'speciality_id' => [
@@ -143,7 +143,7 @@ class CatalogController extends Controller
         $validator = Validator::make($request->post(), [
             'text' => [
                 'required',
-                'min:3',
+                'min:2',
                 'max:500',
             ],
             'rating' => [

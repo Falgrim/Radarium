@@ -133,7 +133,7 @@ class CompanyJobResource extends ModelResource
             Date::make('Дата сообщения', 'post_date')->withTime(),
             Text::make('Название компании', 'company_name'),
             Text::make('Должность', 'position'),
-            Text::make('Специальность', 'specialities', fn($item) => implode(', ', $item->specialtiesWithTitle())),
+            Text::make('Специализация', 'specialities', fn($item) => implode(', ', $item->specialtiesWithTitle())),
             Text::make('Предлагаемый оклад (мин.)', 'min_price'),
             Text::make('Предлагаемый оклад (макс.)', 'max_price'),
             Text::make('Обязанности', 'duty'),
@@ -187,7 +187,7 @@ class CompanyJobResource extends ModelResource
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
         $fields[] = Date::make('Дата сообщения', 'post_date')->withTime()->disabled()->readonly();
         $fields[] = Text::make('Название компании', 'company_name');
-        $fields[] = Select::make('Специальность', 'specialitiesForMoonshine')
+        $fields[] = Select::make('Специализация', 'specialitiesForMoonshine')
             ->options($dictionaryArr)
             ->multiple()
             ->nullable()

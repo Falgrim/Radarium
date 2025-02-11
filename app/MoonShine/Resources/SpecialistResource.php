@@ -174,7 +174,7 @@ class SpecialistResource extends ModelResource
             Text::make('Тип сообщения', 'ai_type'),
             Text::make('Подробнее о типе', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime(),
-            Text::make('Специальность', 'specialities', fn($item) => implode("; ", $item->specialtiesWithTitle())),
+            Text::make('Специализация', 'specialities', fn($item) => implode("; ", $item->specialtiesWithTitle())),
             Text::make('Опыт работы по специальности', 'experience'),
             Text::make('Владение ПО', 'soft_experience'),
             Text::make('Образование', 'education'),

@@ -63,10 +63,15 @@ class DictionarySpecialityResource extends ModelResource
         return null;
     }
 
+    public function getActiveActions(): array
+    {
+        return ['view'];
+    }
+
     public function filters(): array
     {
         return [
-            Text::make('Название', 'title'),
+            Text::make('Специализация', 'title'),
         ];
     }
 
@@ -98,7 +103,6 @@ class DictionarySpecialityResource extends ModelResource
         return [
             'title' => ['required', 'string', 'min:2', 'max:100'],
             'short_name' => ['sometimes', 'required', 'string', 'min:1', 'max:50'],
-            'okso_code' => ['sometimes', 'required', 'string', 'min:1', 'max:50'],
         ];
     }
 
@@ -106,9 +110,8 @@ class DictionarySpecialityResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            Text::make('Специальность', 'title')->sortable(),
+            Text::make('Специализация', 'title')->sortable(),
             Text::make('Aббревиатура', 'short_name')->sortable(),
-            Text::make('Код ОКСО', 'okso_code')->sortable(),
         ];
     }
 
@@ -116,10 +119,9 @@ class DictionarySpecialityResource extends ModelResource
     {
         return [
             ID::make(),
-            Text::make('Специальность', 'title'),
+            Text::make('Специализация', 'title'),
             Text::make('Aббревиатура', 'short_name'),
-            Text::make('Код ОКСО', 'okso_code'),
-            Date::make('Создан', 'created_at')->withTime(),
+            //Date::make('Создан', 'created_at')->withTime(),
         ];
     }
 
@@ -128,10 +130,9 @@ class DictionarySpecialityResource extends ModelResource
         $fields = [];
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
-        $fields[] = Text::make('Специальность', 'title');
+        $fields[] = Text::make('Специализация', 'title');
         $fields[] = Text::make('Aббревиатура', 'short_name');
-        $fields[] = Text::make('Код ОКСО', 'okso_code');
-        $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
+        //$fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
         return $fields;
     }
 }

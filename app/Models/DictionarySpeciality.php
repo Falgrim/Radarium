@@ -14,9 +14,10 @@ class DictionarySpeciality extends Model
     use ModelTableName;
 
     protected $fillable = [
+        'group_title',
         'title',
         'short_name',
-        'okso_code',
+        'key_words',
         'created_at',
         'updated_at',
     ];
@@ -36,6 +37,7 @@ class DictionarySpeciality extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
+            'key_words'  => 'array',
         ];
     }
 

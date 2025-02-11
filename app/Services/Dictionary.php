@@ -7,6 +7,7 @@ use App\Models\DictionarySpeciality;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use Faker\Core\DateTime;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -34,16 +35,37 @@ class Dictionary
         return Str::upper(Str::acronym($name));
     }
 
+    public function getAll(DictionaryEnum $dictionary): Collection
+    {
+        if (DictionaryEnum::Speciality === $dictionary) {
+            return DictionarySpeciality::get();
+        } else {
+            throw new \Exception('Выбранный словарь не найден');
+        }
+    }
+
+    public function checkMatchByList($text, $list): array
+    {
+        $matchIds = [];
+        foreach ($list as $item) {
+            $pattern = '/\b(?:' . implode('|', array_map('preg_quote', $item['key_words'])) . ')\b(?:-[а-яa-z]*)?/iu';
+            preg_match_all($pattern, $text, $matches);
+            if (isset($matches[0]) AND count($matches[0])) {
+                $matchIds[] = $item->id;
+            }
+        }
+
+        return $matchIds;
+    }
+
     public function getOrCreate(DictionaryEnum $dictionary, string $title, ?string $shortName, ?string $OksoCode): int
     {
         if (DictionaryEnum::Speciality === $dictionary) {
             $rowData = DictionarySpeciality::updateOrCreate([
                 'title' => $title,
-                'okso_code' => $OksoCode,
             ], [
                 'title' => $title,
                 'short_name' => $shortName,
-                'okso_code' => $OksoCode,
             ]);
         } else {
             throw new \Exception('Выбранный словарь не найден');

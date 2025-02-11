@@ -64,6 +64,7 @@ class AiParsePrivatePosts extends Command
         $this->info('В обработку постов: '.count($posts).' из '.$postsAll);
 
         $dictionary = new Dictionary;
+        $specialityList = $dictionary->getAll(DictionaryEnum::Speciality);
 
         foreach ($posts as $post) {
             try {
@@ -112,32 +113,16 @@ class AiParsePrivatePosts extends Command
 
                         $result['json']['status'] = SpecialistStatusEnum::InModeration;
 
-                        $specialistSpecialties = [];
-                        if (isset($result['json']['specialities'])) {
-                            $specialistSpecialties = $result['json']['specialities'];
-                            unset($result['json']['specialities']);
-                        }
-
                         $specialist = Specialist::create($result['json']);
 
+                        $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
                         if (count($specialistSpecialties)) {
-                            $dictionaryArr = [];
-                            foreach ($specialistSpecialties as $specialistSpecialty) {
-                                $specInfo = $dictionary->parseOkcoString($specialistSpecialty);
-
-                                if (!$specInfo['name'] OR !$specInfo['code']) {
-                                    throw new \Exception('Ошибка определения специализации: '.json_encode($specInfo));
-                                }
-
-                                $dictionaryArr[] = $dictionary->getOrCreate(
-                                    DictionaryEnum::Speciality,
-                                    $specInfo['name'],
-                                    $specInfo['short_name'],
-                                    $specInfo['code'],
-                                );
-                            }
-
-                            $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $dictionaryArr);
+                            $dictionary->updateRelations(
+                                DictionaryEnum::Speciality,
+                                'specialist',
+                                $specialist->id,
+                                $specialistSpecialties
+                            );
                         }
 
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;

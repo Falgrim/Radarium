@@ -117,7 +117,7 @@ class Specialist extends Model
         $data = $this->through('specialities')->has('dictionarySpeciality')->get();
         $result = [];
         foreach ($data as $row) {
-            $result[$row->id] = trim($row->okso_code.' '.$row->title);
+            $result[$row->id] = $row->title;
         }
         return $result;
     }

@@ -57,7 +57,6 @@ class ApiAIYandex
                 'description'   => ['id' => 'description', 'type' => 'string'],
                 'period'        => ['id' => 'period', 'type' => 'string'],
                 'extra_conditions'  => ['id' => 'extra_conditions', 'type' => 'string'],
-                'specialities'      => ['id' => 'specialities', 'type' => 'array'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
             ];
         } elseif ($isCompany === IsCompanyEnum::Private) {
@@ -76,7 +75,6 @@ class ApiAIYandex
                 'about'             => ['id' => 'about', 'type' => 'string'],
                 'spec_requirements' => ['id' => 'spec_requirements', 'type' => 'string'],
                 'link_resume'       => ['id' => 'link_resume', 'type' => 'string'],
-                'specialities'      => ['id' => 'specialities', 'type' => 'array'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
             ];
         }

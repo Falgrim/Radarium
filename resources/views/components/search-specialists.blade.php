@@ -33,7 +33,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <x-input-label for="speciality_id" class="form-label" :value="__('Специальность')" />
+                                <x-input-label for="speciality_id" class="form-label" :value="__('Специализация')" />
                                 <select class="form-select" name="speciality_id" id="speciality_id">
                                     <option value="">Выберите...</option>
                                     @foreach ($specialitiesList as $speciality)

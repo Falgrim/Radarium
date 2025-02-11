@@ -102,7 +102,7 @@ class SpecialistSpecialityResource extends ModelResource
         return [
             ID::make()->sortable(),
             HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->sortable(),
-            HasOne::make('Специальность', 'dictionarySpeciality', resource: new DictionarySpecialityResource())->sortable(),
+            HasOne::make('Специализация', 'dictionarySpeciality', resource: new DictionarySpecialityResource())->sortable(),
 
         ];
     }
@@ -114,7 +114,7 @@ class SpecialistSpecialityResource extends ModelResource
             HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->fields([
                 Text::make('ID', 'id'),
             ]),
-            HasOne::make('Специальность', 'speciality', resource: new DictionarySpecialityResource())->fields([
+            HasOne::make('Специализация', 'speciality', resource: new DictionarySpecialityResource())->fields([
                 Text::make('Название', 'title'),
             ]),
             Date::make('Создан', 'created_at')->withTime(),
