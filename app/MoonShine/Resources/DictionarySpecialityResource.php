@@ -65,7 +65,7 @@ class DictionarySpecialityResource extends ModelResource
 
     public function getActiveActions(): array
     {
-        return ['view'];
+        return ['view', 'update'];
     }
 
     public function filters(): array
