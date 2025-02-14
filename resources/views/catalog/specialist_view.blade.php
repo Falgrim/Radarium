@@ -46,8 +46,8 @@
                     <div class="col-6">
                         <h4>Специализации</h4>
                         <div class="bg-block-blue">
-                        @if(count($specialist->specialtiesWithTitle()))
-                            <span class="badge text-bg-secondary">{!! implode('</span><br /><span class="badge text-bg-secondary">', $specialist->specialtiesWithTitle()) !!}</span>
+                        @if(count($specialist->specialtiesWithShortName()))
+                            <span class="badge text-bg-secondary">{!! implode('</span><span class="badge text-bg-secondary">', $specialist->specialtiesWithShortName()) !!}</span>
                         @endif
                         </div>
                     </div>

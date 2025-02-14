@@ -122,6 +122,16 @@ class Specialist extends Model
         return $result;
     }
 
+    public function specialtiesWithShortName(): array
+    {
+        $data = $this->through('specialities')->has('dictionarySpeciality')->get();
+        $result = [];
+        foreach ($data as $row) {
+            $result[$row->id] = $row->short_name ? $row->short_name : $row->title;
+        }
+        return $result;
+    }
+
     /**
      * Метод «booted» модели.
      */
