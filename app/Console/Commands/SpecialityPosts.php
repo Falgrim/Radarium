@@ -43,6 +43,7 @@ class SpecialityPosts extends Command
     public function handle()
     {
         $specialists = Specialist::whereNotIn('id', SpecialistSpeciality::select('specialist_id')->groupBy('specialist_id'))
+            ->has('post')
             ->orderBy('id', 'asc')
             ->take(100)
             ->get();
@@ -53,6 +54,7 @@ class SpecialityPosts extends Command
         }
 
         $specialistsAll = Specialist::whereNotIn('id', SpecialistSpeciality::select('specialist_id')->groupBy('specialist_id'))
+            ->has('post')
             ->orderBy('id', 'asc')
             ->count();
 
