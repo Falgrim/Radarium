@@ -44,7 +44,7 @@ class SpecialityPosts extends Command
     {
         $specialists = Specialist::whereNotIn('id', SpecialistSpeciality::select('specialist_id')->groupBy('specialist_id'))
             ->orderBy('id', 'asc')
-            ->take(30)
+            ->take(100)
             ->get();
 
         if (!count($specialists)) {
