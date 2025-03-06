@@ -102,11 +102,13 @@ class ApiPostUser extends Model
 
     public function getAvrSpecialistRating()
     {
-        $avg = ApiPostUser::withAvg('specialistReviews', 'rating')
+        $avg = ApiPostUser::withAvg(['specialistReviews' => function ($query) {
+            $query->where('rating', '>', 0);
+        }], 'rating')
             ->where('id', $this->id)
-            //->where('rating', '>', 0)
             ->first();
-        return is_null($avg->reviews_avg_rating) ? 0 : number_format($avg->reviews_avg_rating, 1, '.', ' ');
+
+        return is_null($avg->specialist_reviews_avg_rating) ? 0 : number_format($avg->specialist_reviews_avg_rating, 1, '.', ' ');
     }
 
     public function specialistData(): array
