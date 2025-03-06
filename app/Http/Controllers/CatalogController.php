@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
@@ -63,6 +64,10 @@ class CatalogController extends Controller
 
             if (!empty($validated['speciality_id'])) {
                 $query->whereRelation('specialities', 'dictionary_speciality_id', $validated['speciality_id']);
+            }
+        })->whereHas('postsComplete', function (Builder $query) use ($validated) {
+            if (!empty($validated['key_word'])) {
+                $query->where('post', 'like', '%'.$validated['key_word'].'%');
             }
         });
 
@@ -145,7 +150,7 @@ class CatalogController extends Controller
 
         $validated = $validator->validateWithBag('specialist');
 
-        $author = ApiPostUser::where('id', $validated['id'])->with(['specialists', 'posts', 'specialistReviews'])->firstOrFail();
+        $author = ApiPostUser::where('id', $validated['id'])->with(['specialists', 'postsComplete', 'specialistReviews'])->firstOrFail();
         $reviews = $author->specialistReviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
 
         return view('catalog.author_view', [

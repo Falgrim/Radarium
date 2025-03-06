@@ -61,6 +61,12 @@ class ApiPostUser extends Model
         return $this->hasMany(ApiChannelPost::class, 'api_post_user_id', 'id');
     }
 
+    public function postsComplete(): HasMany
+    {
+        return $this->hasMany(ApiChannelPost::class, 'api_post_user_id', 'id')
+            ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+    }
+
     public function specialists(): HasMany
     {
         return $this->hasMany(Specialist::class, 'api_post_user_id', 'id');

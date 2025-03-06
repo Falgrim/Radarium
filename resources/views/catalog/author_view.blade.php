@@ -58,21 +58,21 @@
                         </div>
                     </div>
                 </div>
-                @if($author->post?->post)
+                @if($author->lastPost()?->post)
                 <div class="row mt-3">
                     <h4>Последнее сообщение</h4>
                     <div class="col-3 bg-block-blue">
-                        <em>{{ $author->post?->post_date->format("d.m.Y") }}</em>
+                        <em>{{ $author->lastPost()?->post_date->format("d.m.Y") }}</em>
                     </div>
                     <div class="col-9 bg-block-blue">
-                        <em>{{ $author->post?->post }}</em>
+                        <em>{{ $author->lastPost()?->post }}</em>
                     </div>
                 </div>
                 @endif
-                @if($author->posts->count())
+                @if($author->postsComplete->count())
                     <div class="row mt-3">
                         <h4>История сообщений</h4>
-                        @foreach ($author->posts as $post)
+                        @foreach ($author->postsComplete as $post)
                         <div class="col-3 bg-block-blue">
                             <em>{{ $post->post_date->format("d.m.Y") }}</em>
                         </div>
