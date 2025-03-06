@@ -129,6 +129,32 @@ class CatalogController extends Controller
         ]);
     }
 
+    public function authorAsSpecialistView(Request $request, string $id)
+    {
+        $validator = Validator::make($request->route()->parameters(), [
+            'id' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            abort(404);
+        }
+
+        $validated = $validator->validateWithBag('specialist');
+
+        $author = ApiPostUser::where('id', $validated['id'])->with(['specialists', 'posts', 'specialistReviews'])->firstOrFail();
+        $reviews = $author->specialistReviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
+
+        return view('catalog.author_view', [
+            'request' => $request,
+            'author' => $author,
+            'reviews' => $reviews,
+        ]);
+    }
+
     public function specialistView(Request $request, string $id)
     {
         $validator = Validator::make($request->route()->parameters(), [
@@ -171,11 +197,7 @@ class CatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(Specialist::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
-                    if ($this->onlyActive) {
-                        $query->where('status', SpecialistStatusEnum::Active);
-                    }
-                }),
+                Rule::exists(ApiPostUser::table(), 'id'),
             ],
         ]);
 
@@ -226,6 +248,16 @@ class CatalogController extends Controller
                 'min:1',
                 'max:100',
             ],
+            'specialist_id' => [
+                'nullable',
+                'integer',
+                'min:1',
+                Rule::exists(Specialist::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
+                    if ($this->onlyActive) {
+                        $query->where('status', SpecialistStatusEnum::Active);
+                    }
+                }),
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -237,15 +269,19 @@ class CatalogController extends Controller
 
         $validated = $validator->validateWithBag('review');
 
-        $specialist = Specialist::where('id', $validatedRoute['id'])->firstOrFail();
+        $author = ApiPostUser::where('id', $validatedRoute['id'])->firstOrFail();
+
+        if (isset($validated['specialist_id']) AND $validated['specialist_id']) {
+            $specialist = Specialist::where('id', $validated['specialist_id'])->firstOrFail();
+        }
 
         $review = Review::create([
             'text'      => $validated['text'],
             'can_edit'  => ReviewCanEditEnum::Allow,
             'status'    => ReviewStatusEnum::InModeration,
             'rating'    => $validated['rating'],
-            'specialist_id' => $specialist->id,
-            'api_post_user_id' => $specialist->api_post_user_id,
+            'specialist_id' => isset($specialist) ? $specialist->id : 0,
+            'api_post_user_id' => $author->id,
             'user_id'   => Auth::user()->id,
         ]);
 

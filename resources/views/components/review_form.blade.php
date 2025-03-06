@@ -16,7 +16,8 @@
     <form method="POST" action="" />
         @csrf
 
-        <input type="hidden" name="row_id" value="{{ $rowId }}" />
+        <input type="hidden" name="author_id" value="{{ $rowId }}" />
+        <input type="hidden" name="specialist_id" value="" />
         <div class="mb-3">
             <label for="text" class="form-label">Напишите ваш отзыв</label>
             <textarea class="form-control @error('text', 'review') is-invalid @enderror" id="text" name="text" rows="4">{{ old('text', $request->text) }}</textarea>
