@@ -212,7 +212,7 @@ class ReadTelegramChats
             }
         }
 
-        Log::channel('crm_service')->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
+        Log::channel('post_parser')->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
         $this->setInfoMsg('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
         $this->setInfoMsg('Последний ID: '.$this->apiChannel->last_post_id);
         $this->setInfoMsg('Последняя дата: '.$this->apiChannel->last_date_check);
