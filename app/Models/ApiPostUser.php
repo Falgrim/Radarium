@@ -74,7 +74,8 @@ class ApiPostUser extends Model
 
         $result = [];
         foreach ($data as $row) {
-            $result[$row->id] = $row->dictionarySpeciality->short_name ? $row->dictionarySpeciality->short_name : $row->dictionarySpeciality->title;
+            $name = $row->dictionarySpeciality->short_name ? $row->dictionarySpeciality->short_name : $row->dictionarySpeciality->title;
+            $result[$name] = $name;
         }
         return $result;
     }
@@ -128,7 +129,7 @@ class ApiPostUser extends Model
         foreach ($data as $row) {
             foreach ($result as $key => $item) {
                 if ($row->{$key}) {
-                    $result[$key][$row->id] = $row->{$key};
+                    $result[$key][md5($row->{$key})] = $row->{$key};
                 }
             }
         }
