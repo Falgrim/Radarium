@@ -17,6 +17,7 @@ class CompanyJobReview extends Model
     use ModelTableName;
 
     protected $fillable = [
+        'api_post_user_id',
         'company_job_id',
         'user_id',
         'text',
@@ -59,5 +60,10 @@ class CompanyJobReview extends Model
     public function reviewCustomFields(): HasMany
     {
         return $this->hasMany(CompanyJobReviewCustomField::class)->orderBy('title');
+    }
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(ApiPostUser::class, 'api_post_user_id','id');
     }
 }

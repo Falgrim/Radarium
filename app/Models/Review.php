@@ -13,11 +13,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Review extends Model
 {
-    use HasFactory;
     use SoftDeletes;
     use ModelTableName;
 
     protected $fillable = [
+        'api_post_user_id',
         'specialist_id',
         'user_id',
         'text',
@@ -60,5 +60,10 @@ class Review extends Model
     public function reviewCustomFields(): HasMany
     {
         return $this->hasMany(ReviewCustomField::class)->orderBy('title');
+    }
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(ApiPostUser::class, 'api_post_user_id','id');
     }
 }

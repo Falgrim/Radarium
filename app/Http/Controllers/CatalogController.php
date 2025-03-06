@@ -29,6 +29,56 @@ class CatalogController extends Controller
 
     protected int $onPage = 10;
 
+    public function authorsAsSpecialists(Request $request)
+    {
+        $specialitiesList = Repositories::dictionarySpeciality()->getList();
+
+        $validated = $request->validate([
+            'key_word' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:2',
+                'max:50',
+            ],
+            'speciality_id' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'alpha_dash:ascii',
+                Rule::in(array_keys($specialitiesList)),
+            ],
+        ]);
+
+        $authors = ApiPostUser::whereHas('specialists', function (Builder $query) use ($validated) {
+            if ($this->onlyActive) {
+                $query->where('status', '=', SpecialistStatusEnum::Active);
+            }
+
+            if (!empty($validated['key_word'])) {
+                $query->whereHas('post', function (Builder $query) use ($validated) {
+                    $query->where('post', 'like', '%'.$validated['key_word'].'%');
+                });
+            }
+
+            if (!empty($validated['speciality_id'])) {
+                $query->whereRelation('specialities', 'dictionary_speciality_id', $validated['speciality_id']);
+            }
+        });
+
+        $authors = $authors
+            ->with(['specialistReviews'])
+            ->orderByDesc('created_at')
+            ->paginate($this->onPage)
+            ->withQueryString();
+
+        return view('catalog.authors', [
+            'request' => $request,
+            'authors' => $authors,
+            'specialitiesList' => $specialitiesList,
+        ]);
+    }
+
     public function specialists(Request $request)
     {
         $specialitiesList = Repositories::dictionarySpeciality()->getList();
@@ -194,7 +244,8 @@ class CatalogController extends Controller
             'can_edit'  => ReviewCanEditEnum::Allow,
             'status'    => ReviewStatusEnum::InModeration,
             'rating'    => $validated['rating'],
-            'specialist_id'=> $specialist->id,
+            'specialist_id' => $specialist->id,
+            'api_post_user_id' => $specialist->api_post_user_id,
             'user_id'   => Auth::user()->id,
         ]);
 
