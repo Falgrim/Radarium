@@ -8,7 +8,7 @@ use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannel;
 
@@ -97,7 +97,7 @@ class ApiChannelResource extends ModelResource
             'api_ai_id' => ['exists:App\Models\ApiAi,id'],
             'channel_source' => Rule::enum(ApiChannelSourceEnum::class),
             'status' => Rule::enum(ApiChannelStatusEnum::class),
-            'is_company' => Rule::enum(IsCompanyEnum::class),
+            'is_company' => Rule::enum(ApiDataTypeEnum::class),
         ];
     }
 
@@ -109,7 +109,7 @@ class ApiChannelResource extends ModelResource
             Text::make('Описание', 'description'),
             BelongsTo::make('Сервис', 'apiAi'),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-            Enum::make('Тип выборки', 'is_company')->attach(IsCompanyEnum::class),
+            Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
         ];
     }
@@ -123,7 +123,7 @@ class ApiChannelResource extends ModelResource
             BelongsTo::make('Сервис', 'apiAi'),
             Text::make('Промт для ИИ', 'ai_promt'),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-            Enum::make('Тип выборки', 'is_company')->attach(IsCompanyEnum::class),
+            Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
             Text::make('Опции для обработки', 'options', fn($item) => $item->options ? json_encode($item->options) : ''),
         ];
@@ -141,7 +141,7 @@ class ApiChannelResource extends ModelResource
 
         $fields[] = Enum::make('Тип выборки', 'is_company')
             ->hint('От типа зависит какая сущность в БД будет отвечать за сохранение данных (резюме или вакансия)')
-            ->attach(IsCompanyEnum::class);
+            ->attach(ApiDataTypeEnum::class);
 
         $fields[] = Textarea::make('Промт для ИИ', 'ai_promt')
             ->hint('Не меняйте промт без предварительного тестирования в самом ИИ, так как даже при небольших изменениях может поменяться результат и формат ответа')

@@ -7,7 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiPostUser;
 use App\MoonShine\Pages\ApiPostUser\ApiPostUserIndexPage;
@@ -110,7 +110,7 @@ class ApiPostUserResource extends ModelResource
             Text::make('ID', 'id'),
             Text::make('Source ID', 'user_id'),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-            Enum::make('Тип аккаунта', 'is_company')->attach(IsCompanyEnum::class),
+            Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
             Text::make('Логин', 'username'),
             DateRange::make('Создан', 'created_at')->withTime(),
         ];
@@ -122,7 +122,7 @@ class ApiPostUserResource extends ModelResource
             Text::make('ID', 'id')->sortable(),
             Text::make('Source ID', 'user_id')->sortable(),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->sortable(),
-            Enum::make('Тип аккаунта', 'is_company')->attach(IsCompanyEnum::class),
+            Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
             Text::make('Логин', 'username')->sortable(),
             Text::make('Имя', 'first_name'),
             Text::make('Фамилия', 'last_name'),
@@ -140,7 +140,7 @@ class ApiPostUserResource extends ModelResource
             Text::make('ID', 'id')->sortable(),
             Text::make('Source ID', 'user_id')->sortable(),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->sortable(),
-            Enum::make('Тип аккаунта', 'is_company')->attach(IsCompanyEnum::class),
+            Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
             Text::make('Логин', 'username')->sortable(),
             Text::make('Имя', 'first_name'),
             Text::make('Фамилия', 'last_name'),
@@ -168,7 +168,7 @@ class ApiPostUserResource extends ModelResource
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
         $fields[] = Text::make('Source ID', 'user_id')->disabled()->readonly();
         $fields[] = Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->disabled()->readonly();
-        $fields[] = Enum::make('Тип аккаунта', 'is_company')->attach(IsCompanyEnum::class)->readonly();
+        $fields[] = Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class)->readonly();
         $fields[] = Text::make('Логин', 'username');
         $fields[] = Text::make('Имя', 'first_name');
         $fields[] = Text::make('Фамилия', 'last_name');

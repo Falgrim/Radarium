@@ -83,6 +83,9 @@ class Dictionary
         } elseif ($model === 'companyJob') {
             $rowIdName = 'company_job_id';
             $modelSpeciality = 'App\Models\CompanyJobSpeciality';
+        } elseif ($model === 'builder') {
+            $rowIdName = 'builder_id';
+            $modelSpeciality = 'App\Models\BuilderSpeciality';
         }
 
         if (!$rowIdName) {

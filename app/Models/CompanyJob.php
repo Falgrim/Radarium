@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\ApiDataTypeEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\DictionaryEnum;
 use App\Services\Dictionary;
@@ -96,7 +97,10 @@ class CompanyJob extends Model
 
     public function specialtiesWithTitle(): array
     {
-        $data = $this->through('specialities')->has('dictionarySpeciality')->get();
+        $data = $this->through('specialities')
+            ->has('dictionarySpeciality')
+            ->where('api_data_type_id', ApiDataTypeEnum::Specialist)
+            ->get();
         $result = [];
         foreach ($data as $row) {
             $result[$row->id] = $row->title;

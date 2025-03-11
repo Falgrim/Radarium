@@ -6,8 +6,8 @@ use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\DictionaryEnum;
-use App\Enum\IsCompanyEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiDataTypeEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
@@ -45,7 +45,7 @@ class AiParsePrivatePosts extends Command
         $posts = ApiChannelPost::select('api_channel_posts.*')
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
-            ->where('api_channels.is_company', IsCompanyEnum::Private)
+            ->where('api_channels.is_company', ApiDataTypeEnum::Specialist)
             ->orderBy('api_channel_posts.post_date', 'asc')
             ->take(30)
             ->get();
@@ -58,7 +58,7 @@ class AiParsePrivatePosts extends Command
         $postsAll = ApiChannelPost::select('api_channel_posts.*')
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
-            ->where('api_channels.is_company', IsCompanyEnum::Private)
+            ->where('api_channels.is_company', ApiDataTypeEnum::Specialist)
             ->count();
 
         $this->info('В обработку постов: '.count($posts).' из '.$postsAll);
@@ -79,7 +79,7 @@ class AiParsePrivatePosts extends Command
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
-                    $result = $ApiAIYandex->getResult(IsCompanyEnum::Private);
+                    $result = $ApiAIYandex->getResult(ApiDataTypeEnum::Specialist);
 
                     if (count($result['json'])) {
                         // Удаляем старое резюме, на случай повторного прогона поста
@@ -111,7 +111,7 @@ class AiParsePrivatePosts extends Command
                             $result['json']['contact_info'] = '';
                         }
 
-                        $result['json']['status'] = SpecialistStatusEnum::InModeration;
+                        $result['json']['status'] = ApiPostAiStatusEnum::InModeration;
 
                         $specialist = Specialist::create($result['json']);
 
@@ -128,7 +128,7 @@ class AiParsePrivatePosts extends Command
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
-                        if ($specialist->status === SpecialistStatusEnum::InModeration) {
+                        if ($specialist->status === ApiPostAiStatusEnum::InModeration) {
                             $this->info('Создан специалист (резюме)');
                         } else {
                             $this->info('Данный пост не является типом резюме');

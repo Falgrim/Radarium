@@ -8,8 +8,8 @@ use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
-use App\Enum\IsCompanyEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiDataTypeEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannelPost;
@@ -132,7 +132,7 @@ class ApiChannelPostResource extends ModelResource
 
     public function detailFields(): array
     {
-        if ($this->item->channel->is_company === IsCompanyEnum::Company) {
+        if ($this->item->channel->is_company === ApiDataTypeEnum::Company) {
             $aiData = [
                 HasOne::make('ИИ. Вакансия', 'companyJob', resource: new CompanyJobResource())->fields([
                     Text::make('ID', 'id'),
@@ -171,7 +171,7 @@ class ApiChannelPostResource extends ModelResource
                     Text::make('О себе', 'about'),
                     Text::make('Спец. требования', 'spec_requirements'),
                     Text::make('Ссылка на резюме', 'link_resume'),
-                    Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+                    Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class),
                     Date::make('Создан', 'created_at')->withTime(),
                 ])
             ];

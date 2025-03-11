@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enum\CompanyJobStatusEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\CompanyJob;
@@ -41,7 +41,7 @@ class ApiCatalogController extends Controller
         $specialists = Specialist::with('user');
 
         if ($this->onlyActive) {
-            $specialists = $specialists->where('status', '=', SpecialistStatusEnum::Active);
+            $specialists = $specialists->where('status', '=', ApiPostAiStatusEnum::Active);
         }
 
         if (!empty($validated['key_word'])) {
@@ -69,7 +69,7 @@ class ApiCatalogController extends Controller
                 'min:1',
                 Rule::exists(Specialist::table(), 'id')->where(function (Builder $query) {
                     if ($this->onlyActive) {
-                        $query->where('status', SpecialistStatusEnum::Active);
+                        $query->where('status', ApiPostAiStatusEnum::Active);
                     }
                 }),
             ],

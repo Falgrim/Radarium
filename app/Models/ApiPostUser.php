@@ -4,9 +4,9 @@ namespace App\Models;
 
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Enum\ReviewStatusEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,7 +51,7 @@ class ApiPostUser extends Model
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'last_online_date' => 'datetime:Y-m-d H:i:s',
             'channel_source' => ApiChannelSourceEnum::class,
-            'is_company' => IsCompanyEnum::class,
+            'is_company' => ApiDataTypeEnum::class,
             'external_info' => 'array',
         ];
     }
@@ -120,7 +120,7 @@ class ApiPostUser extends Model
     public function specialistData(): array
     {
         $data = Specialist::where('api_post_user_id', $this->id)
-            ->where('status', SpecialistStatusEnum::Active)
+            ->where('status', ApiPostAiStatusEnum::Active)
             ->get();
 
         $result = [

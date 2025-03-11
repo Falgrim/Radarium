@@ -2,16 +2,19 @@
 
 namespace App\Enum;
 
-enum IsCompanyEnum:int {
+enum ApiDataTypeEnum:int {
     case Company = 1;
 
-    case Private = 0;
+    case Specialist = 0;
+
+    case Builder = 2;
 
     public function toString(): ?string
     {
         return match ($this) {
             self::Company   => 'Вакансия',
-            self::Private   => 'Сотрудник',
+            self::Specialist   => 'Сотрудник',
+            self::Builder   => 'Строитель',
         };
     }
 
@@ -24,7 +27,8 @@ enum IsCompanyEnum:int {
     {
         return match ($this) {
             self::Company   => 'info',
-            self::Private   => 'yellow',
+            self::Specialist   => 'yellow',
+            self::Builder   => 'purple',
         };
     }
 }

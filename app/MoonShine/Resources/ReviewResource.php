@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources;
 
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Models\ReviewCustomField;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;

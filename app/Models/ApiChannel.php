@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -52,7 +52,7 @@ class ApiChannel extends Model
             'options' => 'array',
             'status' => ApiChannelStatusEnum::class,
             'channel_source' => ApiChannelSourceEnum::class,
-            'is_company' => IsCompanyEnum::class,
+            'is_company' => ApiDataTypeEnum::class,
         ];
     }
 

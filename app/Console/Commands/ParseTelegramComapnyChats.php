@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
@@ -38,7 +38,7 @@ class ParseTelegramComapnyChats extends Command
     {
         $channels = ApiChannel::where('channel_source', ApiChannelSourceEnum::Telegram)
             ->where('status', ApiChannelStatusEnum::Active)
-            ->where('is_company', IsCompanyEnum::Company)
+            ->where('is_company', ApiDataTypeEnum::Company)
             ->get();
 
         if (!count($channels)) {

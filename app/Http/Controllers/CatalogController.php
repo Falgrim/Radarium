@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
@@ -32,7 +33,7 @@ class CatalogController extends Controller
 
     public function authorsAsSpecialists(Request $request)
     {
-        $specialitiesList = Repositories::dictionarySpeciality()->getList();
+        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist);
 
         $validated = $request->validate([
             'key_word' => [
@@ -53,7 +54,7 @@ class CatalogController extends Controller
 
         $authors = ApiPostUser::whereHas('specialists', function (Builder $query) use ($validated) {
             if ($this->onlyActive) {
-                $query->where('status', '=', SpecialistStatusEnum::Active);
+                $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
 
             if (!empty($validated['key_word'])) {
@@ -86,7 +87,7 @@ class CatalogController extends Controller
 
     public function specialists(Request $request)
     {
-        $specialitiesList = Repositories::dictionarySpeciality()->getList();
+        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist);
 
         $validated = $request->validate([
             'key_word' => [
@@ -108,7 +109,7 @@ class CatalogController extends Controller
         $specialists = Specialist::with('user');
 
         if ($this->onlyActive) {
-            $specialists = $specialists->where('status', '=', SpecialistStatusEnum::Active);
+            $specialists = $specialists->where('status', '=', ApiPostAiStatusEnum::Active);
         }
 
         if (!empty($validated['key_word'])) {
@@ -169,7 +170,7 @@ class CatalogController extends Controller
                 'min:1',
                 Rule::exists(Specialist::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
                     if ($this->onlyActive) {
-                        $query->where('status', SpecialistStatusEnum::Active);
+                        $query->where('status', ApiPostAiStatusEnum::Active);
                     }
                 }),
             ],
@@ -259,7 +260,7 @@ class CatalogController extends Controller
                 'min:1',
                 Rule::exists(Specialist::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
                     if ($this->onlyActive) {
-                        $query->where('status', SpecialistStatusEnum::Active);
+                        $query->where('status', ApiPostAiStatusEnum::Active);
                     }
                 }),
             ],

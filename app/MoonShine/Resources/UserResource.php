@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources;
 
 use App\Enum\ApiChannelSourceEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;

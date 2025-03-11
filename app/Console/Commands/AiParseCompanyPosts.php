@@ -7,7 +7,7 @@ use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\DictionaryEnum;
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
@@ -43,7 +43,7 @@ class AiParseCompanyPosts extends Command
         $posts = ApiChannelPost::select('api_channel_posts.*')
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
-            ->where('api_channels.is_company', IsCompanyEnum::Company)
+            ->where('api_channels.is_company', ApiDataTypeEnum::Company)
             ->orderBy('api_channel_posts.post_date', 'asc')
             ->take(30)
             ->get();
@@ -56,7 +56,7 @@ class AiParseCompanyPosts extends Command
         $postsAll = ApiChannelPost::select('api_channel_posts.*')
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
-            ->where('api_channels.is_company', IsCompanyEnum::Company)
+            ->where('api_channels.is_company', ApiDataTypeEnum::Company)
             ->count();
 
         $this->info('В обработку постов: '.count($posts).' из '.$postsAll);
@@ -77,7 +77,7 @@ class AiParseCompanyPosts extends Command
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
-                    $result = $ApiAIYandex->getResult(IsCompanyEnum::Company);
+                    $result = $ApiAIYandex->getResult(ApiDataTypeEnum::Company);
 
                     if (count($result['json'])) {
                         // Удаляем старое резюме, на случай повторного прогона поста

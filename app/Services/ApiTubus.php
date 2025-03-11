@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Models\User;
 use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;

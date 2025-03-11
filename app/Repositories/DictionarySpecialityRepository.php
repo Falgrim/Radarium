@@ -2,7 +2,8 @@
 
 namespace App\Repositories;
 
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiDataTypeEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Models\Configuration;
 use App\Infrastructures\Repository\Repository;
 use App\Models\DictionarySpeciality;
@@ -27,12 +28,13 @@ class DictionarySpecialityRepository extends Repository
      *
      * @return array
      */
-    public function getList(): array
+    public function getList(ApiDataTypeEnum $type): array
     {
         $list = [];
 
         $collection = $this->getQuery()
             ->select('title', 'id', 'short_name')
+            ->where('api_data_type_id', $type)
             ->orderBy('title')
             ->get();
 

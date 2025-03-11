@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Models\Configuration;
 use App\Infrastructures\Repository\Repository;
 use App\Models\Specialist;

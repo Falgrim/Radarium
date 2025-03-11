@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
-class Specialist extends Model
+class Builder extends Model
 {
     use HasFactory;
     use SoftDeletes;
@@ -80,7 +80,7 @@ class Specialist extends Model
 
     public function lastReview(): string
     {
-        $data = Review::where('specialist_id', $this->id)
+        $data = BuilderReview::where('specialist_id', $this->id)
             ->where('status', ReviewStatusEnum::Active)
             ->orderByDesc('created_at')
             ->first();
@@ -90,12 +90,12 @@ class Specialist extends Model
 
     public function reviews(): HasMany
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(BuilderReview::class);
     }
 
     public function getAvrRating()
     {
-        $avg = Specialist::withAvg(Review::table(), 'rating')
+        $avg = Builder::withAvg(BuilderReview::table(), 'rating')
             ->where('id', $this->id)
             //->where('rating', '>', 0)
             ->first();
@@ -105,19 +105,19 @@ class Specialist extends Model
     // Костыль, чтобы адинка увидела корректно связи при редактировании
     public function specialitiesForMoonshine(): HasMany
     {
-        return $this->hasMany(SpecialistSpeciality::class, 'specialist_id', 'id')->select('dictionary_speciality_id as id', 'specialist_id');
+        return $this->hasMany(SpecialistSpeciality::class, 'builder_id', 'id')->select('dictionary_speciality_id as id', 'builder_id');
     }
 
     public function specialities(): HasMany
     {
-        return $this->hasMany(SpecialistSpeciality::class, 'specialist_id', 'id');
+        return $this->hasMany(SpecialistSpeciality::class, 'builder_id', 'id');
     }
 
     public function specialtiesWithTitle(): array
     {
         $data = $this->through('specialities')
             ->has('dictionarySpeciality')
-            ->where('api_data_type_id', ApiDataTypeEnum::Specialist)
+            ->where('api_data_type_id', ApiDataTypeEnum::Builder)
             ->get();
         $result = [];
         foreach ($data as $row) {
@@ -130,7 +130,7 @@ class Specialist extends Model
     {
         $data = $this->through('specialities')
             ->has('dictionarySpeciality')
-            ->where('api_data_type_id', ApiDataTypeEnum::Specialist)
+            ->where('api_data_type_id', ApiDataTypeEnum::Builder)
             ->get();
         $result = [];
         foreach ($data as $row) {
@@ -146,34 +146,34 @@ class Specialist extends Model
     {
         parent::boot();
 
-        static::creating(function (Specialist $specialist) {
-            if (isset($specialist->specialitiesForMoonshine)) {
-                $specialitiesCount = is_array($specialist->specialitiesForMoonshine) ? count($specialist->specialitiesForMoonshine) : $specialist->specialitiesForMoonshine->count();
+        static::creating(function (Builder $builder) {
+            if (isset($builder->specialitiesForMoonshine)) {
+                $specialitiesCount = is_array($builder->specialitiesForMoonshine) ? count($builder->specialitiesForMoonshine) : $builder->specialitiesForMoonshine->count();
                 if ($specialitiesCount) {
-                    $specialities = is_array($specialist->specialitiesForMoonshine) ? $specialist->specialitiesForMoonshine : $specialist->specialitiesForMoonshine->toArray();
+                    $specialities = is_array($builder->specialitiesForMoonshine) ? $builder->specialitiesForMoonshine : $builder->specialitiesForMoonshine->toArray();
                     $dictionary = new Dictionary;
-                    $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $specialities);
+                    $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', $builder->id, $specialities);
                 }
-                unset($specialist->specialitiesForMoonshine);
+                unset($builder->specialitiesForMoonshine);
             }
         });
 
-        static::updating(function (Specialist $specialist) {
-            if (isset($specialist->specialitiesForMoonshine)) {
-                if (is_array($specialist->specialitiesForMoonshine)) {
-                    if (count($specialist->specialitiesForMoonshine)) {
+        static::updating(function (Builder $builder) {
+            if (isset($builder->specialitiesForMoonshine)) {
+                if (is_array($builder->specialitiesForMoonshine)) {
+                    if (count($builder->specialitiesForMoonshine)) {
                         $dictionary = new Dictionary;
-                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $specialist->specialitiesForMoonshine);
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', $builder->id, $builder->specialitiesForMoonshine);
                     }
                 } else {
-                    if ($specialist->specialitiesForMoonshine->count()) {
-                        $specialities = new Collection($specialist->specialitiesForMoonshine->toArray());
+                    if ($builder->specialitiesForMoonshine->count()) {
+                        $specialities = new Collection($builder->specialitiesForMoonshine->toArray());
                         $dictionary = new Dictionary;
-                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'specialist', $specialist->id, $specialities->pluck('id')->toArray());
+                        $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', $builder->id, $specialities->pluck('id')->toArray());
                     }
                 }
 
-                unset($specialist->specialitiesForMoonshine);
+                unset($builder->specialitiesForMoonshine);
             }
         });
     }

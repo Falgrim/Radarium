@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Models\Configuration;
 use App\Infrastructures\Repository\Repository;
 use App\Models\Specialist;
@@ -34,7 +34,7 @@ class SpecialistsRepository extends Repository
             $configCollection = $this->getQuery()
                 ->select('experience')
                 ->whereNotNull('experience')
-                ->where('status', SpecialistStatusEnum::Active)
+                ->where('status', ApiPostAiStatusEnum::Active)
                 ->groupBy('experience')
                 ->get();
         } else {

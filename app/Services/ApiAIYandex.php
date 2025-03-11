@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enum\IsCompanyEnum;
+use App\Enum\ApiDataTypeEnum;
 use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -40,9 +40,9 @@ class ApiAIYandex
         $this->aiLogging = config('services.ai.logging');
     }
 
-    protected function getKeyRows(IsCompanyEnum $isCompany)
+    protected function getKeyRows(ApiDataTypeEnum $isCompany)
     {
-        if ($isCompany === IsCompanyEnum::Company) {
+        if ($isCompany === ApiDataTypeEnum::Company) {
             return [
                 'type'          => ['id' => 'ai_type', 'type' => 'string'],
                 'reason'        => ['id' => 'ai_reason', 'type' => 'string'],
@@ -59,7 +59,7 @@ class ApiAIYandex
                 'extra_conditions'  => ['id' => 'extra_conditions', 'type' => 'string'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
             ];
-        } elseif ($isCompany === IsCompanyEnum::Private) {
+        } elseif ($isCompany === ApiDataTypeEnum::Specialist) {
             return [
                 'type'              => ['id' => 'ai_type', 'type' => 'string'],
                 'reason'            => ['id' => 'ai_reason', 'type' => 'string'],
@@ -135,7 +135,7 @@ class ApiAIYandex
         return $json;
     }
 
-    public function getResult(IsCompanyEnum $isCompany): array
+    public function getResult(ApiDataTypeEnum $isCompany): array
     {
         $result = $this->sendRequest();
         $aiText = $this->parseResponse($result);

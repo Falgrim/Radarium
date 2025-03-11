@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources;
 
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
@@ -127,7 +127,7 @@ class SpecialistResource extends ModelResource
             ),*/
             Select::make('Статус', 'status')
                 ->options(
-                    SpecialistStatusEnum::getList()
+                    ApiPostAiStatusEnum::getList()
                 ),
         ];
     }
@@ -162,7 +162,7 @@ class SpecialistResource extends ModelResource
             Text::make('Пост', 'post', fn($item) => Str::limit($item?->post?->post, 200)),
             Text::make('ИИ представление', 'ai_reason'),
             Date::make('Дата сообщения', 'post_date')->withTime()->sortable(),
-            Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class)->sortable(),
+            Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class)->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
     }
@@ -188,7 +188,7 @@ class SpecialistResource extends ModelResource
             Text::make('Спец. требования', 'spec_requirements'),
             Text::make('Ссылка на резюме', 'link_resume'),
             Text::make('Контакты из сообщения', 'contact_info'),
-            Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+            Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class),
             Date::make('Создан', 'created_at')->withTime(),
 
             HasOne::make('Сообщение', 'post', resource: new ApiChannelPostResource())->fields([
@@ -249,7 +249,7 @@ class SpecialistResource extends ModelResource
         $fields[] = Textarea::make('Спец. требования', 'spec_requirements')->customAttributes(['rows' => '5']);
         $fields[] = Text::make('Ссылка на резюме', 'link_resume');
         $fields[] = Textarea::make('Контакты из сообщения', 'contact_info');
-        $fields[] = Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class);
+        $fields[] = Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class);
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
 
         return $fields;

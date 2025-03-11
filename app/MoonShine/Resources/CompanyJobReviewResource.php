@@ -6,7 +6,7 @@ namespace App\MoonShine\Resources;
 
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CompanyJobReview;
 
@@ -147,7 +147,7 @@ class CompanyJobReviewResource extends ModelResource
             HasOne::make('Вакансия', 'companyJob', resource: new CompanyJobResource())->fields([
                 Text::make('ID', 'id'),
                 Text::make('Описание', 'description'),
-                Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
+                Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class),
                 Date::make('Создан', 'created_at')->withTime(),
             ]),
             Text::make('Отзыв', 'text'),

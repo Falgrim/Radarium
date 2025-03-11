@@ -2,7 +2,7 @@
 
 namespace App\Enum;
 
-enum SpecialistStatusEnum:int {
+enum ApiPostAiStatusEnum:int {
     case Active = 2;
 
     case Disabled = 0;

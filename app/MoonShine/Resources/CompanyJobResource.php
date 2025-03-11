@@ -7,7 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\CompanyJobStatusEnum;
-use App\Enum\SpecialistStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Models\DictionarySpeciality;
 use App\Models\Specialist;
 use Illuminate\Database\Eloquent\Model;
