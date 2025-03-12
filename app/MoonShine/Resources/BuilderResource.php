@@ -42,11 +42,11 @@ use MoonShine\Components\MoonShineComponent;
 /**
  * @extends ModelResource<Specialist>
  */
-class SpecialistResource extends ModelResource
+class BuilderResource extends ModelResource
 {
-    protected string $model = Specialist::class;
+    protected string $model = \App\Models\Builder::class;
 
-    protected string $title = 'Специалисты (резюме)';
+    protected string $title = 'Строители';
 
     protected string $sortColumn = 'post_date';
 
@@ -82,7 +82,7 @@ class SpecialistResource extends ModelResource
     }
 
     /**
-     * @return list<MoonShineComponent|Field>
+     * @return Field
      */
     public function fields(): array
     {
@@ -224,7 +224,7 @@ class SpecialistResource extends ModelResource
     {
         $fields = [];
 
-        $dictionarySpeciality = DictionarySpeciality::where('api_data_type_id', ApiDataTypeEnum::Specialist)->get();
+        $dictionarySpeciality = DictionarySpeciality::where('api_data_type_id', ApiDataTypeEnum::Builder)->get();
         $dictionaryArr = [];
         foreach ($dictionarySpeciality as $row) {
             $dictionaryArr[$row['id']] = trim($row['okso_code'].' '.$row['title']);

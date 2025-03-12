@@ -77,6 +77,24 @@ class ApiAIYandex
                 'link_resume'       => ['id' => 'link_resume', 'type' => 'string'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
             ];
+        } elseif ($isCompany === ApiDataTypeEnum::Builder) {
+            return [
+                'type'              => ['id' => 'ai_type', 'type' => 'string'],
+                'reason'            => ['id' => 'ai_reason', 'type' => 'string'],
+                'experience'        => ['id' => 'experience', 'type' => 'string'],
+                'soft_experience'   => ['id' => 'soft_experience', 'type' => 'string'],
+                'education'         => ['id' => 'education', 'type' => 'string'],
+                'work_schedule'     => ['id' => 'work_schedule', 'type' => 'string'],
+                'total_work_project'=> ['id' => 'total_work_project', 'type' => 'string'],
+                'type_of_work'      => ['id' => 'type_of_work', 'type' => 'string'],
+                'price_by_hour'     => ['id' => 'price_by_hour', 'type' => 'price'],
+                'price_by_project'  => ['id' => 'price_by_project', 'type' => 'price'],
+                'price_by_month'    => ['id' => 'price_by_month', 'type' => 'price'],
+                'about'             => ['id' => 'about', 'type' => 'string'],
+                'spec_requirements' => ['id' => 'spec_requirements', 'type' => 'string'],
+                'link_resume'       => ['id' => 'link_resume', 'type' => 'string'],
+                'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
+            ];
         }
     }
 

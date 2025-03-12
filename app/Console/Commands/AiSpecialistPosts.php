@@ -21,14 +21,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class AiParsePrivatePosts extends Command
+class AiSpecialistPosts extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:ai_parse:private';
+    protected $signature = 'app:ai_parse:specialist';
 
     /**
      * The console command description.
@@ -64,7 +64,10 @@ class AiParsePrivatePosts extends Command
         $this->info('В обработку постов: '.count($posts).' из '.$postsAll);
 
         $dictionary = new Dictionary;
-        $specialityList = $dictionary->getAll(DictionaryEnum::Speciality);
+        $specialityList = $dictionary->getAll(
+            DictionaryEnum::Speciality,
+            ApiDataTypeEnum::Specialist
+        );
 
         foreach ($posts as $post) {
             try {
@@ -129,9 +132,9 @@ class AiParsePrivatePosts extends Command
                         $post->save();
 
                         if ($specialist->status === ApiPostAiStatusEnum::InModeration) {
-                            $this->info('Создан специалист (резюме)');
+                            $this->info('Создан специалист');
                         } else {
-                            $this->info('Данный пост не является типом резюме');
+                            $this->info('Данный пост не является типом специалиста');
                         }
                     } else {
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Error;

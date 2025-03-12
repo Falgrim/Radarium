@@ -19,7 +19,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class AiParseCompanyPosts extends Command
+class AiCompanyPosts extends Command
 {
     /**
      * The name and signature of the console command.
@@ -62,7 +62,10 @@ class AiParseCompanyPosts extends Command
         $this->info('В обработку постов: '.count($posts).' из '.$postsAll);
 
         $dictionary = new Dictionary;
-        $specialityList = $dictionary->getAll(DictionaryEnum::Speciality);
+        $specialityList = $dictionary->getAll(
+            DictionaryEnum::Speciality,
+            ApiDataTypeEnum::Specialist
+        );
 
         foreach ($posts as $post) {
             try {

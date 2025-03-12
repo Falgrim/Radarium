@@ -6,6 +6,7 @@ namespace App\MoonShine\Resources;
 
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Models\DictionarySpeciality;
@@ -178,7 +179,7 @@ class CompanyJobResource extends ModelResource
     {
         $fields = [];
 
-        $dictionarySpeciality = DictionarySpeciality::get();
+        $dictionarySpeciality = DictionarySpeciality::where('api_data_type_id', ApiDataTypeEnum::Specialist)->get();
         $dictionaryArr = [];
         foreach ($dictionarySpeciality as $row) {
             $dictionaryArr[$row['id']] = $row['title'];

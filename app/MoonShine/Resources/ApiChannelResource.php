@@ -9,10 +9,12 @@ use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Enum\ApiDataTypeEnum;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannel;
 
 use Illuminate\Validation\Rule;
+use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Json;
 use MoonShine\Fields\Preview;
@@ -106,10 +108,11 @@ class ApiChannelResource extends ModelResource
         return [
             Text::make('Название', 'title'),
             Text::make('Ссылка', 'link'),
-            Text::make('Описание', 'description'),
+            //Text::make('Описание', 'description'),
             BelongsTo::make('Сервис', 'apiAi'),
-            Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+            //Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
             Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class),
+            Date::make('Дата начала', 'post_from_date')->format('d.m.Y'),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
         ];
     }
@@ -142,6 +145,9 @@ class ApiChannelResource extends ModelResource
         $fields[] = Enum::make('Тип выборки', 'is_company')
             ->hint('От типа зависит какая сущность в БД будет отвечать за сохранение данных (резюме или вакансия)')
             ->attach(ApiDataTypeEnum::class);
+
+        $fields[] = Date::make('Дата начала', 'post_from_date')
+            ->hint('Укажите с какой даты публикации сообщений должен быть просканирован при первом запуске источник');
 
         $fields[] = Textarea::make('Промт для ИИ', 'ai_promt')
             ->hint('Не меняйте промт без предварительного тестирования в самом ИИ, так как даже при небольших изменениях может поменяться результат и формат ответа')

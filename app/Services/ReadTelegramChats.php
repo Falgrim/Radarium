@@ -58,60 +58,45 @@ class ReadTelegramChats
 
         $MadelineProto->start();
 
+        if (!$this->apiChannel->last_date_check) {
+            $offsetDate = $this->apiChannel->post_from_date ? $this->apiChannel->post_from_date : '2025-01-01 00:00:00';
+        } else {
+            $offsetDate = $this->apiChannel->last_date_check;
+        }
+
         $params = [
             'peer'          => $this->apiChannel->link,
             'limit'         => $this->cronCountPosts?->value ?? 100,
-            'offset_date'   => !$this->apiChannel->last_date_check ? strtotime('2025-01-01 00:00:00') : strtotime($this->apiChannel->last_date_check),
+            'offset_date'   => strtotime($offsetDate),
         ];
+
+        $this->setInfoMsg('Выборка с даты: '.date('H:i:s d.m.Y', $params['offset_date']));
 
         $messages = $MadelineProto->messages->getHistory($params);
 
         /* Сообщения, сортировка по дате (новые сверху) */
         $messages = array_reverse($messages['messages']);
+
+        // Структура для reply_to https://docs.madelineproto.xyz/API_docs/constructors/messageReplyHeader.html
+        $messagesOrigin = $messages;
         $countMsg = count($messages);
 
-        if (count($messages)) {
-            if (isset($this->apiChannel->options['reply_to_msg_id'])) {
-                foreach ($messages as $key => $message) {
-                    if (
-                        !isset($message['reply_to']) or
-                        !isset($message['reply_to']['reply_to_msg_id']) or
-                        $message['reply_to']['reply_to_msg_id'] != $this->apiChannel->options['reply_to_msg_id']
-                    ) {
-                        //$this->setInfoMsg('Сообщение пропущено из-за проверки на reply_to_msg_id');
-                        unset($messages[$key]);
-                    } else {
-                        //$this->setInfoMsg($message['id'].': '.(new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s"));
-                    }
-                }
+        // Для дебага
+        /*foreach ($messages as $key => $message) {
+            if ($this->apiChannel->last_post_id AND $this->apiChannel->last_post_id >= $message['id']) {
+                continue;
             }
-        }
 
-        if ($this->minLengthPost?->value) {
-            foreach ($messages as $key => $message) {
-                // Может быть в кейсе: [_] => messageService
-                if (!isset($message['message'])) {
-                    unset($messages[$key]);
-                    continue;
-                }
-
-                // Игнорируем сообщения от каналов
-                if (!isset($message['from_id'])) {
-                    unset($messages[$key]);
-                    continue;
-                }
-
-                if (Str::length($message['message']) < $this->minLengthPost?->value) {
-                    $this->setInfoMsg('Сообщение пропущено из-за ограничения мин. длины '.$this->minLengthPost?->value.': '.Str::length($message['message']));
-                    unset($messages[$key]);
-                }
+            if (isset($message['media'])) {
+                unset($message['media']);
             }
-        }
+            echo (new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s").PHP_EOL;
+        }*/
+
+        $this->checkReplyTo($messages);
+        $this->checkMinLength($messages);
 
         if ($countMsgFiltered = count($messages)) {
-            $lastPostId = last($messages)['id'] ?? null;
-            $lastDate = last($messages)['date'] ?? null;
-
             foreach ($messages as $message) {
                 if ($this->apiChannel->last_post_id AND $this->apiChannel->last_post_id >= $message['id']) {
                     continue;
@@ -186,6 +171,12 @@ class ReadTelegramChats
                     $this->setInfoMsg('Обновлен пост: ' . $post->id);
                 }
             }
+        }
+
+        // Если есть хоть какие-то сообщения - обновляем дату сканирования
+        if (count($messagesOrigin)) {
+            $lastPostId = last($messagesOrigin)['id'] ?? null;
+            $lastDate = last($messagesOrigin)['date'] ?? null;
 
             if (!is_null($lastPostId)) {
                 if (!$this->apiChannel->last_post_id OR $this->apiChannel->last_post_id < $lastPostId) {
@@ -212,8 +203,8 @@ class ReadTelegramChats
             }
         }
 
-        Log::channel('post_parser')->info('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
-        $this->setInfoMsg('Прочитано '.$countMsg.'; Отфильтрованных: '.$countMsgFiltered);
+        Log::channel('post_parser')->info('Прочитано '.$countMsg.'; Допущенных: '.$countMsgFiltered);
+        $this->setInfoMsg('Прочитано '.$countMsg.'; Допущенных: '.$countMsgFiltered);
         $this->setInfoMsg('Последний ID: '.$this->apiChannel->last_post_id);
         $this->setInfoMsg('Последняя дата: '.$this->apiChannel->last_date_check);
 
@@ -223,6 +214,77 @@ class ReadTelegramChats
             'lastId'    => $this->apiChannel->last_post_id,
             'lastDate'  => $this->apiChannel->last_date_check,
         ];
+    }
+
+    private function checkMinLength(&$messages): bool
+    {
+        if ($this->minLengthPost?->value) {
+            if (!count($messages)) {
+                return false;
+            }
+
+            foreach ($messages as $key => $message) {
+                // Может быть в кейсе: [_] => messageService
+                if (!isset($message['message'])) {
+                    unset($messages[$key]);
+                    continue;
+                }
+
+                // Игнорируем сообщения от каналов
+                if (!isset($message['from_id'])) {
+                    unset($messages[$key]);
+                    continue;
+                }
+
+                if (Str::length($message['message']) < $this->minLengthPost?->value) {
+                    $this->setInfoMsg('Сообщение пропущено из-за ограничения мин. длины '.$this->minLengthPost?->value.': '.Str::length($message['message']));
+                    unset($messages[$key]);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function checkReplyTo(&$messages): bool
+    {
+        if (isset($this->apiChannel->options['reply_to_msg_id'])) {
+            if (!count($messages)) {
+                return false;
+            }
+
+            $replyToMsgIds = explode(',', $this->apiChannel->options['reply_to_msg_id']);
+            $replyToMsgIds = array_map('trim', $replyToMsgIds);
+
+            $messagesNew = [];
+
+            foreach ($messages as $key => $message) {
+                foreach ($replyToMsgIds as $replyToMsgId) {
+                    // Если выбран топик 1 и у сообщения нет ответа, то оно находится в топике 1
+                    if ($replyToMsgId == 1 AND !isset($message['reply_to'])) {
+                        $messagesNew[$message['id']] = $message;
+                        break;
+                    }
+
+                    if (
+                        isset($message['reply_to']) AND
+                        isset($message['reply_to']['reply_to_msg_id']) AND
+                        $message['reply_to']['reply_to_msg_id'] == $replyToMsgId
+                    ) {
+                        $messagesNew[$message['id']] = $message;
+                        break;
+                    }
+                }
+
+                if (!isset($messagesNew[$message['id']])) {
+                    //$this->setInfoMsg('Сообщение пропущено из-за проверки на reply_to_msg_id');
+                }
+            }
+
+            $messages = $messagesNew;
+        }
+
+        return true;
     }
 
     private function setInfoMsg(string $text)

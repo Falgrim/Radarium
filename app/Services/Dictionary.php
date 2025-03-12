@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enum\ApiDataTypeEnum;
 use App\Enum\DictionaryEnum;
 use App\Models\DictionarySpeciality;
 use App\Models\Specialist;
@@ -35,10 +36,10 @@ class Dictionary
         return Str::upper(Str::acronym($name));
     }
 
-    public function getAll(DictionaryEnum $dictionary): Collection
+    public function getAll(DictionaryEnum $dictionary, ApiDataTypeEnum $apiDataType): Collection
     {
         if (DictionaryEnum::Speciality === $dictionary) {
-            return DictionarySpeciality::get();
+            return DictionarySpeciality::where('api_data_type_id', $apiDataType)->get();
         } else {
             throw new \Exception('Выбранный словарь не найден');
         }

@@ -16,14 +16,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class ParseTelegramPrivateChats extends Command
+class ParseTelegramSpecialistChats extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:tg_parse:private';
+    protected $signature = 'app:tg_parse:specialist';
 
     /**
      * The console command description.

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\ApiDataTypeEnum;
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
@@ -20,6 +22,7 @@ use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Number;
 use MoonShine\Fields\Relationships\HasOne;
+use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\TinyMce;
 use MoonShine\Handlers\ExportHandler;
@@ -65,13 +68,18 @@ class DictionarySpecialityResource extends ModelResource
 
     public function getActiveActions(): array
     {
-        return ['view', 'update'];
+        return ['view'];
     }
 
     public function filters(): array
     {
         return [
             Text::make('Специализация', 'title'),
+            Select::make('Тип выборки', 'api_data_type_id')
+                ->options(
+                    ApiDataTypeEnum::getList()
+                ),
+            //Enum::make('Тип выборки', 'api_data_type_id')->attach(ApiDataTypeEnum::class),
         ];
     }
 
@@ -110,6 +118,7 @@ class DictionarySpecialityResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
+            Enum::make('Тип выборки', 'api_data_type_id')->attach(ApiDataTypeEnum::class),
             Text::make('Специализация', 'title')->sortable(),
             Text::make('Aббревиатура', 'short_name')->sortable(),
         ];
@@ -119,6 +128,7 @@ class DictionarySpecialityResource extends ModelResource
     {
         return [
             ID::make(),
+            Enum::make('Тип выборки', 'api_data_type_id')->attach(ApiDataTypeEnum::class),
             Text::make('Специализация', 'title'),
             Text::make('Aббревиатура', 'short_name'),
             //Date::make('Создан', 'created_at')->withTime(),
@@ -129,8 +139,10 @@ class DictionarySpecialityResource extends ModelResource
     {
         $fields = [];
 
-        $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        //$fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = Enum::make('Тип выборки', 'api_data_type_id')->attach(ApiDataTypeEnum::class);
         $fields[] = Text::make('Специализация', 'title');
+        $fields[] = Text::make('Группа', 'group_title')->hint('Группа равна аббервиатуре');
         $fields[] = Text::make('Aббревиатура', 'short_name');
         //$fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
         return $fields;

@@ -12,9 +12,9 @@ enum ApiDataTypeEnum:int {
     public function toString(): ?string
     {
         return match ($this) {
-            self::Company   => 'Вакансия',
-            self::Specialist   => 'Сотрудник',
-            self::Builder   => 'Строитель',
+            self::Company => 'Вакансия',
+            self::Specialist => 'Сотрудник',
+            self::Builder => 'Строитель',
         };
     }
 
@@ -30,5 +30,17 @@ enum ApiDataTypeEnum:int {
             self::Specialist   => 'yellow',
             self::Builder   => 'purple',
         };
+    }
+
+    public static function getList(): array
+    {
+        $values = collect(self::cases());
+
+        $result = $values->mapWithKeys(fn ($value): array => [
+            $value->value => method_exists($value, 'toString') ? $value->toString() : $value->value
+        ]);
+        $result->put('', 'Все статусы');
+
+        return $result->toArray();
     }
 }

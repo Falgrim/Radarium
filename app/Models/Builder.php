@@ -105,12 +105,12 @@ class Builder extends Model
     // Костыль, чтобы адинка увидела корректно связи при редактировании
     public function specialitiesForMoonshine(): HasMany
     {
-        return $this->hasMany(SpecialistSpeciality::class, 'builder_id', 'id')->select('dictionary_speciality_id as id', 'builder_id');
+        return $this->hasMany(BuilderSpeciality::class, 'builder_id', 'id')->select('dictionary_speciality_id as id', 'builder_id');
     }
 
     public function specialities(): HasMany
     {
-        return $this->hasMany(SpecialistSpeciality::class, 'builder_id', 'id');
+        return $this->hasMany(BuilderSpeciality::class, 'builder_id', 'id');
     }
 
     public function specialtiesWithTitle(): array

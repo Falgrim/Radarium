@@ -28,12 +28,12 @@ return new class extends Migration
             $table->integer('price_by_month')->nullable(); // Желаемая оплата - фиксированная оплата за период времени (месяц)
             $table->string('about')->nullable(); // О себе
             $table->string('spec_requirements')->nullable(); // Спец. требования
-            $table->string('contact_info')->nullable()->change();
+            $table->string('contact_info')->nullable();
             $table->string('link_resume')->nullable(); // Ссылка на резюме
             $table->smallInteger('status')->default(0);
             $table->dateTime('post_date')->nullable();
             $table->string('ai_type')->default('');
-            $table->text('ai_reason')->change();
+            $table->text('ai_reason')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

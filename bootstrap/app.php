@@ -27,7 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $schedule->cron('*/'.$readSourceCron->value.' * * * *')
                     ->withoutOverlapping()
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:private');
+                        $schedule->command('app:tg_parse:specialist');
+                        $schedule->command('app:tg_parse:builder');
                         $schedule->command('app:tg_parse:company');
                 });
             } elseif ($readSourceCron->value <= 1439) {
@@ -35,7 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $schedule->cron('0 */'.ceil($readSourceCron->value/60).' * * *')
                     ->withoutOverlapping()
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:private');
+                        $schedule->command('app:tg_parse:specialist');
+                        $schedule->command('app:tg_parse:builder');
                         $schedule->command('app:tg_parse:company');
                     });
             } else {
@@ -43,12 +45,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 $schedule->cron('0 0 * * *')
                     ->withoutOverlapping()
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:private');
+                        $schedule->command('app:tg_parse:specialist');
+                        $schedule->command('app:tg_parse:builder');
                         $schedule->command('app:tg_parse:company');
                     });
             }
         } else {
-            $schedule->command('app:tg_parse:private')->hourly()->withoutOverlapping();
+            $schedule->command('app:tg_parse:specialist')->hourly()->withoutOverlapping();
+            $schedule->command('app:tg_parse:builder')->hourly()->withoutOverlapping();
             $schedule->command('app:tg_parse:company')->hourly()->withoutOverlapping();
         }
 
@@ -57,7 +61,8 @@ return Application::configure(basePath: dirname(__DIR__))
             ->runInBackground()
             ->withoutOverlapping()
             ->group(function (Schedule $schedule) {
-                $schedule->command('app:ai_parse:private');
+                $schedule->command('app:ai_parse:specialist');
+                $schedule->command('app:ai_parse:builder');
                 $schedule->command('app:ai_parse:company');
             });
 

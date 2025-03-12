@@ -28,6 +28,7 @@ class ApiChannel extends Model
         'last_post_id',
         'is_company',
         'last_date_check',
+        'post_from_date',
         'created_at',
         'updated_at',
     ];
@@ -36,6 +37,7 @@ class ApiChannel extends Model
         'created_at',
         'updated_at',
         'last_date_check',
+        'post_from_date',
     ];
 
     /**
@@ -49,6 +51,7 @@ class ApiChannel extends Model
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'last_date_check' => 'datetime:Y-m-d H:i:s',
+            'post_from_date' => 'date:Y-m-d',
             'options' => 'array',
             'status' => ApiChannelStatusEnum::class,
             'channel_source' => ApiChannelSourceEnum::class,

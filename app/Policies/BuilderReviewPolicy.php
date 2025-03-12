@@ -2,13 +2,12 @@
 
 namespace App\Policies;
 
-use App\Models\DictionarySpeciality;
-use App\Models\Review;
+use App\Models\BuilderReview;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use MoonShine\Models\MoonshineUser;
 use MoonShine\Models\MoonshineUserRole;
 
-class DictionarySpecialityPolicy
+class BuilderReviewPolicy
 {
     use HandlesAuthorization;
 
@@ -17,7 +16,7 @@ class DictionarySpecialityPolicy
         return true;
     }
 
-    public function view(MoonshineUser $user, DictionarySpeciality $model)
+    public function view(MoonshineUser $user, BuilderReview$model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -26,7 +25,12 @@ class DictionarySpecialityPolicy
         return true;
     }
 
-    public function create(MoonshineUser $user, DictionarySpeciality $model)
+    public function create(MoonshineUser $user)
+    {
+        return false;
+    }
+
+    public function update(MoonshineUser $user, BuilderReview $model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -35,16 +39,7 @@ class DictionarySpecialityPolicy
         return false;
     }
 
-    public function update(MoonshineUser $user, DictionarySpeciality $model)
-    {
-        if ($user->isSuperUser()) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function delete(MoonshineUser $user, DictionarySpeciality $model)
+    public function delete(MoonshineUser $user, BuilderReview $model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -62,7 +57,7 @@ class DictionarySpecialityPolicy
         return false;
     }
 
-    public function restore(MoonshineUser $user, DictionarySpeciality $model)
+    public function restore(MoonshineUser $user, BuilderReview $model)
     {
         if ($user->isSuperUser()) {
             return true;
@@ -71,7 +66,7 @@ class DictionarySpecialityPolicy
         return false;
     }
 
-    public function forceDelete(MoonshineUser $user, DictionarySpeciality $model)
+    public function forceDelete(MoonshineUser $user, BuilderReview $model)
     {
         if ($user->isSuperUser()) {
             return true;

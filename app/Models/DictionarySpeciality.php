@@ -18,6 +18,7 @@ class DictionarySpeciality extends Model
         'title',
         'short_name',
         'key_words',
+        'api_data_type_id',
         'created_at',
         'updated_at',
     ];

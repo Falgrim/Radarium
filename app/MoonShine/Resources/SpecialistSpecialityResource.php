@@ -103,7 +103,6 @@ class SpecialistSpecialityResource extends ModelResource
             ID::make()->sortable(),
             HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->sortable(),
             HasOne::make('Специализация', 'dictionarySpeciality', resource: new DictionarySpecialityResource())->sortable(),
-
         ];
     }
 

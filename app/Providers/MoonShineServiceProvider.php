@@ -8,6 +8,8 @@ use App\MoonShine\Resources\ApiAiResource;
 use App\MoonShine\Resources\ApiChannelPostResource;
 use App\MoonShine\Resources\ApiChannelResource;
 use App\MoonShine\Resources\ApiPostUserResource;
+use App\MoonShine\Resources\BuilderResource;
+use App\MoonShine\Resources\BuilderReviewResource;
 use App\MoonShine\Resources\CompanyJobResource;
 use App\MoonShine\Resources\CompanyJobReviewResource;
 use App\MoonShine\Resources\ConfigurationResource;
@@ -87,6 +89,11 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
             MenuGroup::make('Вакансии', [
                 MenuItem::make('Вакансии', new CompanyJobResource(), 'heroicons.users'),
                 MenuItem::make('Отзывы', new CompanyJobReviewResource(), 'heroicons.users'),
+            ], 'heroicons.users'),
+
+            MenuGroup::make('Строители', [
+                MenuItem::make('Строители', new BuilderResource(), 'heroicons.users'),
+                MenuItem::make('Отзывы', new BuilderReviewResource(), 'heroicons.users'),
             ], 'heroicons.users'),
         ];
     }
