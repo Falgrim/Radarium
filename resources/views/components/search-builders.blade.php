@@ -45,7 +45,7 @@
                         </div>
 
                         <button class="w-10 btn btn-primary mt-3" type="submit" name="search">Поиск</button>
-                        <button class="w-10 btn btn-primary mt-3" type="reset" onclick="window.location.href='{{route('catalog.specialists')}}'">Сбросить</button>
+                        <button class="w-10 btn btn-primary mt-3" type="reset" onclick="window.location.href='{{route('catalog.builders')}}'">Сбросить</button>
                     </form>
                 </div>
             </div>

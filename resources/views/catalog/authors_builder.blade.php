@@ -1,6 +1,6 @@
 <x-global-layout>
 
-    <x-search-specialists :$specialitiesList :$request :$errors />
+    <x-search-builders :$specialitiesList :$request :$errors />
 
     @if ($errors->any())
 
