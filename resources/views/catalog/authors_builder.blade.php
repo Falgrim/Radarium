@@ -1,5 +1,9 @@
 <x-global-layout>
 
+    <div class="container my-5">
+        <h2>Строители</h2>
+    </div>
+
     <x-search-builders :$specialitiesList :$request :$errors />
 
     @if ($errors->any())

@@ -10,6 +10,11 @@
         @vite('resources/js/app.js')
 
         <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/select2.min.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/select2-bootstrap-5-theme.min.css') }}">
+
+        <script type="application/javascript" src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
+        <script type="application/javascript" src="{{ asset('js/select2.full.min.js') }}"></script>
     </head>
     <body>
         <x-header />

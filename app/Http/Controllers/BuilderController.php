@@ -46,10 +46,12 @@ class BuilderController extends Controller
                 'max:50',
             ],
             'speciality_id' => [
-                'sometimes',
                 'nullable',
-                'string',
-                'alpha_dash:ascii',
+                'array',
+            ],
+            'speciality_id.*' => [
+                'sometimes',
+                'integer',
                 Rule::in(array_keys($specialitiesList)),
             ],
         ]);
@@ -66,7 +68,9 @@ class BuilderController extends Controller
             }
 
             if (!empty($validated['speciality_id'])) {
-                $query->whereRelation('specialities', 'dictionary_speciality_id', $validated['speciality_id']);
+                $query->whereRelation('specialities', function (Builder $query) use ($validated) {
+                    $query->whereIn('dictionary_speciality_id', $validated['speciality_id']);
+                });
             }
         })->whereHas('postsComplete', function (Builder $query) use ($validated) {
             if (!empty($validated['key_word'])) {

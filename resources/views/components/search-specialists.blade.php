@@ -34,7 +34,7 @@
 
                             <div class="col-md-6">
                                 <x-input-label for="speciality_id" class="form-label" :value="__('Специализация')" />
-                                <select class="form-select" name="speciality_id" id="speciality_id">
+                                <select class="form-select select-search-multiple" name="speciality_id[]" id="speciality_id" multiple>
                                     <option value="">Выберите...</option>
                                     @foreach ($specialitiesList as $speciality)
                                         <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
@@ -52,3 +52,19 @@
         </div>
     </div>
 </div>
+
+@pushOnce('scripts')
+    <script type="module">
+        $(document).ready(function() {
+            $('.select-search-multiple').select2({
+                theme: "bootstrap-5",
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: "select2--small",
+                placeholder: 'Выберите...',
+                allowClear: true,
+                language: 'ru',
+                closeOnSelect: false
+            });
+        });
+    </script>
+@endPushOnce
