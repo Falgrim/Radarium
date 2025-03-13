@@ -20,7 +20,7 @@
             </div>
 
             <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-                <li>Исполнители</li>
+                <li>Radarium</li>
             </ul>
 
             <div class="col-md-3 text-end">

@@ -72,6 +72,11 @@ class ApiPostUser extends Model
         return $this->hasMany(Specialist::class, 'api_post_user_id', 'id');
     }
 
+    public function builders(): HasMany
+    {
+        return $this->hasMany(Builder::class, 'api_post_user_id', 'id');
+    }
+
     public function specialtiesWithShortName(): array
     {
         $data = $this->through('specialists')
@@ -106,6 +111,11 @@ class ApiPostUser extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function builderReviews(): HasMany
+    {
+        return $this->hasMany(BuilderReview::class);
+    }
+
     public function getAvrSpecialistRating()
     {
         $avg = ApiPostUser::withAvg(['specialistReviews' => function ($query) {
@@ -117,9 +127,48 @@ class ApiPostUser extends Model
         return is_null($avg->specialist_reviews_avg_rating) ? 0 : number_format($avg->specialist_reviews_avg_rating, 1, '.', ' ');
     }
 
+    public function getAvrBuilderRating()
+    {
+        $avg = ApiPostUser::withAvg(['builderReviews' => function ($query) {
+            $query->where('rating', '>', 0);
+        }], 'rating')
+            ->where('id', $this->id)
+            ->first();
+
+        return is_null($avg->builder_reviews_avg_rating) ? 0 : number_format($avg->builder_reviews_avg_rating, 1, '.', ' ');
+    }
+
     public function specialistData(): array
     {
         $data = Specialist::where('api_post_user_id', $this->id)
+            ->where('status', ApiPostAiStatusEnum::Active)
+            ->get();
+
+        $result = [
+            'experience' => [],
+            'soft_experience' => [],
+            'education' => [],
+            'work_schedule' => [],
+            'total_work_project' => [],
+            'type_of_work' => [],
+            'about' => [],
+            'spec_requirements' => [],
+            'link_resume' => [],
+        ];
+        foreach ($data as $row) {
+            foreach ($result as $key => $item) {
+                if ($row->{$key}) {
+                    $result[$key][md5($row->{$key})] = $row->{$key};
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    public function builderData(): array
+    {
+        $data = BuilderReview::where('api_post_user_id', $this->id)
             ->where('status', ApiPostAiStatusEnum::Active)
             ->get();
 

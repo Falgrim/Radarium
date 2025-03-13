@@ -1,0 +1,300 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\ApiDataTypeEnum;
+use App\Enum\CompanyJobStatusEnum;
+use App\Enum\ReviewCanEditEnum;
+use App\Enum\ReviewStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
+use App\Infrastructures\Facades\Repositories;
+use App\Models\ApiPostUser;
+use App\Models\BuilderReview;
+use App\Models\BuilderReviewCustomField;
+use App\Models\CompanyJob;
+use App\Models\Review;
+use App\Models\ReviewCustomField;
+use App\Models\Specialist;
+use App\Models\SpecialistSpeciality;
+//use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+
+class BuilderController extends Controller
+{
+    protected bool $onlyActive = true;
+
+    protected int $onPage = 10;
+
+    public function builders(Request $request)
+    {
+        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Builder);
+
+        $validated = $request->validate([
+            'key_word' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:2',
+                'max:50',
+            ],
+            'speciality_id' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'alpha_dash:ascii',
+                Rule::in(array_keys($specialitiesList)),
+            ],
+        ]);
+
+        $authors = ApiPostUser::whereHas('builders', function (Builder $query) use ($validated) {
+            if ($this->onlyActive) {
+                $query->where('status', '=', ApiPostAiStatusEnum::Active);
+            }
+
+            if (!empty($validated['key_word'])) {
+                $query->whereHas('post', function (Builder $query) use ($validated) {
+                    $query->where('post', 'like', '%'.$validated['key_word'].'%');
+                });
+            }
+
+            if (!empty($validated['speciality_id'])) {
+                $query->whereRelation('specialities', 'dictionary_speciality_id', $validated['speciality_id']);
+            }
+        })->whereHas('postsComplete', function (Builder $query) use ($validated) {
+            if (!empty($validated['key_word'])) {
+                $query->where('post', 'like', '%'.$validated['key_word'].'%');
+            }
+        });
+
+        $authors = $authors
+            ->with(['builderReviews'])
+            ->orderByDesc('created_at')
+            ->paginate($this->onPage)
+            ->withQueryString();
+
+        return view('catalog.authors_builder', [
+            'request' => $request,
+            'authors' => $authors,
+            'specialitiesList' => $specialitiesList,
+        ]);
+    }
+
+    public function builderView(Request $request, string $id)
+    {
+        $validator = Validator::make($request->route()->parameters(), [
+            'id' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            abort(404);
+        }
+
+        $validated = $validator->validateWithBag('specialist');
+
+        $author = ApiPostUser::where('id', $validated['id'])->with(['specialists', 'postsComplete', 'specialistReviews'])->firstOrFail();
+        $reviews = $author->builderReviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
+
+        return view('catalog.author_builder_view', [
+            'request' => $request,
+            'author' => $author,
+            'reviews' => $reviews,
+        ]);
+    }
+
+    public function builderStoreReview(Request $request, string $id): RedirectResponse
+    {
+        if (Auth::user()->user_role_id !== 2) {
+            abort(403);
+        }
+
+        $validator = Validator::make($request->route()->parameters(), [
+            'id' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::exists(ApiPostUser::table(), 'id'),
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()
+                ->route('catalog.builders')
+                ->withErrors($validator, 'specialist')
+                ->withInput();
+        }
+
+        $validatedRoute = $validator->validateWithBag('specialist');
+
+        //TODO: проверить был ли ранее отзыв опубликован, чтобы блокировать добавление новых
+
+        $validator = Validator::make($request->post(), [
+            'text' => [
+                'required',
+                'min:2',
+                'max:500',
+            ],
+            'rating' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:5',
+            ],
+            /*'extra_row' => [
+                'sometimes',
+                'required_with:extra_row.*.title',
+                'array:title,value',
+            ],*/
+            'extra_row.*.title' => [
+                'sometimes',
+                'required_with:extra_row.*.value',
+                //'required_if:extra_row.*.value,required',
+                'nullable',
+                'distinct:ignore_case',
+                'string',
+                'min:3',
+                'max:100',
+            ],
+            'extra_row.*.value' => [
+                'sometimes',
+                'required_with:extra_row.*.title',
+                'nullable',
+                //'required_if:extra_row.*.title,required',
+                'string',
+                'min:1',
+                'max:100',
+            ],
+            'specialist_id' => [
+                'nullable',
+                'integer',
+                'min:1',
+                Rule::exists(\App\Models\Builder::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
+                    if ($this->onlyActive) {
+                        $query->where('status', ApiPostAiStatusEnum::Active);
+                    }
+                }),
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()
+                ->route('catalog.builder.view', ['id' => $id])
+                ->withErrors($validator, 'review')
+                ->withInput();
+        }
+
+        $validated = $validator->validateWithBag('review');
+
+        $author = ApiPostUser::where('id', $validatedRoute['id'])->firstOrFail();
+
+        if (isset($validated['specialist_id']) AND $validated['specialist_id']) {
+            $specialist = \App\Models\Builder::where('id', $validated['specialist_id'])->firstOrFail();
+        }
+
+        $review = BuilderReview::create([
+            'text'      => $validated['text'],
+            'can_edit'  => ReviewCanEditEnum::Allow,
+            'status'    => ReviewStatusEnum::InModeration,
+            'rating'    => $validated['rating'],
+            'builder_id' => isset($specialist) ? $specialist->id : 0,
+            'api_post_user_id' => $author->id,
+            'user_id'   => Auth::user()->id,
+        ]);
+
+        if (isset($validated['extra_row']) AND count($validated['extra_row'])) {
+            foreach ($validated['extra_row'] as $item) {
+                if (!$item['title']) {
+                    continue;
+                }
+
+                BuilderReviewCustomField::create([
+                    'review_id' => $review->id,
+                    'title' => $item['title'],
+                    'value' => $item['value'],
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Отзыв добавлен. После модерации он появится на странице исполнителя');
+    }
+
+    public function builderEditReview(Request $request, string $id)
+    {
+        if (Auth::user()->user_role_id !== 2) {
+            abort(403);
+        }
+
+        $validator = Validator::make($request->post(), [
+            'review_id' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::exists(BuilderReview::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
+                    $query->where('user_id', Auth::user()->id);
+                    $query->where('can_edit', ReviewCanEditEnum::Allow);
+                    $query->where('status', ReviewStatusEnum::Active);
+                }),
+            ],
+            'text' => [
+                'required',
+                'min:3',
+                'max:500',
+            ],
+            'rating' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:5',
+            ],
+            'extra_row.*.title' => [
+                'sometimes',
+                'required_with:extra_row.*.value',
+                //'required_if:extra_row.*.value,required',
+                'nullable',
+                'distinct:ignore_case',
+                'string',
+                'min:3',
+                'max:100',
+            ],
+            'extra_row.*.value' => [
+                'sometimes',
+                'required_with:extra_row.*.title',
+                'nullable',
+                //'required_if:extra_row.*.title,required',
+                'string',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->messages())->setStatusCode(403);
+        }
+
+        $validated = $validator->validateWithBag('review');
+
+        $review = BuilderReview::where('id', $validated['review_id'])->firstOrFail();
+
+        $review->text = $validated['text'];
+        $review->can_edit = ReviewCanEditEnum::Disabled;
+        $review->rating = $validated['rating'];
+        $review->status = ReviewStatusEnum::InModeration;
+        $review->save();
+
+        return response()
+        ->json($review)
+        ->setStatusCode(200)
+        ->header('Content-Type', 'application/json');
+    }
+}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BuilderController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IndexController;
@@ -17,6 +18,14 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/companyjobs', [CatalogController::class, 'companyJobs'])->name('catalog.companyjobs');
 Route::get('/companyjobs/companyjob/{id}', [CatalogController::class, 'companyJobView'])->name('catalog.companyjob.view');
+
+Route::get('/builders', [BuilderController::class, 'builders'])->name('catalog.builders');
+Route::get('/builders/builder/{id}', [BuilderController::class, 'builderView'])->name('catalog.builder.view');
+
+Route::middleware('auth')->group(function () {
+    Route::post('/builders/builder/{id}', [BuilderController::class, 'builderStoreReview'])->name('catalog.builder.store');
+    Route::post('/builders/builder/{id}/review', [BuilderController::class, 'builderEditReview'])->name('catalog.builder.edit_review');
+});
 
 Route::get('/dashboard', function () {
     return view('dashboard');

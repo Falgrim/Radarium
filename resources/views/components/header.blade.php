@@ -1,13 +1,25 @@
 <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom text-bg-dark">
     <div class="col-md-3 mb-2 mb-md-0">
         <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
-            Лого
+            Radarium
         </a>
     </div>
 
     <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
         <li><a href="{{ route('index') }}" class="nav-link px-2">Главная</a></li>
-        <li><a href="{{ route('catalog.specialists') }}" class="nav-link px-2">Специалисты</a></li>
+
+        <li>
+            <div class="dropdown">
+                <a class="nav-link px-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Специалисты
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{ route('catalog.specialists') }}" class="dropdown-item px-2">Специалисты</a></li>
+                    <li><a href="{{ route('catalog.builders') }}" class="dropdown-item px-2">Строители</a></li>
+                </ul>
+            </div>
+        </li>
+
         <li><a href="{{ route('catalog.companyjobs') }}" class="nav-link px-2">Вакансии</a></li>
     </ul>
 
