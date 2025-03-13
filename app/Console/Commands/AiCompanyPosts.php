@@ -45,7 +45,7 @@ class AiCompanyPosts extends Command
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
             ->where('api_channels.is_company', ApiDataTypeEnum::Company)
             ->orderBy('api_channel_posts.post_date', 'asc')
-            ->take(30)
+            ->take(100)
             ->get();
 
         if (!count($posts)) {
