@@ -73,27 +73,27 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
                 MenuItem::make('Роли', new UserRoleResource(), 'heroicons.cog'),
             ], 'heroicons.users'),
 
-            MenuGroup::make('API', [
+            MenuGroup::make('Основное меню', [
                 MenuItem::make('Сервисы ИИ', new ApiAiResource(), 'heroicons.users'),
                 MenuItem::make('Источники сообщений', new ApiChannelResource(), 'heroicons.users'),
                 MenuItem::make('Cообщения/Посты', new ApiChannelPostResource(), 'heroicons.users'),
-                MenuItem::make('Аккаунты', new ApiPostUserResource(), 'heroicons.users'),
+                MenuItem::make('Специалисты (аккаунты)', new ApiPostUserResource(), 'heroicons.users'),
                 MenuItem::make('Специализации', new DictionarySpecialityResource(), 'heroicons.users'),
             ], 'heroicons.users'),
 
-            MenuGroup::make('Специалисты', [
-                MenuItem::make('Специалисты (резюме)', new SpecialistResource(), 'heroicons.users'),
+            MenuGroup::make('Проектирование', [
+                MenuItem::make('Проектирование', new SpecialistResource(), 'heroicons.users'),
                 MenuItem::make('Отзывы', new ReviewResource(), 'heroicons.users'),
+            ], 'heroicons.users'),
+
+            MenuGroup::make('Строительство', [
+                MenuItem::make('Строительство', new BuilderResource(), 'heroicons.users'),
+                MenuItem::make('Отзывы', new BuilderReviewResource(), 'heroicons.users'),
             ], 'heroicons.users'),
 
             MenuGroup::make('Вакансии', [
                 MenuItem::make('Вакансии', new CompanyJobResource(), 'heroicons.users'),
                 MenuItem::make('Отзывы', new CompanyJobReviewResource(), 'heroicons.users'),
-            ], 'heroicons.users'),
-
-            MenuGroup::make('Строители', [
-                MenuItem::make('Строители', new BuilderResource(), 'heroicons.users'),
-                MenuItem::make('Отзывы', new BuilderReviewResource(), 'heroicons.users'),
             ], 'heroicons.users'),
         ];
     }

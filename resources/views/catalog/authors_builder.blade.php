@@ -1,7 +1,7 @@
 <x-global-layout>
 
     <div class="container my-5">
-        <h2>Строители</h2>
+        <h2>Строительство</h2>
     </div>
 
     <x-search-builders :$specialitiesList :$request :$errors />

@@ -46,7 +46,7 @@ class BuilderResource extends ModelResource
 {
     protected string $model = \App\Models\Builder::class;
 
-    protected string $title = 'Строители';
+    protected string $title = 'Строительство';
 
     protected string $sortColumn = 'post_date';
 

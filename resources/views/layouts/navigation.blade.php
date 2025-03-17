@@ -16,10 +16,10 @@
                         {{ __('Главная') }}
                     </x-nav-link>
                     <x-nav-link :href="route('catalog.specialists')" :active="request()->routeIs('catalog.index')">
-                        {{ __('Специалисты') }}
+                        {{ __('Проектирование') }}
                     </x-nav-link>
                     <x-nav-link :href="route('catalog.builders')" :active="request()->routeIs('catalog.index')">
-                        {{ __('Строители') }}
+                        {{ __('Строительство') }}
                     </x-nav-link>
                     <x-nav-link :href="route('catalog.companyjobs')" :active="request()->routeIs('catalog.index')">
                         {{ __('Вакансии') }}

@@ -1,7 +1,7 @@
 <x-global-layout>
 
     <div class="container my-5">
-        <h2>Специалисты</h2>
+        <h2>Проектирование</h2>
     </div>
 
     <x-search-specialists :$specialitiesList :$request :$errors />

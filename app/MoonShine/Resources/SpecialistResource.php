@@ -46,7 +46,7 @@ class SpecialistResource extends ModelResource
 {
     protected string $model = Specialist::class;
 
-    protected string $title = 'Специалисты (резюме)';
+    protected string $title = 'Проектирование';
 
     protected string $sortColumn = 'post_date';
 

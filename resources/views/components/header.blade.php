@@ -14,8 +14,8 @@
                     Специалисты
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a href="{{ route('catalog.specialists') }}" class="dropdown-item px-2">Специалисты</a></li>
-                    <li><a href="{{ route('catalog.builders') }}" class="dropdown-item px-2">Строители</a></li>
+                    <li><a href="{{ route('catalog.specialists') }}" class="dropdown-item px-2">Проектирование</a></li>
+                    <li><a href="{{ route('catalog.builders') }}" class="dropdown-item px-2">Строительство</a></li>
                 </ul>
             </div>
         </li>
