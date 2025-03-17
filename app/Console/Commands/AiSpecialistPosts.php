@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enum\ApiAiSourceEnum;
+use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\DictionaryEnum;
@@ -74,9 +75,13 @@ class AiSpecialistPosts extends Command
                 $promt = $post->channel->ai_promt;
                 $options = $post->channel->apiAi->options;
 
-                if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
-                    $this->info('Анализ поста: '.$post->id);
+                $this->info('Анализ поста: '.$post->id);
+                if ($post->channel->apiAi->status !== ApiAiStatusEnum::Active) {
+                    $this->error('ИИ "'.$post->channel->apiAi->title.'" (ID '.$post->channel->apiAi->id.') отключен: '.$post->id);
+                    continue;
+                }
 
+                if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
                     $ApiAIYandex = new ApiAIYandex;
                     $ApiAIYandex->logging('Анализ поста: '.$post->id);
                     $ApiAIYandex->setConfig($options);
