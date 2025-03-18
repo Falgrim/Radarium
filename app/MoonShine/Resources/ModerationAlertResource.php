@@ -17,11 +17,13 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Review;
 
 use Illuminate\Support\Str;
+use MoonShine\ActionButtons\ActionButton;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Number;
+use MoonShine\Fields\Preview;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
@@ -51,7 +53,7 @@ class ModerationAlertResource extends ModelResource
 
     protected bool $isAsync = true;
 
-    protected bool $editInModal = true;
+    protected bool $editInModal = false;
 
     protected bool $withPolicy = true;
 
@@ -111,10 +113,9 @@ class ModerationAlertResource extends ModelResource
     public function rules(Model $item): array
     {
         return [
-            'text' => ['required', 'string', 'min:10'],
-            'rating' => ['required', 'digits_between:0,5'],
-            'can_edit' => Rule::enum(ReviewCanEditEnum::class),
-            'status' => Rule::enum(ReviewStatusEnum::class),
+            'description' => ['nullable', 'string', 'min:5', 'max:255'],
+            'comment' => ['nullable', 'string', 'min:2'],
+            'status' => Rule::enum(ModerationAlertStatusEnum::class),
         ];
     }
 
@@ -145,7 +146,16 @@ class ModerationAlertResource extends ModelResource
             ]),
             Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class),
             Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class),
-            Text::make('ID записи', 'table_row_id'),
+            Preview::make('Ссылка', 'link', static function ($item) {
+                $params = $item->getObject();
+                if (is_null($params)) {
+                    return 'Запись не обнаружена...';
+                }
+
+                $className = '\\App\\MoonShine\\Resources\\'.$item->table_name->value.'Resource';
+                $page = (new $className)->detailPageUrl($item->table_row_id);
+                return ActionButton::make('Открыть', $page)->blank()->primary();
+            }),
             Text::make('Комментарий от автора', 'description'),
             Text::make('Комментарий модератора', 'comment'),
             Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class),
@@ -156,11 +166,11 @@ class ModerationAlertResource extends ModelResource
     {
         $fields = [];
 
-        $fields[] = Text::make('ID', 'id')->disabled()->readonly();
-        $fields[] = Text::make('Пользователь ID', 'user_id')->disabled()->readonly();
-        $fields[] = Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class)->readonly();
-        $fields[] = Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class)->readonly();
-        $fields[] = Text::make('ID записи', 'table_row_id')->readonly();
+        $fields[] = Text::make('ID', 'id')->disabled();
+        $fields[] = Text::make('Пользователь ID', 'user_id')->disabled();
+        $fields[] = Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class)->disabled();
+        $fields[] = Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class)->disabled();
+        $fields[] = Text::make('ID записи', 'table_row_id')->disabled();
         $fields[] = TinyMce::make('Комментарий от автора', 'description')
                 ->menubar('')
                 ->toolbar('undo redo | bold italic underline strikethrough | numlist bullist');
@@ -168,7 +178,7 @@ class ModerationAlertResource extends ModelResource
                 ->menubar('')
                 ->toolbar('undo redo | bold italic underline strikethrough | numlist bullist');
         $fields[] = Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class);
-        $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
+        $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled();
 
         return $fields;
     }
