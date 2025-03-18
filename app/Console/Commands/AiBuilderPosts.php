@@ -9,6 +9,8 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Enum\ModerationAlertSystemEnum;
+use App\Enum\ModerationAlertTableNameEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
@@ -18,6 +20,7 @@ use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIYandex;
 use App\Services\Dictionary;
+use App\Services\ModerationAlertService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -70,6 +73,8 @@ class AiBuilderPosts extends Command
             DictionaryEnum::Speciality,
             ApiDataTypeEnum::Builder
         );
+
+        $moderationAlertService = app()->make(ModerationAlertService::class);
 
         foreach ($posts as $post) {
             try {
@@ -139,6 +144,14 @@ class AiBuilderPosts extends Command
 
                         if ($builder->status === ApiPostAiStatusEnum::InModeration) {
                             $this->info('Создан строитель');
+
+                            $moderationAlertService->createAlert(
+                                0,
+                                ModerationAlertSystemEnum::System,
+                                ModerationAlertTableNameEnum::Builder,
+                                $builder->id,
+                                'Нет специализаций'
+                            );
                         } else {
                             $this->info('Данный пост не является типом строителя');
                         }

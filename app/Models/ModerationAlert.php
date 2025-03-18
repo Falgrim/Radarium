@@ -2,24 +2,16 @@
 
 namespace App\Models;
 
-use App\Enum\ApiChannelPostStatusEnum;
-use App\Enum\ApiChannelSourceEnum;
-use App\Enum\ApiDataTypeEnum;
 use App\Enum\ModerationAlertStatusEnum;
 use App\Enum\ModerationAlertSystemEnum;
 use App\Enum\ModerationAlertTableNameEnum;
-use App\Enum\ReviewStatusEnum;
-use App\Enum\ApiPostAiStatusEnum;
+use App\Observers\ModerationAlertObserver;
 use App\Traits\ModelTableName;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\ApiPostUser;
-use App\Models\Specialist;
-use App\Models\CompanyJob;
-use App\Models\Builder;
 
+#[ObservedBy([ModerationAlertObserver::class])]
 class ModerationAlert extends Model
 {
     use ModelTableName;

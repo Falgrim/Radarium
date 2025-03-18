@@ -14,13 +14,13 @@ enum ModerationAlertTableNameEnum:string {
     public function toString(): ?string
     {
         return match ($this) {
-            self::Author => 'Специалист.',
-            self::Specialist => 'Проектирование.',
-            self::Builder => 'Строительство.',
-            self::CompanyJob => 'Вакансии.',
-            self::ReviewSpecialist => 'Проектирование. Отзыв.',
-            self::ReviewBuilder => 'Строительство. Отзыв.',
-            self::ReviewCompanyJob => 'Вакансии. Отзыв.',
+            self::Author => 'Специалист',
+            self::Specialist => 'Проектирование',
+            self::Builder => 'Строительство',
+            self::CompanyJob => 'Вакансии',
+            self::ReviewSpecialist => 'Проектирование. Отзыв',
+            self::ReviewBuilder => 'Строительство. Отзыв',
+            self::ReviewCompanyJob => 'Вакансии. Отзыв',
         };
     }
 

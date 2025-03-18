@@ -9,16 +9,22 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Enum\ModerationAlertStatusEnum;
+use App\Enum\ModerationAlertSystemEnum;
+use App\Enum\ModerationAlertTableNameEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\ModerationAlert;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIYandex;
 use App\Services\Dictionary;
+use App\Services\ModerationAlertService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -69,6 +75,8 @@ class AiSpecialistPosts extends Command
             DictionaryEnum::Speciality,
             ApiDataTypeEnum::Specialist
         );
+
+        $moderationAlertService = app()->make(ModerationAlertService::class);
 
         foreach ($posts as $post) {
             try {
@@ -131,6 +139,8 @@ class AiSpecialistPosts extends Command
                                 $specialist->id,
                                 $specialistSpecialties
                             );
+                        } else {
+
                         }
 
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
@@ -138,6 +148,14 @@ class AiSpecialistPosts extends Command
 
                         if ($specialist->status === ApiPostAiStatusEnum::InModeration) {
                             $this->info('Создан специалист');
+
+                            $moderationAlertService->createAlert(
+                                0,
+                                ModerationAlertSystemEnum::System,
+                                ModerationAlertTableNameEnum::Specialist,
+                                $specialist->id,
+                                'Нет специализаций'
+                            );
                         } else {
                             $this->info('Данный пост не является типом специалиста');
                         }
