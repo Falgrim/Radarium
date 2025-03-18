@@ -14,6 +14,7 @@ use App\MoonShine\Resources\CompanyJobResource;
 use App\MoonShine\Resources\CompanyJobReviewResource;
 use App\MoonShine\Resources\ConfigurationResource;
 use App\MoonShine\Resources\DictionarySpecialityResource;
+use App\MoonShine\Resources\ModerationAlertResource;
 use App\MoonShine\Resources\ReviewCustomFieldResource;
 use App\MoonShine\Resources\ReviewResource;
 use App\MoonShine\Resources\SpecialistResource;
@@ -79,6 +80,7 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
                 MenuItem::make('Cообщения/Посты', new ApiChannelPostResource(), 'heroicons.users'),
                 MenuItem::make('Специалисты (аккаунты)', new ApiPostUserResource(), 'heroicons.users'),
                 MenuItem::make('Специализации', new DictionarySpecialityResource(), 'heroicons.users'),
+                MenuItem::make('Модерация', new ModerationAlertResource(), 'heroicons.users'),
             ], 'heroicons.users'),
 
             MenuGroup::make('Проектирование', [

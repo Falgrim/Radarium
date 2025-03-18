@@ -223,6 +223,8 @@ class ApiAIYandex
         $this->logging($this->text);
         $response = Http::withHeaders($headers)->post($this->url, $json);
 
+        dd($response->json());
+
         if ($response->status() !== 200) {
             throw new \Exception('Не удалось отправить запрос: '.$response->body());
         }
@@ -247,5 +249,14 @@ class ApiAIYandex
         } else {
             Log::channel('ai_debug')->info($text);
         }
+    }
+
+    public function getFolderList()
+    {
+        $headers = $this->getHeaders();
+        $url = 'https://resource-manager.api.cloud.yandex.net/resource-manager/v1/folders';
+        $response = Http::withHeaders($headers)->get($url);
+
+        //dd($response->body());
     }
 }

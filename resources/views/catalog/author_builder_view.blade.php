@@ -39,6 +39,10 @@
                     @if($author->phone)
                         <br />{{ trim($author->phone) }}
                     @endif
+
+                    @if(Auth::check())
+                        <button class="btn-sm btn-danger moderation-alert" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}" type="button">Есть ошибка!</button>
+                    @endif
                 </div>
             </div>
             <div class="col-8">

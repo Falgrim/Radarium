@@ -1,0 +1,175 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\MoonShine\Resources;
+
+use App\Enum\ModerationAlertStatusEnum;
+use App\Enum\ModerationAlertSystemEnum;
+use App\Enum\ModerationAlertTableNameEnum;
+use App\Enum\ReviewCanEditEnum;
+use App\Enum\ReviewStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
+use App\Models\ModerationAlert;
+use App\Models\ReviewCustomField;
+use Illuminate\Validation\Rule;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Review;
+
+use Illuminate\Support\Str;
+use MoonShine\Fields\Date;
+use MoonShine\Fields\DateRange;
+use MoonShine\Fields\Email;
+use MoonShine\Fields\Enum;
+use MoonShine\Fields\Number;
+use MoonShine\Fields\Relationships\HasMany;
+use MoonShine\Fields\Relationships\HasOne;
+use MoonShine\Fields\Text;
+use MoonShine\Fields\TinyMce;
+use MoonShine\Handlers\ExportHandler;
+use MoonShine\Handlers\ImportHandler;
+use MoonShine\Resources\ModelResource;
+use MoonShine\Decorations\Block;
+use MoonShine\Fields\ID;
+use MoonShine\Fields\Field;
+use MoonShine\Components\MoonShineComponent;
+
+/**
+ * @extends ModelResource<Review>
+ */
+class ModerationAlertResource extends ModelResource
+{
+    protected string $model = ModerationAlert::class;
+
+    protected string $title = 'Модерация';
+
+    protected string $sortColumn = 'created_at';
+
+    protected string $sortDirection = 'DESC';
+
+    public string $column = 'created_at';
+
+    protected bool $isAsync = true;
+
+    protected bool $editInModal = true;
+
+    protected bool $withPolicy = true;
+
+    protected bool $stickyTable = true;
+
+    public function getActiveActions(): array
+    {
+        return ['view', 'update', 'delete', 'massDelete'];
+    }
+
+    public function import(): ?ImportHandler
+    {
+        return null;
+    }
+
+    public function export(): ?ExportHandler
+    {
+        return null;
+    }
+
+    public function search(): array
+    {
+        return [];
+    }
+
+    public function filters(): array
+    {
+        return [
+            Text::make('ID', 'id'),
+            Text::make('Пользователь ID', 'user_id'),
+            Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class),
+            Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class),
+            Text::make('ID записи', 'table_row_id'),
+            Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class),
+            DateRange::make('Создано', 'created_at')->withTime(),
+        ];
+    }
+
+    /**
+     * @return Field
+     */
+    public function fields(): array
+    {
+        return [
+            Block::make([
+                ID::make()->sortable(),
+            ]),
+        ];
+    }
+
+    /**
+     * @param Review $item
+     *
+     * @return array<string, string[]|string>
+     * @see https://laravel.com/docs/validation#available-validation-rules
+     */
+    public function rules(Model $item): array
+    {
+        return [
+            'text' => ['required', 'string', 'min:10'],
+            'rating' => ['required', 'digits_between:0,5'],
+            'can_edit' => Rule::enum(ReviewCanEditEnum::class),
+            'status' => Rule::enum(ReviewStatusEnum::class),
+        ];
+    }
+
+    public function indexFields(): array
+    {
+        return [
+            ID::make()->sortable(),
+            HasOne::make('Пользователь', 'user', resource: new UserResource())->fields([
+                Text::make('ID', 'id'),
+                Text::make('Имя', 'name'),
+                Email::make('Почта', 'email'),
+            ]),
+            Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class),
+            Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class),
+            Text::make('ID записи', 'table_row_id'),
+            Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class),
+        ];
+    }
+
+    public function detailFields(): array
+    {
+        return [
+            ID::make(),
+            HasOne::make('Пользователь', 'user', resource: new UserResource())->fields([
+                Text::make('ID', 'id'),
+                Text::make('Имя', 'name'),
+                Email::make('Почта', 'email'),
+            ]),
+            Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class),
+            Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class),
+            Text::make('ID записи', 'table_row_id'),
+            Text::make('Комментарий от автора', 'description'),
+            Text::make('Комментарий модератора', 'comment'),
+            Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class),
+        ];
+    }
+
+    public function formFields(): array
+    {
+        $fields = [];
+
+        $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = Text::make('Пользователь ID', 'user_id')->disabled()->readonly();
+        $fields[] = Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class)->readonly();
+        $fields[] = Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class)->readonly();
+        $fields[] = Text::make('ID записи', 'table_row_id')->readonly();
+        $fields[] = TinyMce::make('Комментарий от автора', 'description')
+                ->menubar('')
+                ->toolbar('undo redo | bold italic underline strikethrough | numlist bullist');
+        $fields[] = TinyMce::make('Комментарий модератора', 'comment')
+                ->menubar('')
+                ->toolbar('undo redo | bold italic underline strikethrough | numlist bullist');
+        $fields[] = Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class);
+        $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
+
+        return $fields;
+    }
+}

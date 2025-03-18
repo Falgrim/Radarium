@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BuilderController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\ModerationAlertController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\IndexController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,10 @@ Route::get('/specialists/specialist/{id}', [CatalogController::class, 'authorAsS
 Route::middleware('auth')->group(function () {
     Route::post('/specialists/specialist/{id}', [CatalogController::class, 'specialistStoreReview'])->name('catalog.specialist.store');
     Route::post('/specialists/specialist/{id}/review', [CatalogController::class, 'specialistEditReview'])->name('catalog.specialist.edit_review');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/moderation-alert', [ModerationAlertController::class, 'store'])->name('moderationAlert.new');
 });
 
 Route::get('/companyjobs', [CatalogController::class, 'companyJobs'])->name('catalog.companyjobs');
