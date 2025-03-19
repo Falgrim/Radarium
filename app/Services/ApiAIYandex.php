@@ -223,8 +223,6 @@ class ApiAIYandex
         $this->logging($this->text);
         $response = Http::withHeaders($headers)->post($this->url, $json);
 
-        dd($response->json());
-
         if ($response->status() !== 200) {
             throw new \Exception('Не удалось отправить запрос: '.$response->body());
         }
