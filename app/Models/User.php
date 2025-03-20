@@ -33,6 +33,8 @@ class User extends Authenticatable
         'password',
         'user_role_id',
         'tubus_id',
+        'company_inn',
+        'company_title',
     ];
 
     /**

@@ -17,6 +17,8 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'company_inn' => ['sometimes', 'nullable', 'integer', 'digits_between:10,12'],
+            'company_title' => ['sometimes', 'nullable', 'string', 'min:3', 'max:100'],
             'email' => [
                 'required',
                 'string',

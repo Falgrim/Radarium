@@ -95,6 +95,8 @@ class UserResource extends ModelResource
         return [
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'phone:mobile,RU', 'unique:'.User::class.',phone,'.$item->id],
+            'company_inn' => ['sometimes', 'nullable', 'integer', 'digits_between:10,12'],
+            'company_title' => ['sometimes', 'nullable', 'string', 'min:3', 'max:100'],
             'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
             'password' => $item->exists ? ['sometimes', 'nullable', ValidPassword::min(6)] : ['required', ValidPassword::min(6)],
@@ -136,6 +138,8 @@ class UserResource extends ModelResource
             BelongsTo::make('Роль', 'userRole', resource: new UserRoleResource())->badge('purple')->sortable(),
             Text::make('Имя', 'name'),
             Text::make('Телефон', 'phone'),
+            Text::make('ИНН компании', 'company_inn'),
+            Text::make('Название компании', 'company_title'),
             Email::make('Почта', 'email'),
             Email::make('Tubus ID', 'tubus_id'),
             Date::make('Регистрация', 'created_at')->withTime(),
@@ -151,6 +155,8 @@ class UserResource extends ModelResource
         $fields[] = BelongsTo::make('Роль', 'userRole');
         $fields[] = Text::make('Имя', 'name');
         $fields[] = Text::make('Телефон', 'phone');
+        $fields[] = Text::make('ИНН компании', 'company_inn')->hint('От 10 до 12 цифр');
+        $fields[] = Text::make('Название компании', 'company_title');
         $fields[] = Email::make('Почта', 'email');
         $fields[] = Password::make('Новый пароль', 'password')
             ->customAttributes(['autocomplete' => 'new-password'])
