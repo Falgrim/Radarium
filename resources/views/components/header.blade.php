@@ -25,14 +25,14 @@
 
     <div class="col-md-3 text-end">
         @if(Auth::check())
-            <a href="{{ route('profile.edit') }}" class="btn btn-outline-primary me-2">{{ Auth::user()->name }}</a>
+            <a href="{{ route('profile.edit') }}" class="btn btn-light me-2">{{ Auth::user()->name }}</a>
             <!-- Authentication -->
             <form method="POST" action="{{ route('logout') }}" class="logout_form">
                 @csrf
                 <button onclick="event.preventDefault(); this.closest('form').submit();" class="btn btn-primary">{{ __('Выйти') }}</button>
             </form>
         @else
-            <a href="{{ route('login') }}" class="btn btn-outline-primary me-2">Вход</a>
+            <a href="{{ route('login') }}" class="btn btn-light me-2">Вход</a>
             <a href="{{ route('register') }}" class="btn btn-primary">Регистрация</a>
         @endif
     </div>

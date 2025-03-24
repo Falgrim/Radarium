@@ -11,25 +11,25 @@
         @csrf
         @method('patch')
 
-        <div class="mb-3 col-12 col-lg-4">
+        <div class="mb-3 col-12 col-lg-4 col-md-6">
             <x-input-label for="name" :value="__('Имя')" />
             <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
-        <div class="mb-3 col-12 col-lg-4">
+        <div class="mb-3 col-12 col-lg-4 col-md-6">
             <x-input-label for="company_inn" :value="__('ИНН компании')" />
             <x-text-input id="company_inn" name="company_inn" type="text" class="mt-1 block w-full" :value="old('company_inn', $user->company_inn)" autofocus />
             <x-input-error class="mt-2" :messages="$errors->get('company_inn')" />
         </div>
 
-        <div class="mb-3 col-12 col-lg-4">
+        <div class="mb-3 col-12 col-lg-4 col-md-6">
             <x-input-label for="company_title" :value="__('Название компании')" />
             <x-text-input id="company_title" name="company_title" type="text" class="mt-1 block w-full" :value="old('company_title', $user->company_title)" autofocus />
             <x-input-error class="mt-2" :messages="$errors->get('company_title')" />
         </div>
 
-        <div class="mb-3 col-12 col-lg-4">
+        <div class="mb-3 col-12 col-lg-4 col-md-6">
             <x-input-label for="email" :value="__('Почта')" />
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
@@ -53,7 +53,7 @@
             @endif
         </div>
 
-        <div class="mb-3 col-12 col-lg-4">
+        <div class="mb-3 col-12 col-lg-4 col-md-6">
             <x-primary-button>{{ __('Сохранить') }}</x-primary-button>
 
             @if (session('status') === 'profile-updated')

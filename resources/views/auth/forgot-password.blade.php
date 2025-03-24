@@ -13,7 +13,7 @@
                 @csrf
 
                 <!-- Email Address -->
-                <div class="mb-3">
+                <div class="mb-3 col-12 col-lg-4 col-md-6">
                     <x-input-label for="email" :value="__('Почта')" />
                     <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
                     <x-input-error :messages="$errors->get('email')" class="mt-2" />
