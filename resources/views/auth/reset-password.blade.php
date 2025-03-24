@@ -9,21 +9,21 @@
                 <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
                 <!-- Email Address -->
-                <div class="mb-3">
+                <div class="mb-3 col-12 col-lg-4 col-md-6">
                     <x-input-label for="email" :value="__('Почта')" />
                     <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
                     <x-input-error :messages="$errors->get('email')" class="mt-2" />
                 </div>
 
                 <!-- Password -->
-                <div class="mb-3">
+                <div class="mb-3 col-12 col-lg-4 col-md-6">
                     <x-input-label for="password" :value="__('Новый пароль')" />
                     <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
                     <x-input-error :messages="$errors->get('password')" class="mt-2" />
                 </div>
 
                 <!-- Confirm Password -->
-                <div class="mb-3">
+                <div class="mb-3 col-12 col-lg-4 col-md-6">
                     <x-input-label for="password_confirmation" :value="__('Подтвердите новый пароль')" />
 
                     <x-text-input id="password_confirmation" class="block mt-1 w-full"

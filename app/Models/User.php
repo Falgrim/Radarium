@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Notifications\ResetPassword;
 use App\Traits\ModelTableName;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -80,9 +79,4 @@ class User extends Authenticatable
         // https://laravel.demiart.ru/guide-to-roles-and-permissions/
         return true;
     }
-
-    /*public function sendPasswordResetNotification($url)
-    {
-        $this->notify(new ResetPassword($url));
-    }*/
 }
