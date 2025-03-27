@@ -96,7 +96,7 @@ class ApiChannelPostResource extends ModelResource
 
     public function search(): array
     {
-        return ['post'];
+        return ['post', 'id', 'user_login'];
     }
 
     public function filters(): array

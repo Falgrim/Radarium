@@ -95,7 +95,7 @@ class CompanyJobResource extends ModelResource
 
     public function search(): array
     {
-        return ['post.post'];
+        return ['post.post', 'user.username'];
     }
 
     public function filters(): array

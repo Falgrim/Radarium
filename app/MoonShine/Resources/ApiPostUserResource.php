@@ -101,7 +101,11 @@ class ApiPostUserResource extends ModelResource
 
     public function search(): array
     {
-        return [];
+        return [
+            'username',
+            'phone',
+            'posts.post'
+        ];
     }
 
     public function filters(): array
