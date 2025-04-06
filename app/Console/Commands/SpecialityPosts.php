@@ -12,6 +12,8 @@ use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\Builder;
+use App\Models\BuilderSpeciality;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIYandex;
@@ -42,15 +44,24 @@ class SpecialityPosts extends Command
      */
     public function handle()
     {
+        $this->info('Специалисты');
+        $this->specialists();
+
+        $this->info('Строители');
+        $this->builders();
+    }
+
+    protected function specialists(): void
+    {
         $specialists = Specialist::whereNotIn('id', SpecialistSpeciality::select('specialist_id')->groupBy('specialist_id'))
             ->has('post')
             ->orderBy('id', 'asc')
-            ->take(100)
+            ->take(500)
             ->get();
 
         if (!count($specialists)) {
             $this->warn('Нет списка постов без специализации');
-            return 1;
+            return;
         }
 
         $specialistsAll = Specialist::whereNotIn('id', SpecialistSpeciality::select('specialist_id')->groupBy('specialist_id'))
@@ -61,7 +72,10 @@ class SpecialityPosts extends Command
         $this->info('В обработку постов: '.count($specialists).' из '.$specialistsAll);
 
         $dictionary = new Dictionary;
-        $specialityList = $dictionary->getAll(DictionaryEnum::Speciality);
+        $specialityList = $dictionary->getAll(
+            DictionaryEnum::Speciality,
+            ApiDataTypeEnum::Specialist
+        );
 
         foreach ($specialists as $specialist) {
             try {
@@ -70,6 +84,53 @@ class SpecialityPosts extends Command
                     $dictionary->updateRelations(
                         DictionaryEnum::Speciality,
                         'specialist',
+                        $specialist->id,
+                        $specialistSpecialties
+                    );
+
+                    $this->info('ID '.$specialist->id.': '.count($specialistSpecialties));
+                }
+            } catch (\Exception $e) {
+                $this->error($e->getMessage());
+            }
+        }
+
+        $this->info('Завершено');
+    }
+
+    protected function builders(): void
+    {
+        $specialists = Builder::whereNotIn('id', BuilderSpeciality::select('builder_id')->groupBy('builder_id'))
+            ->has('post')
+            ->orderBy('id', 'asc')
+            ->take(500)
+            ->get();
+
+        if (!count($specialists)) {
+            $this->warn('Нет списка постов без специализации');
+            return;
+        }
+
+        $specialistsAll = Builder::whereNotIn('id', BuilderSpeciality::select('builder_id')->groupBy('builder_id'))
+            ->has('post')
+            ->orderBy('id', 'asc')
+            ->count();
+
+        $this->info('В обработку постов: '.count($specialists).' из '.$specialistsAll);
+
+        $dictionary = new Dictionary;
+        $specialityList = $dictionary->getAll(
+            DictionaryEnum::Speciality,
+            ApiDataTypeEnum::Builder
+        );
+
+        foreach ($specialists as $specialist) {
+            try {
+                $specialistSpecialties = $dictionary->checkMatchByList($specialist->post->post, $specialityList);
+                if (count($specialistSpecialties)) {
+                    $dictionary->updateRelations(
+                        DictionaryEnum::Speciality,
+                        'builder',
                         $specialist->id,
                         $specialistSpecialties
                     );

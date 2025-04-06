@@ -130,6 +130,7 @@ class AiBuilderPosts extends Command
                         $builder = Builder::create($result['json']);
 
                         $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
+
                         if (count($specialistSpecialties)) {
                             $dictionary->updateRelations(
                                 DictionaryEnum::Speciality,
