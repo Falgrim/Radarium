@@ -127,7 +127,7 @@ class AiSpecialistPosts extends Command
                             $result['json']['contact_info'] = '';
                         }
 
-                        $result['json']['status'] = ApiPostAiStatusEnum::InModeration;
+                        $result['json']['status'] = ApiPostAiStatusEnum::Active;
 
                         $specialist = Specialist::create($result['json']);
 
@@ -146,7 +146,7 @@ class AiSpecialistPosts extends Command
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
-                        if ($specialist->status === ApiPostAiStatusEnum::InModeration) {
+                        if ($specialist->status === ApiPostAiStatusEnum::InModeration OR $specialist->status === ApiPostAiStatusEnum::Active) {
                             $this->info('Создан специалист');
 
                             $moderationAlertService->createAlert(

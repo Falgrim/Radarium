@@ -125,7 +125,7 @@ class AiBuilderPosts extends Command
                             $result['json']['contact_info'] = '';
                         }
 
-                        $result['json']['status'] = ApiPostAiStatusEnum::InModeration;
+                        $result['json']['status'] = ApiPostAiStatusEnum::Active;
 
                         $builder = Builder::create($result['json']);
 
@@ -143,7 +143,7 @@ class AiBuilderPosts extends Command
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
-                        if ($builder->status === ApiPostAiStatusEnum::InModeration) {
+                        if ($builder->status === ApiPostAiStatusEnum::InModeration OR $builder->status === ApiPostAiStatusEnum::Active) {
                             $this->info('Создан строитель');
 
                             $moderationAlertService->createAlert(

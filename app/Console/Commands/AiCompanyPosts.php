@@ -122,7 +122,7 @@ class AiCompanyPosts extends Command
                             $result['json']['contact_info'] = '';
                         }
 
-                        $result['json']['status'] = CompanyJobStatusEnum::InModeration;
+                        $result['json']['status'] = CompanyJobStatusEnum::Active;
 
                         $companyJob = CompanyJob::create($result['json']);
 
@@ -139,7 +139,7 @@ class AiCompanyPosts extends Command
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
-                        if ($companyJob->status === CompanyJobStatusEnum::InModeration) {
+                        if ($companyJob->status === CompanyJobStatusEnum::InModeration OR $companyJob->status === CompanyJobStatusEnum::Active) {
                             $this->info('Создана вакансия');
 
                             $moderationAlertService->createAlert(
