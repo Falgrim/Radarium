@@ -56,6 +56,8 @@ class RegisteredUserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
+            'company_title' => $validated['company_title'] ?? '',
+            'company_inn' => $validated['company_inn'] ?? '',
             'user_role_id' => $validated['user_role_id'],
             'password' => Hash::make($validated['password']),
         ]);
