@@ -46,7 +46,7 @@ return new class extends Migration
             $table->id();
             $table->integer('user_id');
             $table->integer('payment_tariff_id');
-            $table->string('api_data_type');
+            $table->string('api_data_type'); // Отрасль
             $table->integer('count_month')->default(0);
             $table->integer('count_contacts')->default(0);
             $table->integer('count_contacts_left')->default(0);

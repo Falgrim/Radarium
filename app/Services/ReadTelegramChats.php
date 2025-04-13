@@ -9,6 +9,7 @@ use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ReadTelegramChats
@@ -23,6 +24,8 @@ class ReadTelegramChats
         'warn' => [],
         'error' => [],
     ];
+
+    public const PHOTO_PATH = 'telegram/profile_photos';
 
     public function __construct() {
         $this->cronCountPosts = Repositories::setting()->findByName('cron_count_posts');
@@ -148,6 +151,24 @@ class ReadTelegramChats
                         $this->setInfoMsg('Создан новый пользователь: '.$user->id);
                     } else {
                         $this->setInfoMsg('Обновлен пользователь: ' . $user->id);
+                    }
+
+                    if (isset($userInfo['User']['photo'])) {
+                        $photos = $MadelineProto->photos->getUserPhotos([
+                            'user_id' => $userData['user_id'],
+                            'offset' => 0,
+                            'max_id' => 0,
+                            'limit' => 1,
+                        ]);
+
+                        try {
+                            $photoPath = $this->downloadUserPhoto($MadelineProto, $user, $photos['photos'] ?? []);
+                            if ($photoPath !== false) {
+                                ApiPostUser::where('id', $user->id)->update(['photo' => $photoPath]);
+                            }
+                        } catch (\Exception $e) {
+                            $this->setWarnMsg('Не удалось скачать фото профиля ID' . $user->id.': '.$e->getMessage());
+                        }
                     }
                 }
 
@@ -315,5 +336,28 @@ class ReadTelegramChats
     public function getErrorMsg(): array
     {
         return $this->messages['error'];
+    }
+
+    private function downloadUserPhoto($MadelineProto, ApiPostUser $user, array $photos)
+    {
+        if (!count($photos)) {
+            return false;
+        }
+
+        $photo = $photos[0];
+        $path = Storage::disk('public')->path(self::PHOTO_PATH);
+        if (!file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+
+        // Проверяем было ли ранее загружено это фото по его ID, нейминг фото "5249052310842238504_c_2.jpg", где "5249052310842238504" это id
+        if (!empty($user->photo) AND strpos($user->photo, $photo['id']) !== false) {
+            return false;
+        }
+
+        $file = $MadelineProto->downloadToDir($photo, $path);
+        $filename = basename($file);
+
+        return $filename;
     }
 }

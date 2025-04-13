@@ -8,6 +8,7 @@ use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Enum\ApiDataTypeEnum;
+use App\Services\ReadTelegramChats;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiPostUser;
 use App\MoonShine\Pages\ApiPostUser\ApiPostUserIndexPage;
@@ -19,6 +20,7 @@ use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
+use MoonShine\Fields\Image;
 use MoonShine\Fields\Json;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
@@ -102,6 +104,7 @@ class ApiPostUserResource extends ModelResource
     public function search(): array
     {
         return [
+            'user_id',
             'username',
             'phone',
             'posts.post'
@@ -127,6 +130,7 @@ class ApiPostUserResource extends ModelResource
             Text::make('Source ID', 'user_id')->sortable(),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->sortable(),
             Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
+            Image::make('Фото', 'photo')->disk('public')->dir(ReadTelegramChats::PHOTO_PATH),
             Text::make('Логин', 'username')->sortable(),
             Text::make('Имя', 'first_name'),
             Text::make('Фамилия', 'last_name'),
@@ -146,6 +150,7 @@ class ApiPostUserResource extends ModelResource
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->sortable(),
             Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
             Text::make('Логин', 'username')->sortable(),
+            Image::make('Фото', 'photo')->disk('public')->dir(ReadTelegramChats::PHOTO_PATH),
             Text::make('Имя', 'first_name'),
             Text::make('Фамилия', 'last_name'),
             Text::make('Телефон', 'phone')->sortable(),
