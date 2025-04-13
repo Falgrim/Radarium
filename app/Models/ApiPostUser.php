@@ -7,11 +7,13 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Services\ReadTelegramChats;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class ApiPostUser extends Model
 {
@@ -21,6 +23,7 @@ class ApiPostUser extends Model
     protected $fillable = [
         'user_id',
         'username',
+        'photo',
         'first_name',
         'last_name',
         'channel_source',
@@ -211,5 +214,14 @@ class ApiPostUser extends Model
             ->first();
 
         return $data;
+    }
+
+    public function getPhoto()
+    {
+        if (empty($this->photo)) {
+            return asset('images/avatar.jpg');
+        }
+
+        return asset('storage/'.ReadTelegramChats::PHOTO_PATH.'/'.$this->photo);
     }
 }

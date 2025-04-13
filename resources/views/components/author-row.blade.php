@@ -1,6 +1,6 @@
 <tr id="author-id-{{ $author->id }}">
     <td>
-        <img src="{{asset('images/avatar.jpg')}}" class="avatar_row">
+        <img src="{{ $author->getPhoto() }}" class="avatar_row">
     </td>
     <td class="align-middle text-center">
         {{ $author->getAvrSpecialistRating() }}
@@ -32,7 +32,7 @@
     </td>
     <td class="text-">
         @if($author->lastPost()?->post)
-            <em>{{ Str::limit($author->lastPost()->post, 100) }}</em>
+            <em>{{ $author->lastPost()->post_date->format('d.m.Y') }}<br />{{ Str::limit($author->lastPost()->post, 100) }}</em>
         @endif
     </td>
     <td>

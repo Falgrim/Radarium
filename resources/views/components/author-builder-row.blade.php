@@ -32,7 +32,7 @@
     </td>
     <td class="text-">
         @if($author->lastPost()?->post)
-            <em>{{ Str::limit($author->lastPost()->post, 100) }}</em>
+            <em>{{ $author->lastPost()->post_date->format('d.m.Y') }}<br />{{ Str::limit($author->lastPost()->post, 100) }}</em>
         @endif
     </td>
     <td>
