@@ -9,25 +9,19 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
 
-Route::get('/specialists', [CatalogController::class, 'authorsAsSpecialists'])->name('catalog.specialists');
-Route::get('/specialists/specialist/{id}', [CatalogController::class, 'authorAsSpecialistView'])->name('catalog.specialist.view');
-
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/specialists', [CatalogController::class, 'authorsAsSpecialists'])->name('catalog.specialists');
+    Route::get('/specialists/specialist/{id}', [CatalogController::class, 'authorAsSpecialistView'])->name('catalog.specialist.view');
     Route::post('/specialists/specialist/{id}', [CatalogController::class, 'specialistStoreReview'])->name('catalog.specialist.store');
     Route::post('/specialists/specialist/{id}/review', [CatalogController::class, 'specialistEditReview'])->name('catalog.specialist.edit_review');
-});
 
-Route::middleware('auth')->group(function () {
     Route::post('/moderation-alert', [ModerationAlertController::class, 'store'])->name('moderationAlert.new');
-});
 
-Route::get('/companyjobs', [CatalogController::class, 'companyJobs'])->name('catalog.companyjobs');
-Route::get('/companyjobs/companyjob/{id}', [CatalogController::class, 'companyJobView'])->name('catalog.companyjob.view');
+    Route::get('/companyjobs', [CatalogController::class, 'companyJobs'])->name('catalog.companyjobs');
+    Route::get('/companyjobs/companyjob/{id}', [CatalogController::class, 'companyJobView'])->name('catalog.companyjob.view');
 
-Route::get('/builders', [BuilderController::class, 'builders'])->name('catalog.builders');
-Route::get('/builders/builder/{id}', [BuilderController::class, 'builderView'])->name('catalog.builder.view');
-
-Route::middleware('auth')->group(function () {
+    Route::get('/builders', [BuilderController::class, 'builders'])->name('catalog.builders');
+    Route::get('/builders/builder/{id}', [BuilderController::class, 'builderView'])->name('catalog.builder.view');
     Route::post('/builders/builder/{id}', [BuilderController::class, 'builderStoreReview'])->name('catalog.builder.store');
     Route::post('/builders/builder/{id}/review', [BuilderController::class, 'builderEditReview'])->name('catalog.builder.edit_review');
 });
