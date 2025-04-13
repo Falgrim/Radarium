@@ -338,7 +338,7 @@ class ReadTelegramChats
         return $this->messages['error'];
     }
 
-    private function downloadUserPhoto($MadelineProto, ApiPostUser $user, array $photos)
+    public function downloadUserPhoto($MadelineProto, ApiPostUser $user, array $photos)
     {
         if (!count($photos)) {
             return false;

@@ -203,4 +203,13 @@ class ApiPostUser extends Model
 
         return $data;
     }
+
+    public function lastPostAnyStatus(): ?ApiChannelPost
+    {
+        $data = ApiChannelPost::where('api_post_user_id', $this->id)
+            ->orderByDesc('created_at')
+            ->first();
+
+        return $data;
+    }
 }
