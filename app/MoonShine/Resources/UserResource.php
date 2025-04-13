@@ -100,6 +100,7 @@ class UserResource extends ModelResource
             'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', $item->exists ? Rule::unique('users')->ignore($item->id) : 'unique:'.User::class],
             'password' => $item->exists ? ['sometimes', 'nullable', ValidPassword::min(6)] : ['required', ValidPassword::min(6)],
+            'email_verified_at' => ['sometimes', 'nullable', 'date_format:Y-m-d\TH:i']
         ];
     }
 
@@ -128,6 +129,7 @@ class UserResource extends ModelResource
             Email::make('Почта', 'email')->sortable(),
             Email::make('Tubus ID', 'tubus_id')->sortable(),
             Date::make('Регистрация', 'created_at')->withTime()->sortable(),
+            Date::make('Подтвержден', 'email_verified_at')->withTime()->sortable(),
         ];
     }
 
@@ -158,6 +160,7 @@ class UserResource extends ModelResource
         $fields[] = Text::make('ИНН компании', 'company_inn')->hint('От 10 до 12 цифр');
         $fields[] = Text::make('Название компании', 'company_title');
         $fields[] = Email::make('Почта', 'email');
+        $fields[] = Date::make('Подтвержден', 'email_verified_at')->withTime();
         $fields[] = Password::make('Новый пароль', 'password')
             ->customAttributes(['autocomplete' => 'new-password'])
             ->hint('Минимум 6 символов')
