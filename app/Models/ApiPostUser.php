@@ -200,8 +200,8 @@ class ApiPostUser extends Model
     public function lastPost(): ?ApiChannelPost
     {
         $data = ApiChannelPost::where('api_post_user_id', $this->id)
-            ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
-            ->orderByDesc('created_at')
+            //->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
+            ->orderByDesc('post_date')
             ->first();
 
         return $data;

@@ -78,7 +78,8 @@ class CatalogController extends Controller
 
         $authors = $authors
             ->with(['specialistReviews'])
-            ->orderByDesc('created_at')
+            ->withMax('posts as latest_post_date', 'post_date')
+            ->orderByDesc('latest_post_date')
             ->paginate($this->onPage)
             ->withQueryString();
 
