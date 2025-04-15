@@ -33,14 +33,20 @@ class DictionarySpecialityRepository extends Repository
         $list = [];
 
         $collection = $this->getQuery()
-            ->select('title', 'id', 'short_name')
+            ->select('title', 'id', 'short_name', 'group_title')
             ->where('api_data_type_id', $type)
             ->orderBy('title')
             ->get();
 
         foreach ($collection as $row) {
+            if ($row->group_title AND $row->group_title != $row->title) {
+                $title = $row->group_title.' - '.$row->title;
+            } else {
+                $title = $row->title;
+            }
+
             $list[$row->id] = [
-                'value' => $row->title,
+                'value' => $title,
                 'short_name' => $row->short_name,
                 'id'    => $row->id,
             ];
