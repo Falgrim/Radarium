@@ -73,10 +73,10 @@
                     </div>
                 </div>
                 @endif
-                @if($author->postsComplete->count())
+                @if($author->posts->count())
                     <div class="row mt-3">
                         <h4>История сообщений</h4>
-                        @foreach ($author->postsComplete as $post)
+                        @foreach ($author->posts as $post)
                         <div class="col-3 bg-block-blue">
                             <em>{{ $post->post_date->format("d.m.Y") }}</em>
                         </div>

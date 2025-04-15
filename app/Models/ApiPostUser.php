@@ -61,13 +61,14 @@ class ApiPostUser extends Model
 
     public function posts(): HasMany
     {
-        return $this->hasMany(ApiChannelPost::class, 'api_post_user_id', 'id');
+        return $this->hasMany(ApiChannelPost::class, 'api_post_user_id', 'id')->orderByDesc('post_date');
     }
 
     public function postsComplete(): HasMany
     {
         return $this->hasMany(ApiChannelPost::class, 'api_post_user_id', 'id')
-            ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
+            ->orderByDesc('post_date');
     }
 
     public function specialists(): HasMany
@@ -210,7 +211,7 @@ class ApiPostUser extends Model
     public function lastPostAnyStatus(): ?ApiChannelPost
     {
         $data = ApiChannelPost::where('api_post_user_id', $this->id)
-            ->orderByDesc('created_at')
+            ->orderByDesc('post_date')
             ->first();
 
         return $data;
