@@ -80,6 +80,25 @@ class ApiChannelPostResource extends ModelResource
         return null;
     }
 
+    protected function resolveOrder(): static
+    {
+        if (($sort = request('sort')) && is_string($sort)) {
+            $column = ltrim($sort, '-');
+            $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
+
+            if ($column === 'api_channel_id') {
+                $this->query()
+                    ->select('api_channel_posts.*')
+                    ->leftJoin('api_channels', 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
+                    ->orderBy('api_channels.title', $direction);
+
+                return $this;
+            }
+        }
+
+        return parent::resolveOrder();
+    }
+
     /**
      * @param ApiChannelPost $item
      *
@@ -120,7 +139,7 @@ class ApiChannelPostResource extends ModelResource
     {
         return [
             Text::make('ID', 'id')->sortable(),
-            BelongsTo::make('Источник', 'channel', resource: new ApiChannelResource())->sortable(),
+            BelongsTo::make('Источник', 'channel', 'api_channel_id', resource: new ApiChannelResource())->setColumn('api_channel_id')->sortable(),
             Text::make('API ID', 'post_id')->sortable(),
             Text::make('Логин', 'user_login')->sortable(),
             Text::make('Сообщение', 'post', fn($item) => Str::limit($item->post, 100)),
