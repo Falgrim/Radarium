@@ -24,7 +24,7 @@
                 </div>
 
                 <div class="collapse" id="collapseSearchForm">
-                    <form class="needs-validation {{ $formErrorClass }} mt-2" id="search_form" method="GET" action="{{ route('catalog.specialists') }}" novalidate="">
+                    <form class="needs-validation {{ $formErrorClass }} mt-2" id="search_form" method="GET" action="{{ route('catalog.builders') }}" novalidate="">
                         <div class="row g-3">
                             <div class="col-sm-6">
                                 <x-input-label for="key_word" class="form-label" :value="__('Поиск в сообщении')" />
