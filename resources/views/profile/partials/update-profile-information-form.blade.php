@@ -18,15 +18,22 @@
         </div>
 
         <div class="mb-3 col-12 col-lg-4 col-md-6">
-            <x-input-label for="company_inn" :value="__('ИНН компании')" />
-            <x-text-input id="company_inn" name="company_inn" type="text" class="mt-1 block w-full" :value="old('company_inn', $user->company_inn)" autofocus />
-            <x-input-error class="mt-2" :messages="$errors->get('company_inn')" />
+            <label>
+                <input type="checkbox" name="from_company" value="1" @if($user->company_title OR $user->company_inn) checked @endif /> {{ __('Представляю компанию') }}
+            </label>
+            <x-input-error :messages="$errors->get('from_company')" class="mt-2" />
         </div>
 
-        <div class="mb-3 col-12 col-lg-4 col-md-6">
+        <div class="mb-3 col-12 col-lg-4 col-md-6 company_field" @if(!$user->company_title AND !$user->company_inn) style="display: none;" @endif>
             <x-input-label for="company_title" :value="__('Название компании')" />
-            <x-text-input id="company_title" name="company_title" type="text" class="mt-1 block w-full" :value="old('company_title', $user->company_title)" autofocus />
-            <x-input-error class="mt-2" :messages="$errors->get('company_title')" />
+            <x-text-input id="company_title" class="block mt-1 w-full" type="text" name="company_title" :value="old('company_title', $user->company_title)" autofocus autocomplete="company_title" />
+            <x-input-error :messages="$errors->get('company_title')" class="mt-2" />
+        </div>
+
+        <div class="mb-3 col-12 col-lg-4 col-md-6 company_field" style="display: none;">
+            <x-input-label for="company_inn" :value="__('ИНН')" />
+            <x-text-input id="company_inn" class="block mt-1 w-full" type="text" name="company_inn" :value="old('company_inn', $user->company_inn)" autofocus autocomplete="company_inn" />
+            <x-input-error :messages="$errors->get('company_inn')" class="mt-2" />
         </div>
 
         <div class="mb-3 col-12 col-lg-4 col-md-6">
@@ -68,3 +75,17 @@
         </div>
     </form>
 </section>
+
+@pushOnce('scripts')
+    <script type="module">
+        $(document).ready(function() {
+            $('input[name=from_company]').on('change', function () {
+                if ($(this).is(':checked')) {
+                    $('.company_field').show();
+                } else {
+                    $('.company_field').hide();
+                }
+            });
+        });
+    </script>
+@endPushOnce
