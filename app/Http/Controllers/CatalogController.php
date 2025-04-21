@@ -43,6 +43,16 @@ class CatalogController extends Controller
                 'min:2',
                 'max:50',
             ],
+            'key_word_tags' => [
+                'nullable',
+                'array',
+            ],
+            'key_word_tags.*' => [
+                'sometimes',
+                'string',
+                'min:3',
+                'max:50'
+            ],
             'speciality_id' => [
                 'nullable',
                 'array',
@@ -59,9 +69,13 @@ class CatalogController extends Controller
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
 
-            if (!empty($validated['key_word'])) {
+            if (!empty($validated['key_word_tags'])) {
                 $query->whereHas('post', function (Builder $query) use ($validated) {
-                    $query->where('post', 'like', '%'.$validated['key_word'].'%');
+                    $query->where(function (Builder $query) use ($validated) {
+                        foreach ($validated['key_word_tags'] as $keyWordTag) {
+                            $query->orWhere('post', 'like', '%'.$keyWordTag.'%');
+                        }
+                    });
                 });
             }
 

@@ -75,3 +75,37 @@ a.nav-link {
     background-color: #f3f8ff;
     padding: 10px;
 }
+
+.tag-container {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+.tag-button {
+    margin: 0;
+    padding: 5px 10px;
+    background-color: #e0f7fa;
+    border: 1px solid #b2ebf2;
+    border-radius: 3px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+.tag-button:hover {
+    background-color: #b2ebf2;
+}
+.tag-button::after {
+    content: "×";
+    margin-left: 5px;
+    font-size: 14px;
+}
+.hidden-input {
+    display: none;
+}
+.dynamic-button {
+    margin-top: 10px;
+    margin-right: 7px;
+    margin-bottom: 10px;
+}
