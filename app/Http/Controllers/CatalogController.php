@@ -33,7 +33,7 @@ class CatalogController extends Controller
 
     public function authorsAsSpecialists(Request $request)
     {
-        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist);
+        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist, false);
 
         $validated = $request->validate([
             'key_word' => [
@@ -106,7 +106,7 @@ class CatalogController extends Controller
 
     public function specialists(Request $request)
     {
-        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist);
+        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist, false);
 
         $validated = $request->validate([
             'key_word' => [

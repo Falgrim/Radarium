@@ -51,4 +51,9 @@ class DictionarySpeciality extends Model
     {
         return $this->hasMany(CompanyJobSpeciality::class);
     }
+
+    public function builders(): HasMany
+    {
+        return $this->hasMany(BuilderSpeciality::class);
+    }
 }

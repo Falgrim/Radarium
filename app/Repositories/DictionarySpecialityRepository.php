@@ -25,18 +25,31 @@ class DictionarySpecialityRepository extends Repository
      * Список уникальных данных по специальности
      *
      * @param array $list
+     * @param bool $withEmpty
      *
      * @return array
      */
-    public function getList(ApiDataTypeEnum $type): array
+    public function getList(ApiDataTypeEnum $type, bool $withEmpty = true): array
     {
         $list = [];
 
+        if ($type === ApiDataTypeEnum::Specialist OR $type === ApiDataTypeEnum::Company) {
+            $whereHas = 'specialists';
+        } elseif ($type === ApiDataTypeEnum::Builder) {
+            $whereHas = 'builders';
+        } else {
+            return $list;
+        }
+
         $collection = $this->getQuery()
             ->select('title', 'id', 'short_name', 'group_title')
-            ->where('api_data_type_id', $type)
-            ->orderBy('title')
-            ->get();
+            ->where('api_data_type_id', $type);
+
+        if (!$withEmpty) {
+            $collection = $collection->whereHas($whereHas);
+        }
+
+        $collection = $collection->orderBy('title')->get();
 
         foreach ($collection as $row) {
             if ($row->group_title AND $row->group_title != $row->title) {

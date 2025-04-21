@@ -35,7 +35,7 @@ class BuilderController extends Controller
 
     public function builders(Request $request)
     {
-        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Builder);
+        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Builder, false);
 
         $validated = $request->validate([
             'key_word' => [
