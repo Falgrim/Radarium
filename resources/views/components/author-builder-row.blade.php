@@ -3,7 +3,7 @@
         <img src="{{asset('images/avatar.jpg')}}" class="avatar_row">
     </td>
     <td class="align-middle text-center">
-        {{ $author->getAvrBuilderRating() }}
+        {{ is_null($author->builder_reviews_avg_rating) ? 0 : number_format($author->builder_reviews_avg_rating, 1, '.', ' ') }}
     </td>
     <td class="align-middle">
         @if($author->username)

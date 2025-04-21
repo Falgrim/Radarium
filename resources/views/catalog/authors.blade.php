@@ -32,11 +32,17 @@
                 <thead>
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">Рейтинг</th>
+                    <th scope="col"><a href="{{ route('catalog.specialists', array_merge(request()->query(), [
+                    'sort' => 'specialist_reviews_avg_rating',
+                    'direction' => request('direction') === 'asc' ? 'desc' : 'asc'
+                ])) }}">Рейтинг</a></th>
                     <th scope="col">Открытые данные</th>
                     <th scope="col">Специализация</th>
                     <th scope="col">Профильные навыки</th>
-                    <th scope="col">Содержание сообщения</th>
+                    <th scope="col"><a href="{{ route('catalog.specialists', array_merge(request()->query(), [
+                    'sort' => 'latest_post_date',
+                    'direction' => request('direction') === 'asc' ? 'desc' : 'asc'
+                ])) }}">Последнее сообщение</a></th>
                     <th scope="col">Последний комментарий</th>
                     <th scope="col"></th>
                 </tr>

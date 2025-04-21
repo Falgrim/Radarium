@@ -62,6 +62,16 @@ class CatalogController extends Controller
                 'integer',
                 Rule::in(array_keys($specialitiesList)),
             ],
+            'sort' => [
+                'nullable',
+                'string',
+                Rule::in(['specialist_reviews_avg_rating', 'latest_post_date']),
+            ],
+            'direction' => [
+                'nullable',
+                'string',
+                Rule::in(['asc', 'desc']),
+            ],
         ]);
 
         $authors = ApiPostUser::whereHas('specialists', function (Builder $query) use ($validated) {
@@ -90,10 +100,16 @@ class CatalogController extends Controller
             }
         });
 
+        $sortField = $validated['sort'] ?? 'latest_post_date';
+        $sortDirection = $validated['direction'] ?? 'desc';
+
         $authors = $authors
             ->with(['specialistReviews'])
             ->withMax('posts as latest_post_date', 'post_date')
-            ->orderByDesc('latest_post_date')
+            ->withAvg(['specialistReviews' => function ($query) {
+                $query->where('rating', '>', 0);
+            }], 'rating')
+            ->orderBy($sortField, $sortDirection)
             ->paginate($this->onPage)
             ->withQueryString();
 
