@@ -21,6 +21,7 @@ use App\MoonShine\Resources\ReviewResource;
 use App\MoonShine\Resources\SpecialistResource;
 use App\MoonShine\Resources\UserResource;
 use App\MoonShine\Resources\UserRoleResource;
+use App\MoonShine\Resources\UserTariffResource;
 use MoonShine\Providers\MoonShineApplicationServiceProvider;
 use MoonShine\MoonShine;
 use MoonShine\Menu\MenuGroup;
@@ -72,6 +73,7 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
 
             MenuGroup::make('Пользователи', [
                 MenuItem::make('Пользователи', new UserResource(), 'heroicons.cog'),
+                MenuItem::make('Подписки', new UserTariffResource(), 'heroicons.cog'),
                 MenuItem::make('Роли', new UserRoleResource(), 'heroicons.cog'),
             ], 'heroicons.users'),
 
