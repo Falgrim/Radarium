@@ -25,7 +25,7 @@ class UserTariff extends Model
         'user_id',
         'payment_tariff_id',
         'api_data_type',
-        'count_month',
+        'period',
         'count_contacts',
         'count_contacts_left',
         'payment_id',

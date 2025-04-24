@@ -97,7 +97,7 @@ class UserTariffResource extends ModelResource
             Text::make('Пользователь', 'user.email')->sortable(),
             Text::make('Тариф', 'paymentTariff.title'),
             Enum::make('Статус', 'status')->attach(UserTariffStatusEnum::class)->sortable(),
-            Text::make('Кол-во мес.', 'count_month')->sortable(),
+            Text::make('Кол-во дней.', 'period')->sortable(),
             Text::make('Контактов', 'count_contacts')->sortable(),
             Text::make('Осталось к.', 'count_contacts_left')->sortable(),
             Date::make('Начало', 'date_start')->withTime()->sortable(),
@@ -116,7 +116,7 @@ class UserTariffResource extends ModelResource
             ]),
             Text::make('Тариф', 'paymentTariff.title'),
             Enum::make('Статус', 'status')->attach(UserTariffStatusEnum::class)->sortable(),
-            Text::make('Кол-во мес.', 'count_month')->sortable(),
+            Text::make('Кол-во дней', 'period')->sortable(),
             Text::make('Контактов', 'count_contacts')->sortable(),
             Text::make('Осталось к.', 'count_contacts_left')->sortable(),
             Date::make('Начало', 'date_start')->withTime()->sortable(),
@@ -135,7 +135,7 @@ class UserTariffResource extends ModelResource
         //$fields[] = BelongsTo::make('Пользователь', 'user', resource: new UserResource());
         $fields[] = BelongsTo::make('Пользователь', 'user', resource: new UserResource())->asyncSearch();
         $fields[] = BelongsTo::make('Тариф', 'paymentTariff', resource: new PaymentTariffResource());
-        $fields[] = Number::make('Кол-во мес.', 'count_month')->default(2);
+        $fields[] = Number::make('Кол-во дней', 'period')->default(30);
         $fields[] = Number::make('Контактов', 'count_contacts')->default(100);
         $fields[] = Number::make('Осталось к.', 'count_contacts_left')->default(100);
         $fields[] = Date::make('Начало', 'date_start')->default(Carbon::now()->format('Y-m-d H:i'))->withTime();
@@ -157,7 +157,7 @@ class UserTariffResource extends ModelResource
         return [
             'user_id' => ['required', 'exists:App\Models\User,id'],
             'payment_tariff_id' => ['required', 'exists:App\Models\PaymentTariff,id'],
-            'count_month' => ['required', 'digits_between:0,100'],
+            'period' => ['required', 'digits_between:0,100000'],
             'count_contacts' => ['required', 'digits_between:0,100000'],
             'count_contacts_left' => ['required', 'digits_between:0,100000'],
             'date_start' => ['required', 'date_format:Y-m-d\TH:i'],

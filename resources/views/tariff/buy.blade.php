@@ -3,7 +3,7 @@
         <h1 class="text-body-emphasis text-center">Оформление тарифа "{{ $tariff->title }}"</h1>
 
         <p>{{ $tariff->description }}</p>
-        <p>Количество месяцев: {{ $tariff->period }}</p>
+        <p>Количество дней: {{ $tariff->period }}</p>
         <p>Количество контактов: {{ $tariff->count_contacts }}</p>
 
         @if (!Auth::user())

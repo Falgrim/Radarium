@@ -107,7 +107,7 @@
                         </div>
                         <div class="card-body">
                             <p>{{ $tariff->description }}</p>
-                            <h3 class="card-title pricing-card-title">{{ number_format($tariff->price, 0, '.', ' ') }} ₽ <small class="text-body-secondary fw-light">за {{ $tariff->period }} мес.</small></h3>
+                            <h3 class="card-title pricing-card-title">{{ number_format($tariff->price, 0, '.', ' ') }} ₽ <small class="text-body-secondary fw-light">за {{ $tariff->period }} дней</small></h3>
                             <h3 class="card-title pricing-card-title">{{ number_format($tariff->count_contacts, 0, '.', ' ') }} <small class="text-body-secondary fw-light"> контактов</small></h3>
                         </div>
 

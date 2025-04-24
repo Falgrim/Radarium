@@ -132,7 +132,7 @@ class PaymentTariffResource extends ModelResource
             'title' => ['required', 'string', 'min:2'],
             'description' => ['sometimes', 'nullable', 'string'],
             'price' => ['required', 'digits_between:0,1000000'],
-            'period' => ['required', 'digits_between:0,100'],
+            'period' => ['required', 'digits_between:0,10000'],
             'count_contacts' => ['required', 'digits_between:0,10000'],
             'status' => Rule::enum(PaymentTariffStatusEnum::class),
         ];
@@ -146,7 +146,7 @@ class PaymentTariffResource extends ModelResource
             Text::make('Описание', 'description'),
             Enum::make('Статус', 'status')->attach(PaymentTariffStatusEnum::class)->sortable(),
             Text::make('Стоимость', 'price', fn($item) => number_format($item->price, 0, '.', ' '))->sortable(),
-            Text::make('Период действия (мес.)', 'period')->sortable(),
+            Text::make('Период действия (дн.)', 'period')->sortable(),
             Text::make('Контактов', 'count_contacts')->sortable(),
             Text::make('За контакт', 'price_by_contact', fn($item) => $item->price ? number_format(ceil($item->price/$item->count_contacts), 0, '.', ' ') : 0)->sortable(),
         ];
@@ -160,7 +160,7 @@ class PaymentTariffResource extends ModelResource
             Text::make('Описание', 'description'),
             Enum::make('Статус', 'status')->attach(PaymentTariffStatusEnum::class),
             Text::make('Стоимость', 'price', fn($item) => number_format($item->price, 0, '.', ' ')),
-            Text::make('Период действия (мес.)', 'period'),
+            Text::make('Период действия (дн.)', 'period'),
             Text::make('Контактов', 'count_contacts'),
             Text::make('За контакт', 'price_by_contact', fn($item) => $item->price ? number_format(ceil($item->price/$item->count_contacts), 0, '.', ' ') : 0),
             Date::make('Создан', 'created_at')->withTime(),
@@ -175,7 +175,7 @@ class PaymentTariffResource extends ModelResource
         $fields[] = Text::make('Название', 'title');
         $fields[] = Text::make('Описание', 'description');
         $fields[] = Text::make('Стоимость', 'price');
-        $fields[] = Text::make('Период действия (мес.)', 'period');
+        $fields[] = Text::make('Период действия (дн.)', 'period');
         $fields[] = Text::make('Контактов', 'count_contacts');
         $fields[] = Switcher::make('Акция', 'is_hot')->default(0);
         $fields[] = Enum::make('Статус', 'status')->attach(PaymentTariffStatusEnum::class)->default(PaymentTariffStatusEnum::Archive);
