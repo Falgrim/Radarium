@@ -37,7 +37,15 @@ header {
 }
 
 .landing_price .card {
+    min-height: 320px;
+}
 
+.landing_price .card .btn {
+    position: absolute;
+    bottom: 15px;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
 }
 
 a.nav-link {
