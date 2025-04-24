@@ -109,7 +109,7 @@
                             <p>{{ $tariff->description }}</p>
                             <h3 class="card-title pricing-card-title">{{ number_format($tariff->price, 0, '.', ' ') }} ₽ <small class="text-body-secondary fw-light">за {{ $tariff->period }} мес.</small></h3>
                             <h3 class="card-title pricing-card-title">{{ number_format($tariff->count_contacts, 0, '.', ' ') }} <small class="text-body-secondary fw-light"> контактов</small></h3>
-                            <button type="button" class="w-100 btn btn-lg btn-outline-primary">Заказать</button>
+                            <a href="{{ route('tariff.buy', ['id' => $tariff->id]) }}" class="w-100 btn btn-lg btn-outline-primary">Заказать</a>
                         </div>
                     </div>
                 </div>
