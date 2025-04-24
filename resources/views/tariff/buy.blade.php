@@ -12,6 +12,6 @@
             </div>
         @endif
 
-        <a href="#" class="btn btn-primary @if (!Auth::user()) disabled @endif">Оплатить</a>
+        <a href="{{ $paymentLink }}" target="_blank" class="btn btn-primary @if (!Auth::user()) disabled @endif">Оплатить</a>
     </div>
 </x-global-layout>
