@@ -1,3 +1,7 @@
+@php
+    $contactsLimit = Auth::check() ? Auth::user()->getLeftContacts() : [];
+@endphp
+
 <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom text-bg-dark">
     <div class="col-md-3 mb-2 mb-md-0">
         <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
@@ -11,7 +15,7 @@
         <li>
             <div class="dropdown">
                 <a class="nav-link px-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Специалисты
+                    Специалисты @if(Auth::check() AND $contactsLimit['count_contacts']) <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">{{ $contactsLimit['count_contacts_left'] }} из {{ $contactsLimit['count_contacts'] }}<span> @endif
                 </a>
                 <ul class="dropdown-menu">
                     <li><a href="{{ route('catalog.specialists') }}" class="dropdown-item px-2">Проектирование</a></li>

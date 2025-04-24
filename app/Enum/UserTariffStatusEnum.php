@@ -9,11 +9,14 @@ enum UserTariffStatusEnum:string {
 
     case Cancel = 'cancel';
 
+    case Ended = 'ended';
+
     public function toString(): ?string
     {
         return match ($this) {
             self::Active => 'Активно',
             self::Disabled => 'Отключено',
+            self::Ended => 'Закончился',
             self::Cancel => 'Отменен',
         };
     }
@@ -28,6 +31,7 @@ enum UserTariffStatusEnum:string {
         return match ($this) {
             self::Active => 'success',
             self::Disabled => 'yellow',
+            self::Ended => 'yellow',
             self::Cancel => 'gray',
         };
     }

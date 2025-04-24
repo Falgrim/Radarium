@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enum\UserTariffStatusEnum;
 use App\Traits\ModelTableName;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -79,5 +80,25 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         // https://laravel.demiart.ru/guide-to-roles-and-permissions/
         return true;
+    }
+
+    public function getFirstActiveTariff(): ?UserTariff
+    {
+        return $this->hasMany(UserTariff::class)
+            ->where('status', UserTariffStatusEnum::Active)
+            ->orderBy('date_start', 'ASC')
+            ->first();
+    }
+
+    public function getLeftContacts(): array
+    {
+        $contacts = $this->hasMany(UserTariff::class)
+            ->selectRaw('SUM(count_contacts_left) as count_contacts_left, SUM(count_contacts) as count_contacts')
+            ->first();
+
+        return [
+            'count_contacts_left' => !is_null($contacts) ? $contacts->count_contacts_left : 0,
+            'count_contacts' => !is_null($contacts) ? $contacts->count_contacts : 0,
+        ];
     }
 }

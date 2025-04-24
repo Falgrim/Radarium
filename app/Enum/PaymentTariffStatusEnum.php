@@ -14,8 +14,8 @@ enum PaymentTariffStatusEnum:string {
     public function toString(): ?string
     {
         return match ($this) {
-            self::Active => 'Активно',
-            self::Disabled => 'Отключено',
+            self::Active => 'Активен',
+            self::Disabled => 'Неактивен',
             self::Draft => 'Черновик',
             self::Archive => 'Архив',
         };

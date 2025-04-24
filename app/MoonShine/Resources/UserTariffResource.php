@@ -169,6 +169,6 @@ class UserTariffResource extends ModelResource
 
     public function redirectAfterSave(): string
     {
-        return to_page(resource: UserTariff::class);
+        return to_page(resource: UserTariffResource::class);
     }
 }
