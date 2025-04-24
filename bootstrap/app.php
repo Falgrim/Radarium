@@ -69,6 +69,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Синхронизация с Тубус
         $schedule->command('app:tubus')->hourly()->withoutOverlapping();
 
+        $schedule->command('app:tariff:users')->everyFifteenMinutes();
+
         // Удаление просроченных токенов восстановления паролей
         $schedule->command('auth:clear-resets')->everyFifteenMinutes();
     })->create();
