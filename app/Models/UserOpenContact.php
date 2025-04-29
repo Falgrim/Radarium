@@ -5,7 +5,10 @@ namespace App\Models;
 use App\Enum\PaymentServicePayEnum;
 use App\Enum\PaymentStatusEnum;
 use App\Enum\PaymentTariffStatusEnum;
+use App\Observers\UserOpenContactObserver;
+use App\Observers\UserTariffObserver;
 use App\Traits\ModelTableName;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,9 +16,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy([UserOpenContactObserver::class])]
 class UserOpenContact extends Model
 {
-    use SoftDeletes;
     use ModelTableName;
 
     protected $fillable = [

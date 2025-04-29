@@ -16,6 +16,7 @@ use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 //use Illuminate\Database\Query\Builder;
+use App\Services\Tariff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,11 @@ class CatalogController extends Controller
     protected bool $onlyActive = true;
 
     protected int $onPage = 10;
+
+    public function __construct(protected Tariff $tariffService)
+    {
+
+    }
 
     public function authorsAsSpecialists(Request $request)
     {
@@ -117,6 +123,7 @@ class CatalogController extends Controller
             'request' => $request,
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
+            'tariffAccess' => $this->tariffService->checkContactAccess(),
         ]);
     }
 
@@ -167,6 +174,7 @@ class CatalogController extends Controller
             'request'           => $request,
             'specialists'       => $specialists,
             'specialitiesList'    => $specialitiesList,
+            'tariffAccess' => $this->tariffService->checkContactAccess(),
         ]);
     }
 
@@ -188,6 +196,11 @@ class CatalogController extends Controller
 
         $author = ApiPostUser::where('id', $validated['id'])->with(['specialists', 'postsComplete', 'specialistReviews'])->firstOrFail();
         $reviews = $author->specialistReviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
+
+        if (!$this->tariffService->checkContactAccess($author)) {
+            return view('catalog.buy_tariff', []);
+        }
+        $this->tariffService->addOpenContactLog(Auth::user(), $author);
 
         return view('catalog.author_view', [
             'request' => $request,

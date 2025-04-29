@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enum\UserTariffStatusEnum;
+use App\Services\Tariff;
 use App\Traits\ModelTableName;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -94,11 +95,18 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $contacts = $this->hasMany(UserTariff::class)
             ->selectRaw('SUM(count_contacts_left) as count_contacts_left, SUM(count_contacts) as count_contacts')
+            ->where('status', UserTariffStatusEnum::Active)
             ->first();
 
         return [
             'count_contacts_left' => !is_null($contacts) ? $contacts->count_contacts_left : 0,
             'count_contacts' => !is_null($contacts) ? $contacts->count_contacts : 0,
         ];
+    }
+
+    public function checkAccessToContact(ApiPostUser $postUser)
+    {
+        $tariffService = new Tariff();
+        return $tariffService->checkContactAccess($postUser);
     }
 }

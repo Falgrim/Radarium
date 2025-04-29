@@ -11,7 +11,7 @@
                         @foreach($subscribe as $row)
                             <div class="col">
                                 <div class="card mb-4 rounded-3 shadow-sm ">
-                                    <div class="card-header py-3 ">
+                                    <div class="card-header py-3 @if($row->status === \App\Enum\UserTariffStatusEnum::Disabled->value OR $row->status === \App\Enum\UserTariffStatusEnum::Ended->value) text-bg-warning border-warning @endif">
                                         <h4 class="my-0 fw-normal text-center">{{ $row->paymentTariff->title }}</h4>
                                     </div>
                                     <div class="card-body">

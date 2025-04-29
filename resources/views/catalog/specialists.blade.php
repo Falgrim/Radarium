@@ -39,7 +39,7 @@
                 </thead>
                 <tbody>
                 @foreach ($specialists as $specialist)
-                    <x-specialist-row :$specialist />
+                    <x-specialist-row :$specialist :$tariffAccess />
                 @endforeach
                 </tbody>
             </table>

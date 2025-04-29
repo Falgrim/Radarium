@@ -96,7 +96,7 @@
     </div>
 
     <div class="container-lg p-5 mb-4">
-        <h2 class="display-5 fw-bold text-center">Стоимость подключения</h2>
+        <h2 class="display-5 fw-bold text-center" id="buy_tariff">Стоимость подключения</h2>
 
         <div class="row row-cols-1 row-cols-md-3 mb-3 mt-5 landing_price">
             @foreach($tariffs as $tariff)

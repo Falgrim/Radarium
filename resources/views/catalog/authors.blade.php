@@ -55,7 +55,7 @@
                 </thead>
                 <tbody>
                 @foreach ($authors as $author)
-                    <x-author-row :$author />
+                    <x-author-row :$author :$tariffAccess />
                 @endforeach
                 </tbody>
             </table>

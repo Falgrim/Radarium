@@ -6,20 +6,24 @@
         {{ $author->getAvrSpecialistRating() }}
     </td>
     <td class="align-middle">
-        @if($author->username)
-            <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
-        @elseif($author->user_id)
-            <a href="tg://user?id=5127911621{{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
+        @if(Auth::check() AND Auth::user()->checkAccessToContact($author))
+            @if($author->username)
+                <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
+            @elseif($author->user_id)
+                <a href="tg://user?id=5127911621{{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
+            @else
+                <i>Не известно</i>
+            @endif
+
+            @if($author->first_name)
+                <br />{{ trim($author->last_name.' '.$author->first_name) }}
+            @endif
+
+            @if($author->phone)
+                <br />{{ trim($author->phone) }}
+            @endif
         @else
-            <i>Не известно</i>
-        @endif
-
-        @if($author->first_name)
-            <br />{{ trim($author->last_name.' '.$author->first_name) }}
-        @endif
-
-        @if($author->phone)
-            <br />{{ trim($author->phone) }}
+            <i>Скрыто</i>
         @endif
     </td>
     <td>
@@ -39,6 +43,8 @@
 
     </td>
     <td class="align-middle">
+        @if(Auth::check() AND Auth::user()->checkAccessToContact($author))
         <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Подробнее</a>
+        @endif
     </td>
 </tr>
