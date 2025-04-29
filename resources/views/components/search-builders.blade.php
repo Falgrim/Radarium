@@ -9,21 +9,10 @@
 @endif
 
 <div class="my-5">
-    <div class="p-5 bg-body-tertiary">
+    <div class="p-3 bg-body-tertiary">
         <div class="container">
             <div class="col-md-12 col-lg-12">
-                <div class="row justify-content-between border py-2">
-                    <div class="col-4">
-                        Настройки поиска:
-                    </div>
-                    <div class="col-4 text-end">
-                        <a class="btn btn-light btn-sm" data-bs-toggle="collapse" href="#collapseSearchForm" role="button" aria-expanded="false" aria-controls="collapseSearchForm">
-                            Свернуть/Развернуть
-                        </a>
-                    </div>
-                </div>
-
-                <div class="collapse" id="collapseSearchForm">
+                <div class="row col-12">
                     <form class="needs-validation {{ $formErrorClass }} mt-2" id="search_form" method="GET" action="{{ route('catalog.builders') }}" novalidate="">
                         <div class="row g-3">
                             <div class="col-sm-6">
