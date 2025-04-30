@@ -29,6 +29,10 @@ class Tariff
             return true;
         }
 
+        if ($this->user->free_contacts) {
+            return true;
+        }
+
         return false;
     }
 
@@ -59,13 +63,31 @@ class Tariff
         $userTariff = $user->getFirstActiveTariff();
 
         if (is_null($userTariff)) {
-            return false;
+            return $this->freeContactsMinus($postUser);
         }
 
-        $data = UserOpenContact::firstOrCreate([
+        UserOpenContact::firstOrCreate([
             'user_id' => $user->id,
             'api_post_user_id' => $postUser->id,
             'user_tariff_id' => $userTariff->id,
         ]);
+    }
+
+    protected function freeContactsMinus(ApiPostUser $postUser)
+    {
+        if (!$this->user->free_contacts) {
+            return false;
+        }
+
+        $this->user->free_contacts = $this->user->free_contacts-1;
+        $this->user->save();
+
+        UserOpenContact::firstOrCreate([
+            'user_id' => $this->user->id,
+            'api_post_user_id' => $postUser->id,
+            'user_tariff_id' => 0,
+        ]);
+
+        return true;
     }
 }

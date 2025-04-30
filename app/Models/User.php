@@ -37,6 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'tubus_id',
         'company_inn',
         'company_title',
+        'free_contacts',
     ];
 
     /**

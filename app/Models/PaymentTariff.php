@@ -24,7 +24,7 @@ class PaymentTariff extends Model
         'price',
         'count_contacts',
         'status',
-        'period', // Срок в месяцах
+        'period', // Срок в днях
         'is_hot',
         'created_at',
         'updated_at',

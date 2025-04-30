@@ -75,8 +75,39 @@ class PaymentStatusCheck extends Command
 
         foreach ($payments as $payment) {
             try {
-                $status = $robokassa->opState($payment->id . '24234343fgdfggdf33');
+                $status = $robokassa->opState($payment->id);
                 print_r($status);
+                continue;
+
+                if (!is_array($status)) {
+                    throw new \Exception('Не получен ответ в формате массива');
+                }
+
+                if (!isset($status['Result'])) {
+                    throw new \Exception('В теле ответа нет параметра Result');
+                }
+
+                if (!isset($status['Result']['Code'])) {
+                    throw new \Exception('В теле ответа нет параметра Result.Code');
+                }
+
+                // Все что больше 0 - ошибка
+                if ($status['Result']['Code']) {
+                    $payment->status = PaymentStatusEnum::Error;
+                    $payment->description = $status['Result']['Description'] ?? 'Неизвестная ошибка';
+                    $payment->save();
+
+                    $this->error(
+                        'Ошибка проверки платежа ID' . $payment->id . ': ' . $status['Result']['Description'] ?? 'Неизвестная ошибка'
+                    );
+                    continue;
+                } else {
+                    $payment->status = PaymentStatusEnum::Success;
+                    $payment->save();
+
+                    $this->info('Платеж подтвержден ID' . $payment->id);
+                    continue;
+                }
             } catch (\Exception $e) {
                 $payment->status = PaymentStatusEnum::Error;
                 $payment->description = mb_substr($e->getMessage(), 0, 255);
@@ -84,17 +115,6 @@ class PaymentStatusCheck extends Command
 
                 $this->error('Ошибка проверки платежа ID'.$payment->id.': '.$e->getMessage());
                 continue;
-            }
-
-            if (is_array($status) AND isset($status['Result'])) {
-                if ($status['Result']['Code'] AND $status['Result']['Code'] == 3) {
-                    $payment->status = PaymentStatusEnum::Error;
-                    $payment->description = $status['Result']['Description'] ?? 'Неизвестная ошибка';
-                    $payment->save();
-
-                    $this->error('Ошибка проверки платежа ID'.$payment->id.': '.$status['Result']['Description'] ?? 'Неизвестная ошибка');
-                    continue;
-                }
             }
 
             if (strtotime($payment->created_at) <= time()-Payment::PAYMENT_TTL) {
