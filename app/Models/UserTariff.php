@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enum\PaymentServicePayEnum;
 use App\Enum\PaymentStatusEnum;
 use App\Enum\PaymentTariffStatusEnum;
+use App\Enum\UserTariffStatusEnum;
 use App\Observers\UserTariffObserver;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -54,6 +55,7 @@ class UserTariff extends Model
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'date_start' => 'datetime:Y-m-d H:i:s',
             'date_end' => 'datetime:Y-m-d H:i:s',
+            'status' => UserTariffStatusEnum::class,
         ];
     }
 

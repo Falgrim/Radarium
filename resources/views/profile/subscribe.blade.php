@@ -11,10 +11,11 @@
                         @foreach($subscribe as $row)
                             <div class="col">
                                 <div class="card mb-4 rounded-3 shadow-sm ">
-                                    <div class="card-header py-3 @if($row->status === \App\Enum\UserTariffStatusEnum::Disabled->value OR $row->status === \App\Enum\UserTariffStatusEnum::Ended->value) text-bg-warning border-warning @endif">
+                                    <div class="card-header py-3 @if($row->status === \App\Enum\UserTariffStatusEnum::Disabled OR $row->status === \App\Enum\UserTariffStatusEnum::Ended) text-bg-warning border-warning @endif">
                                         <h4 class="my-0 fw-normal text-center">{{ $row->paymentTariff->title }}</h4>
                                     </div>
                                     <div class="card-body">
+                                        <p>Текущий статус: <b>{{ $row->status->toString() }}</b></p>
                                         <p>{{ $row->paymentTariff->description }}</p>
                                         <p>С {{ $row->date_start->format('H:i d.m.Y') }} до {{ $row->date_end->format('H:i d.m.Y') }} (осталось {{ $row->date_start->diffInDays($row->date_end) }} дн.)</p>
                                         <p>Доступно контактов: {{ $row->count_contacts_left }} из {{ $row->count_contacts }}</p>
