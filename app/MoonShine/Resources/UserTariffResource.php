@@ -7,6 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\UserTariffStatusEnum;
 use App\Models\UserTariff;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Review;
@@ -94,7 +95,9 @@ class UserTariffResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            Text::make('Пользователь', 'user.email')->sortable(),
+            Text::make('Пользователь', 'user.email')->sortable(function (Builder $query, string $column, string $direction) {
+                $query->leftJoin('users', 'user_tariffs.user_id', '=', 'users.id')->orderBy('users.email', $direction);
+            }),
             Text::make('Тариф', 'paymentTariff.title'),
             Enum::make('Статус', 'status')->attach(UserTariffStatusEnum::class)->sortable(),
             Text::make('Кол-во дней.', 'period')->sortable(),
