@@ -6,7 +6,7 @@
         {{ $author->getAvrSpecialistRating() }}
     </td>
     <td class="align-middle">
-        @if(Auth::check() AND Auth::user()->checkAccessToContact($author))
+        @if(Auth::check() AND Auth::user()->checkOpenContact($author))
             @if($author->username)
                 <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
             @elseif($author->user_id)

@@ -6,7 +6,7 @@
         {{ is_null($author->builder_reviews_avg_rating) ? 0 : number_format($author->builder_reviews_avg_rating, 1, '.', ' ') }}
     </td>
     <td class="align-middle">
-        @if(Auth::check() AND Auth::user()->checkAccessToContact($author))
+        @if(Auth::check() AND Auth::user()->checkOpenContact($author))
             @if($author->username)
                 <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
             @elseif($author->user_id)

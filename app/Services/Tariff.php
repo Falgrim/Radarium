@@ -25,11 +25,20 @@ class Tariff
             return false;
         }
 
-        if (!is_null($postUser) AND $this->getOpenContactLog($this->user, $postUser)) {
+        if ($this->checkOpenContact($postUser) OR $this->user->getLeftContacts()['count_contacts_left'] > 0) {
             return true;
         }
 
-        if ($this->user->getLeftContacts()['count_contacts_left'] > 0) {
+        return false;
+    }
+
+    public function checkOpenContact(?ApiPostUser $postUser = null): bool
+    {
+        if (is_null($this->user)) {
+            return false;
+        }
+
+        if (!is_null($postUser) AND $this->getOpenContactLog($this->user, $postUser)) {
             return true;
         }
 
