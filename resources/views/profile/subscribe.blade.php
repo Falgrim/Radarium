@@ -25,6 +25,23 @@
                     @else
                         <p>У вас еще нет подписки.</p>
                     @endif
+
+                    @if(count($payments))
+                        <h2 class="text-lg font-medium text-gray-900">
+                            {{ __('Платежи, ожидающие оплаты') }}
+                        </h2>
+                        <p>
+                            <i>Если вы передумали оплачивать, то платежи автоматически будут отменены.</i><br />
+                            <i>После оплаты, в течение нескольких минут у вас будет активирован оплаченный тарифный план.</i>
+                        </p>
+                        @foreach($payments as $row)
+                            <div class="col py-3">
+                                <p>Тариф "{{ $row->paymentTariff->title }}". Создан платеж {{ $row->created_at->format('H:i d.m.Y') }} на сумму {{ number_format($row->sum, 0, '.', ' ') }} руб.</p>
+                                <p><a href="https://auth.robokassa.ru/Merchant/Index/{{ $row->payment_hash }}" target="_blank" class="btn btn-primary btn-sm">Оплатить</a></p>
+                                <hr />
+                            </div>
+                        @endforeach
+                    @endif
                 </section>
             </div>
         </div>

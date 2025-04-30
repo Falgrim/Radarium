@@ -34,6 +34,8 @@ class Payment extends Model
         'updated_at',
     ];
 
+    public const PAYMENT_TTL = 60*60; // Время, через которое платеж будет отменен
+
     /**
      * Get the attributes that should be cast.
      *

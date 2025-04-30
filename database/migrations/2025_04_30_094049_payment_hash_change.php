@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payment_tariffs', function (Blueprint $table) {
-            $table->integer('period')->default(0)->change();
+        Schema::table('payments', function (Blueprint $table) {
+            $table->string('payment_hash')->nullable()->change();
         });
     }
 
@@ -21,6 +21,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-
+        //
     }
 };

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\PaymentServicePayEnum;
+use App\Enum\PaymentStatusEnum;
 use App\Enum\PaymentTariffStatusEnum;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Payment;
 use App\Models\PaymentTariff;
 use App\Models\UserTariff;
 use Illuminate\Http\RedirectResponse;
@@ -33,16 +36,41 @@ class TariffController extends Controller
             return false;
         }
 
-        $robokassa = new Robokassa([
-            'login' => 'merchant_login',
-            'password1' => 'password1',
-            'password2' => 'password2',
-            'hashType' => 'md5'
+        $robokassaConf = config('payment.robokassa');
+
+        $conf = [
+            'login' => $robokassaConf['login'],
+            'password1' => $robokassaConf['pass1'],
+            'password2' => $robokassaConf['pass1'],
+            'hashType' => 'md5',
+        ];
+
+        if ($robokassaConf['is_test']) {
+            $conf['is_test'] = $robokassaConf['is_test'];
+            $conf['test_password1'] = $robokassaConf['pass1'];
+            $conf['test_password2'] = $robokassaConf['pass2'];
+        }
+
+        $robokassa = new Robokassa($conf);
+
+        $payment = Payment::firstOrCreate([
+            'user_id' => Auth::user()->id,
+            'payment_tariff_id' => $paymentTariff->id,
+            'payment_service' => PaymentServicePayEnum::Robokassa,
+            'status' => PaymentStatusEnum::New,
+            'sum' => $paymentTariff->price,
+        ],
+        [
+            'user_id' => Auth::user()->id,
+            'payment_tariff_id' => $paymentTariff->id,
+            'payment_service' => PaymentServicePayEnum::Robokassa,
+            'status' => PaymentStatusEnum::New,
+            'sum' => $paymentTariff->price,
         ]);
 
         $params = [
             'OutSum' => $paymentTariff->price,
-            'InvoiceID' => 88512512,
+            'InvoiceID' => $payment->id,
             'Description' => 'Покупка тарифа "'.$paymentTariff->title.'"',
             'Receipt' => [
                 'items' => [
@@ -58,6 +86,15 @@ class TariffController extends Controller
             ]
         ];
 
-        return $robokassa->sendPaymentRequestCurl($params);
+        $url = $robokassa->sendPaymentRequestCurl($params);
+
+        list($params, $hash) = explode('Merchant/Index/', $url);
+
+        if (!empty($hash) AND (!$payment->payment_hash OR $payment->payment_hash != $hash)) {
+            $payment->payment_hash = $hash;
+            $payment->save();
+        }
+
+        return $url;
     }
 }
