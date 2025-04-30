@@ -24,7 +24,11 @@
                             </div>
                         @endforeach
                     @else
-                        <p>У вас еще нет подписки.</p>
+                        @if(Auth::user()->free_contacts)
+                            <p>У вас сейчас активирован Демо режим. <a href="{{ route('index') }}#buy_tariff">Выберите тариф для работы с сервисом {{ config('app.name') }}</a></p>
+                        @else
+                            <p>У вас еще нет подписки.</p>
+                        @endif
                     @endif
 
                     @if(count($payments))
