@@ -15,6 +15,12 @@
                 <div class="row col-12">
                     <form class="needs-validation {{ $formErrorClass }} mt-2" id="search_form" method="GET" action="{{ route('catalog.specialists') }}" novalidate="">
                         <div class="row g-3">
+                            <div class="col-sm-12">
+                                <label>
+                                    <input type="checkbox" name="open_contacts" value="1" @checked(old('open_contacts', $request->open_contacts))>
+                                    Показать только открытые контакты
+                                </label>
+                            </div>
                             <div class="col-sm-6">
                                 <x-input-label for="key_word" class="form-label" :value="__('Поиск в сообщении')" />
                                 <input type="text" class="form-control" name="key_word" id="key_word" placeholder="" value="{{ old('key_word', $request->key_word) }}">

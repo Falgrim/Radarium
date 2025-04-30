@@ -18,6 +18,7 @@ use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 //use Illuminate\Database\Query\Builder;
+use App\Models\UserOpenContact;
 use App\Services\Tariff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -70,6 +71,11 @@ class BuilderController extends Controller
                 'integer',
                 Rule::in(array_keys($specialitiesList)),
             ],
+            'open_contacts' => [
+                'sometimes',
+                'nullable',
+                'integer',
+            ],
             'sort' => [
                 'nullable',
                 'string',
@@ -107,6 +113,14 @@ class BuilderController extends Controller
                 $query->where('post', 'like', '%'.$validated['key_word'].'%');
             }
         });
+
+        if (!empty($validated['open_contacts']) AND Auth::check()) {
+            $authors = $authors->whereIn('id', function($query){
+                $query->select('api_post_user_id')
+                    ->from(with(new UserOpenContact())->getTable())
+                    ->where('user_id', Auth::user()->id);
+            });
+        }
 
         $sortField = $validated['sort'] ?? 'latest_post_date';
         $sortDirection = $validated['direction'] ?? 'desc';
