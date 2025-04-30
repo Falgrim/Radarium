@@ -61,7 +61,7 @@ class PaymentStatusCheck extends Command
         $conf = [
             'login' => $robokassaConf['login'],
             'password1' => $robokassaConf['pass1'],
-            'password2' => $robokassaConf['pass1'],
+            'password2' => $robokassaConf['pass2'],
             'hashType' => 'md5',
         ];
 
@@ -76,8 +76,7 @@ class PaymentStatusCheck extends Command
         foreach ($payments as $payment) {
             try {
                 $status = $robokassa->opState($payment->id);
-                print_r($status);
-                continue;
+                Log::channel('payments')->info('Платеж ID ' . $payment->id.': '.(is_array($status) ? json_encode($status) : $status));
 
                 if (!is_array($status)) {
                     throw new \Exception('Не получен ответ в формате массива');
@@ -101,7 +100,7 @@ class PaymentStatusCheck extends Command
                         'Ошибка проверки платежа ID' . $payment->id . ': ' . $status['Result']['Description'] ?? 'Неизвестная ошибка'
                     );
                     continue;
-                } else {
+                } elseif (isset($status['State']) AND $status['State']['Code'] == 100) {
                     $payment->status = PaymentStatusEnum::Success;
                     $payment->save();
 
@@ -113,6 +112,8 @@ class PaymentStatusCheck extends Command
                 $payment->description = mb_substr($e->getMessage(), 0, 255);
                 $payment->save();
 
+                Log::channel('payments')->error('Платеж ID ' . $payment->id.': '.$e->getMessage());
+
                 $this->error('Ошибка проверки платежа ID'.$payment->id.': '.$e->getMessage());
                 continue;
             }
@@ -122,6 +123,7 @@ class PaymentStatusCheck extends Command
                 $payment->save();
 
                 $this->warn('Платеж просрочен: ID '.$payment->id);
+                Log::channel('payments')->info('Платеж ID ' . $payment->id.': просрочен');
             }
         }
     }

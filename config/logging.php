@@ -150,6 +150,12 @@ return [
             'level' => 'info',
             'path' => storage_path('logs/tubus.log'),
         ],
+
+        'payments' => [
+            'driver' => 'single',
+            'level' => 'info',
+            'path' => storage_path('logs/payments.log'),
+        ],
     ],
 
 ];
