@@ -71,6 +71,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $schedule->command('app:tariff:users')->everyFifteenMinutes();
 
+        // Проверка статуса новых платежей
+        $schedule->command('app:payments:check')->everyTwoMinutes();
+
         // Удаление просроченных токенов восстановления паролей
         $schedule->command('auth:clear-resets')->everyFifteenMinutes();
     })->create();
