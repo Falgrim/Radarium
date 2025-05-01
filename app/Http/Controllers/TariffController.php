@@ -9,6 +9,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Payment;
 use App\Models\PaymentTariff;
 use App\Models\UserTariff;
+use App\Services\Tariff;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,7 +71,7 @@ class TariffController extends Controller
 
         $params = [
             'OutSum' => $paymentTariff->price,
-            'InvoiceID' => $payment->id,
+            'InvoiceID' => Tariff::getInvoiceID($payment),
             'Description' => 'Покупка тарифа "'.$paymentTariff->title.'"',
             'Receipt' => [
                 'items' => [

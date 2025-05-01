@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ApiPostUser;
+use App\Models\Payment;
 use App\Models\User;
 use App\Models\UserOpenContact;
 use App\Models\UserTariff;
@@ -89,5 +90,10 @@ class Tariff
         ]);
 
         return true;
+    }
+
+    public static function getInvoiceID(Payment $payment): string
+    {
+        return $payment->id.'-'.$payment->created_at->timestamp;
     }
 }
