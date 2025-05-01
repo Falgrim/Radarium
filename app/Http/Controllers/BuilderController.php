@@ -59,7 +59,7 @@ class BuilderController extends Controller
             'key_word_tags.*' => [
                 'sometimes',
                 'string',
-                'min:3',
+                'min:2',
                 'max:50'
             ],
             'speciality_id' => [

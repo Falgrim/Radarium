@@ -72,7 +72,7 @@
                     }
 
                     const text = $(this).val().trim();
-                    if (text.length >= 3) {
+                    if (text.length >= 2) {
                         const button = $('<button>')
                             .addClass('dynamic-button btn btn-outline-secondary btn-sm')
                             .text(text)
