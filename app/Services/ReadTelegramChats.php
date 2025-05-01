@@ -7,6 +7,7 @@ use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use danog\MadelineProto\PeerNotInDbException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -115,8 +116,12 @@ class ReadTelegramChats
                     $this->setWarnMsg('Дубликат: '.$message['id'].' (БД '.$postCheck->id.')');
                 }
 
-                $this->setInfoMsg('Add ID: '.$message['id']);
-                $userInfo = $MadelineProto->getInfo($message['from_id']);
+                try {
+                    $this->setInfoMsg('Add ID: ' . $message['id']);
+                    $userInfo = $MadelineProto->getInfo($message['from_id']);
+                } catch (PeerNotInDbException $e) {
+                    $this->setErrorMsg($e->getMessage());
+                }
 
                 $userData = [];
                 if (isset($userInfo['User'])) {
