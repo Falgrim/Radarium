@@ -42,7 +42,7 @@ class TariffController extends Controller
         $conf = [
             'login' => $robokassaConf['login'],
             'password1' => $robokassaConf['pass1'],
-            'password2' => $robokassaConf['pass1'],
+            'password2' => $robokassaConf['pass2'],
             'hashType' => 'md5',
         ];
 
