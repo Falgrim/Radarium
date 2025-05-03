@@ -94,6 +94,6 @@ class Tariff
 
     public static function getInvoiceID(Payment $payment): string
     {
-        return $payment->id.'-'.$payment->created_at->timestamp;
+        return $payment->id.'0'.$payment->user_id;
     }
 }
