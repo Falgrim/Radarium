@@ -105,7 +105,7 @@ class UserTariffResource extends ModelResource
             Text::make('Осталось к.', 'count_contacts_left')->sortable(),
             Date::make('Начало', 'date_start')->withTime()->sortable(),
             Date::make('Завершение', 'date_end')->withTime()->sortable(),
-            Date::make('Комментарий', 'comment')->withTime()->sortable(),
+            Text::make('Комментарий', 'comment'),
         ];
     }
 
@@ -124,7 +124,7 @@ class UserTariffResource extends ModelResource
             Text::make('Осталось к.', 'count_contacts_left')->sortable(),
             Date::make('Начало', 'date_start')->withTime()->sortable(),
             Date::make('Завершение', 'date_end')->withTime()->sortable(),
-            Date::make('Комментарий', 'comment')->withTime()->sortable(),
+            Text::make('Комментарий', 'comment'),
             Date::make('Создан', 'created_at')->withTime(),
         ];
     }
