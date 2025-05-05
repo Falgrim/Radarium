@@ -20,6 +20,7 @@ use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIYandex;
 use App\Services\Dictionary;
+use App\Services\Tariff;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -75,7 +76,7 @@ class PaymentStatusCheck extends Command
 
         foreach ($payments as $payment) {
             try {
-                $status = $robokassa->opState($payment->id);
+                $status = $robokassa->opState(Tariff::getInvoiceID($payment));
                 Log::channel('payments')->info('Платеж ID ' . $payment->id.': '.(is_array($status) ? json_encode($status) : $status));
 
                 if (!is_array($status)) {
