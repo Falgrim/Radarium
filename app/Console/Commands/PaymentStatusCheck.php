@@ -92,7 +92,8 @@ class PaymentStatusCheck extends Command
                 }
 
                 // Все что больше 0 - ошибка
-                if ($status['Result']['Code']) {
+                // Код 3 означает, что оплата не найдена в системе, она может не сразу появится для проверки
+                if ($status['Result']['Code'] AND $status['Result']['Code'] != 3) {
                     $payment->status = PaymentStatusEnum::Error;
                     $payment->description = $status['Result']['Description'] ?? 'Неизвестная ошибка';
                     $payment->save();
