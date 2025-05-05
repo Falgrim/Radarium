@@ -9,4 +9,5 @@ return [
         'pass1' => env('ROBOKASSA_PASS1'),
         'pass2' => env('ROBOKASSA_PASS2'),
     ],
+    'order_id_extra' => env('ORDER_ID_EXTRA', ''),
 ];

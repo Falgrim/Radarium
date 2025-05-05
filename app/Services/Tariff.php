@@ -94,6 +94,6 @@ class Tariff
 
     public static function getInvoiceID(Payment $payment): string
     {
-        return $payment->id.'0'.$payment->user_id;
+        return $payment->id.config('payment.order_id_extra');
     }
 }
