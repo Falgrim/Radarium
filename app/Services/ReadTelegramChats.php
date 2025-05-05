@@ -100,6 +100,8 @@ class ReadTelegramChats
         $this->checkReplyTo($messages);
         $this->checkMinLength($messages);
 
+        $addedCount = 0;
+
         if ($countMsgFiltered = count($messages)) {
             foreach ($messages as $message) {
                 if ($this->apiChannel->last_post_id AND $this->apiChannel->last_post_id >= $message['id']) {
@@ -192,6 +194,7 @@ class ReadTelegramChats
                 ]);
 
                 if ($post->wasRecentlyCreated === true) {
+                    $addedCount ++;
                     $this->setInfoMsg('Создан новый пост: ' . $post->id);
                 } else {
                     $this->setInfoMsg('Обновлен пост: ' . $post->id);
@@ -229,7 +232,7 @@ class ReadTelegramChats
             }
         }
 
-        Log::channel('post_parser')->info('Прочитано '.$countMsg.'; Допущенных: '.$countMsgFiltered);
+        Log::channel('post_parser')->info($apiChannel->id.': Всего постов '.$countMsg.'; Отфильтровано '.$countMsgFiltered.'; Новых '.$addedCount);
         $this->setInfoMsg('Прочитано '.$countMsg.'; Допущенных: '.$countMsgFiltered);
         $this->setInfoMsg('Последний ID: '.$this->apiChannel->last_post_id);
         $this->setInfoMsg('Последняя дата: '.$this->apiChannel->last_date_check);
