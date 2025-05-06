@@ -25,7 +25,6 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($readSourceCron->value <= 59) {
                 // Каждые X минут
                 $schedule->cron('*/'.$readSourceCron->value.' * * * *')
-                    ->withoutOverlapping()
                     ->group(function (Schedule $schedule) {
                         $schedule->command('app:tg_parse:specialist');
                         $schedule->command('app:tg_parse:builder');
@@ -34,7 +33,6 @@ return Application::configure(basePath: dirname(__DIR__))
             } elseif ($readSourceCron->value <= 1439) {
                 // Каждые Х часов
                 $schedule->cron('0 */'.ceil($readSourceCron->value/60).' * * *')
-                    ->withoutOverlapping()
                     ->group(function (Schedule $schedule) {
                         $schedule->command('app:tg_parse:specialist');
                         $schedule->command('app:tg_parse:builder');
@@ -43,7 +41,6 @@ return Application::configure(basePath: dirname(__DIR__))
             } else {
                 // Каждый день в 00:00
                 $schedule->cron('0 0 * * *')
-                    ->withoutOverlapping()
                     ->group(function (Schedule $schedule) {
                         $schedule->command('app:tg_parse:specialist');
                         $schedule->command('app:tg_parse:builder');
@@ -51,9 +48,9 @@ return Application::configure(basePath: dirname(__DIR__))
                     });
             }
         } else {
-            $schedule->command('app:tg_parse:specialist')->hourly()->withoutOverlapping();
-            $schedule->command('app:tg_parse:builder')->hourly()->withoutOverlapping();
-            $schedule->command('app:tg_parse:company')->hourly()->withoutOverlapping();
+            $schedule->command('app:tg_parse:specialist')->hourly();
+            $schedule->command('app:tg_parse:builder')->hourly();
+            $schedule->command('app:tg_parse:company')->hourly();
         }
 
         // Отправка запросов в ИИ
