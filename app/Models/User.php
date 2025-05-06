@@ -111,7 +111,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $tariffService->checkContactAccess($postUser);
     }
 
-    public function checkOpenContact(ApiPostUser $postUser)
+    public function checkOpenContact(ApiPostUser $postUser): bool
     {
         $tariffService = new Tariff();
         return $tariffService->checkOpenContact($postUser);

@@ -1,6 +1,7 @@
 @php
     $lastPost = $author->lastPost();
     $specialties = $author->specialtiesWithShortName();
+    $checkOpenContact = Auth::user()->checkOpenContact($author);
 @endphp
 
 <tr id="author-id-{{ $author->id }}">
@@ -11,7 +12,7 @@
         {{ is_null($author->builder_reviews_avg_rating) ? 0 : number_format($author->builder_reviews_avg_rating, 1, '.', ' ') }}
     </td>
     <td class="align-middle">
-        @if(Auth::check() AND Auth::user()->checkOpenContact($author))
+        @if($checkOpenContact)
             @if($author->username)
                 <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
             @elseif($author->user_id)
@@ -41,14 +42,14 @@
     </td>
     <td class="text-">
         @if($lastPost?->post)
-            <em>{{ $lastPost->post_date->format('d.m.Y') }}<br />{{ Str::limit($lastPost->post, 100) }}</em>
+            <em>{{ $lastPost->post_date->format('d.m.Y') }}<br />{{ \App\Models\ApiPostUser::prepareLastPostText($lastPost->post, $checkOpenContact)  }}</em>
         @endif
     </td>
     <td>
 
     </td>
     <td class="align-middle">
-        @if(Auth::check() AND Auth::user()->checkAccessToContact($author))
+        @if(Auth::user()->checkAccessToContact($author))
         <a href="{{ route('catalog.builder.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Подробнее</a>
         @endif
     </td>

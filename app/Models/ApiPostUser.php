@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ApiPostUser extends Model
 {
@@ -224,5 +225,19 @@ class ApiPostUser extends Model
         }
 
         return asset('storage/'.ReadTelegramChats::PHOTO_PATH.'/'.$this->photo);
+    }
+
+    public static function prepareLastPostText(string $post, bool $checkOpenContact)
+    {
+        $post = Str::limit($post, 100);
+        if (!$checkOpenContact) {
+            $post = preg_replace(
+                '/(?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s\-()]*\d{2}[\s\-()]*\d{2}/',
+                '*********',
+                $post
+            );
+        }
+
+        return $post;
     }
 }
