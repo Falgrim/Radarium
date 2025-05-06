@@ -38,7 +38,7 @@ class ApiPostUserResource extends ModelResource
 {
     protected string $model = ApiPostUser::class;
 
-    protected string $title = 'Специалисты (аккаунты)';
+    protected string $title = 'Авторы сообщений';
 
     protected string $sortColumn = 'created_at';
 

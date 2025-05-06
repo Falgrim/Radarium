@@ -81,7 +81,7 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
                 MenuItem::make('Сервисы ИИ', new ApiAiResource(), 'heroicons.users'),
                 MenuItem::make('Источники сообщений', new ApiChannelResource(), 'heroicons.users'),
                 MenuItem::make('Cообщения/Посты', new ApiChannelPostResource(), 'heroicons.users'),
-                MenuItem::make('Специалисты (аккаунты)', new ApiPostUserResource(), 'heroicons.users'),
+                MenuItem::make('Авторы сообщений', new ApiPostUserResource(), 'heroicons.users'),
                 MenuItem::make('Специализации', new DictionarySpecialityResource(), 'heroicons.users'),
                 MenuItem::make('Модерация', new ModerationAlertResource(), 'heroicons.users'),
             ], 'heroicons.users'),
