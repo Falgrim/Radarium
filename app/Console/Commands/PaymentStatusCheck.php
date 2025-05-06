@@ -79,8 +79,6 @@ class PaymentStatusCheck extends Command
                 $status = $robokassa->opState(Tariff::getInvoiceID($payment));
                 Log::channel('payments')->info('Платеж ID ' . $payment->id.': '.(is_array($status) ? json_encode($status) : $status));
 
-                print_r($status);
-
                 if (!is_array($status)) {
                     throw new \Exception('Не получен ответ в формате массива');
                 }

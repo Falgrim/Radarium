@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enum\PaymentStatusEnum;
+use App\Enum\UserTariffStatusEnum;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Payment;
 use App\Models\UserTariff;
@@ -16,7 +17,13 @@ class SubscribeController extends Controller
 {
     public function main(Request $request): View
     {
-        $subscribe = UserTariff::where('user_id', Auth::user()->id)
+        $subscribeActive = UserTariff::where('user_id', Auth::user()->id)
+            ->where('status', UserTariffStatusEnum::Active)
+            ->orderBy('date_end', 'DESC')
+            ->get();
+
+        $subscribeEnded = UserTariff::where('user_id', Auth::user()->id)
+            ->where('status', UserTariffStatusEnum::Ended)
             ->orderBy('date_end', 'DESC')
             ->get();
 
@@ -27,7 +34,8 @@ class SubscribeController extends Controller
             ->get();
 
         return view('profile.subscribe', [
-            'subscribe' => $subscribe,
+            'subscribeActive' => $subscribeActive,
+            'subscribeEnded' => $subscribeEnded,
             'payments' => $payments,
         ]);
     }
