@@ -1,3 +1,8 @@
+@php
+    $lastPost = $author->lastPost();
+    $specialties = $author->specialtiesWithShortName();
+@endphp
+
 <tr id="author-id-{{ $author->id }}">
     <td>
         <img src="{{asset('images/avatar.jpg')}}" class="avatar_row">
@@ -27,16 +32,16 @@
         @endif
     </td>
     <td>
-        @if(count($author->specialtiesWithShortName()))
-        <span class="badge text-bg-secondary">{!! implode('</span><span class="badge text-bg-secondary">', $author->specialtiesWithShortName()) !!}</span>
+        @if(count($specialties))
+        <span class="badge text-bg-secondary">{!! implode('</span><span class="badge text-bg-secondary">', $specialties) !!}</span>
         @endif
     </td>
     <td>
         {{ implode('; ', $author->builderData()['soft_experience']) }}
     </td>
     <td class="text-">
-        @if($author->lastPost()?->post)
-            <em>{{ $author->lastPost()->post_date->format('d.m.Y') }}<br />{{ Str::limit($author->lastPost()->post, 100) }}</em>
+        @if($lastPost?->post)
+            <em>{{ $lastPost->post_date->format('d.m.Y') }}<br />{{ Str::limit($lastPost->post, 100) }}</em>
         @endif
     </td>
     <td>
