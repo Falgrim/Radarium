@@ -21,12 +21,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $readSourceCron = Repositories::setting()->findByName('read_source_cron');
 
         // Поиск новых постов из источников
+        $schedule->command('app:tg_parse:specialist')->everyFiveMinutes()->sendOutputTo(base_path('tg_parse_specialist_5.log'));;
+
         if ($readSourceCron?->value) {
             if ($readSourceCron->value <= 59) {
                 // Каждые X минут
                 $schedule->cron('*/'.$readSourceCron->value.' * * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse_specialist.log'));
                         $schedule->command('app:tg_parse:builder')->sendOutputTo(base_path('tg_parse.log'));
                         $schedule->command('app:tg_parse:company')->sendOutputTo(base_path('tg_parse.log'));
                 });
@@ -34,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 // Каждые Х часов
                 $schedule->cron('0 */'.ceil($readSourceCron->value/60).' * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse_specialist.log'));
                         $schedule->command('app:tg_parse:builder')->sendOutputTo(base_path('tg_parse.log'));
                         $schedule->command('app:tg_parse:company')->sendOutputTo(base_path('tg_parse.log'));
                     });
@@ -42,13 +44,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 // Каждый день в 00:00
                 $schedule->cron('0 0 * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse_specialist.log'));
                         $schedule->command('app:tg_parse:builder')->sendOutputTo(base_path('tg_parse.log'));
                         $schedule->command('app:tg_parse:company')->sendOutputTo(base_path('tg_parse.log'));
                     });
             }
         } else {
-            $schedule->command('app:tg_parse:specialist')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
+            $schedule->command('app:tg_parse:specialist')->hourly()->sendOutputTo(base_path('tg_parse_specialist.log'));;
             $schedule->command('app:tg_parse:builder')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
             $schedule->command('app:tg_parse:company')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
         }
