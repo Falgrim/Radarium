@@ -29,7 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
                         $schedule->command('app:tg_parse:specialist');
                         $schedule->command('app:tg_parse:builder');
                         $schedule->command('app:tg_parse:company');
-                });
+                })
+                    ->sendOutputTo(base_path('tg_parse.log'));
             } elseif ($readSourceCron->value <= 1439) {
                 // Каждые Х часов
                 $schedule->cron('0 */'.ceil($readSourceCron->value/60).' * * *')
@@ -37,7 +38,8 @@ return Application::configure(basePath: dirname(__DIR__))
                         $schedule->command('app:tg_parse:specialist');
                         $schedule->command('app:tg_parse:builder');
                         $schedule->command('app:tg_parse:company');
-                    });
+                    })
+                    ->sendOutputTo(base_path('tg_parse.log'));
             } else {
                 // Каждый день в 00:00
                 $schedule->cron('0 0 * * *')
@@ -45,12 +47,13 @@ return Application::configure(basePath: dirname(__DIR__))
                         $schedule->command('app:tg_parse:specialist');
                         $schedule->command('app:tg_parse:builder');
                         $schedule->command('app:tg_parse:company');
-                    });
+                    })
+                    ->sendOutputTo(base_path('tg_parse.log'));
             }
         } else {
-            $schedule->command('app:tg_parse:specialist')->hourly();
-            $schedule->command('app:tg_parse:builder')->hourly();
-            $schedule->command('app:tg_parse:company')->hourly();
+            $schedule->command('app:tg_parse:specialist')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
+            $schedule->command('app:tg_parse:builder')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
+            $schedule->command('app:tg_parse:company')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
         }
 
         // Отправка запросов в ИИ
