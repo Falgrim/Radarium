@@ -56,6 +56,14 @@
                             <span>1%</span> ИИ находит на 1% больше объявлений, чем человек
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-6 landing_why_title">
+                            Показатели
+                        </div>
+                        <div class="col-6 landing_why_block">
+                            <span>{{ $contactSum }}</span> Всего специалистов. За сегодня добавлено {{ $contactTodaySum }}
+                        </div>
+                    </div>
                 </div>
                 <div class="col-lg-6 col-md-12">
                     <div class="row">
