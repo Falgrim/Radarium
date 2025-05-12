@@ -3,6 +3,23 @@
         <div class="p-5 bg-body-tertiary">
             <div class="container py-5">
                 <section>
+                    @if(count($payments))
+                        <h3 class="text-lg font-medium text-gray-900">
+                            {{ __('Платежи, ожидающие оплаты') }}
+                        </h3>
+                        <p>
+                            <i>Если вы передумали оплачивать, то платежи автоматически будут отменены.</i><br />
+                            <i>После оплаты, в течение нескольких минут у вас будет активирован оплаченный тарифный план.</i>
+                        </p>
+                        @foreach($payments as $row)
+                            <div class="col py-3">
+                                <p>Тариф "{{ $row->paymentTariff->title }}". Создан платеж {{ $row->created_at->format('H:i d.m.Y') }} на сумму {{ number_format($row->sum, 0, '.', ' ') }} руб.</p>
+                                <p><a href="https://auth.robokassa.ru/Merchant/Index/{{ $row->payment_hash }}" target="_blank" class="btn btn-primary btn-sm">Ожидает активации</a></p>
+                                <hr />
+                            </div>
+                        @endforeach
+                    @endif
+
                     @if(count($subscribeActive))
                         <h3>Активная подписка</h3>
                         @foreach($subscribeActive as $row)
@@ -22,7 +39,7 @@
                         @endforeach
                     @else
                         <h3 class="text-lg font-medium text-gray-900">
-                            {{ __('Ваша подписка') }}
+                            {{ __('Ваши подписки') }}
                         </h3>
                         @if(Auth::user()->free_contacts)
                             <p>У вас сейчас активирован Демо режим. <a href="{{ route('index') }}#buy_tariff">Выберите тариф для работы с сервисом {{ config('app.name') }}</a></p>
@@ -46,23 +63,6 @@
                                         <p>Доступно контактов: {{ $row->count_contacts_left }} из {{ $row->count_contacts }}</p>
                                     </div>
                                 </div>
-                            </div>
-                        @endforeach
-                    @endif
-
-                    @if(count($payments))
-                        <h3 class="text-lg font-medium text-gray-900">
-                            {{ __('Платежи, ожидающие оплаты') }}
-                        </h3>
-                        <p>
-                            <i>Если вы передумали оплачивать, то платежи автоматически будут отменены.</i><br />
-                            <i>После оплаты, в течение нескольких минут у вас будет активирован оплаченный тарифный план.</i>
-                        </p>
-                        @foreach($payments as $row)
-                            <div class="col py-3">
-                                <p>Тариф "{{ $row->paymentTariff->title }}". Создан платеж {{ $row->created_at->format('H:i d.m.Y') }} на сумму {{ number_format($row->sum, 0, '.', ' ') }} руб.</p>
-                                <p><a href="https://auth.robokassa.ru/Merchant/Index/{{ $row->payment_hash }}" target="_blank" class="btn btn-primary btn-sm">Оплатить</a></p>
-                                <hr />
                             </div>
                         @endforeach
                     @endif

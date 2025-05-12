@@ -1,6 +1,6 @@
 <section>
     <div class="mb-3 col-12 col-lg-4 col-md-6">
-        <a href="{{ route('profile.subscribe') }}" class="btn btn-medium btn-outline-primary">Ваша подписка</a>
+        <a href="{{ route('profile.subscribe') }}" class="btn btn-medium btn-outline-primary">Ваши подписки</a>
     </div>
 
     <h2 class="text-lg font-medium text-gray-900">
