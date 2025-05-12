@@ -50,7 +50,11 @@
     </td>
     <td class="align-middle">
         @if(Auth::user()->checkAccessToContact($author))
-        <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Подробнее</a>
+            @if($checkOpenContact)
+                <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-primary btn-sm ">Контакт открыт</a>
+            @else
+                <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Открыть контакт</a>
+            @endif
         @endif
     </td>
 </tr>
