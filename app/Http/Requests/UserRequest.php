@@ -36,6 +36,9 @@ class UserRequest extends FormRequest
 
             'password.required' => 'Введите пароль',
             'password.confirmed' => 'Введенные пароли не совпадают',
+
+            'user_agree.required' => 'Вы должны дать свое согласие с пользовательским соглашением',
+            'user_agree.accepted' => 'Вы должны дать свое согласие с пользовательским соглашением',
         ];
     }
 
@@ -62,6 +65,7 @@ class UserRequest extends FormRequest
             'user_role_id' => ['exists:App\Models\UserRole,id'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'user_agree' => ['required', 'accepted'],
         ];
     }
 }

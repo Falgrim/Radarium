@@ -90,6 +90,13 @@
                     <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                 </div>
 
+                <div class="mb-3 col-12 col-lg-4 col-md-6">
+                    <label>
+                        <input type="checkbox" name="user_agree" value="1" required /> <a href="{{ asset('storage/documents/user-agreement.pdf') }}" target="_blank">{{ __('С пользовательским соглашением ознакомлен') }}</a>
+                    </label>
+                    <x-input-error :messages="$errors->get('from_company')" class="mt-2" />
+                </div>
+
                 <div class="flex items-center justify-end mt-4">
                     <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
                         {{ __('Уже есть аккаунт?') }}
