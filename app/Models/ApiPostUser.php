@@ -90,7 +90,14 @@ class ApiPostUser extends Model
 
         $result = [];
         foreach ($data as $row) {
-            $name = $row->dictionarySpeciality->short_name ? $row->dictionarySpeciality->short_name : $row->dictionarySpeciality->title;
+            if ($row->dictionarySpeciality->short_name AND $row->dictionarySpeciality->short_name != $row->dictionarySpeciality->title) {
+                $name = $row->dictionarySpeciality->short_name.' - '.$row->dictionarySpeciality->title;
+            } elseif ($row->dictionarySpeciality->short_name) {
+                $name = $row->dictionarySpeciality->short_name;
+            } else {
+                $name = $row->dictionarySpeciality->title;
+            }
+
             $result[$name] = $name;
         }
         return $result;

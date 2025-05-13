@@ -134,7 +134,15 @@ class Builder extends Model
             ->get();
         $result = [];
         foreach ($data as $row) {
-            $result[$row->id] = $row->short_name ? $row->short_name : $row->title;
+            if ($row->dictionarySpeciality->short_name AND $row->dictionarySpeciality->short_name != $row->dictionarySpeciality->title) {
+                $name = $row->dictionarySpeciality->short_name.' - '.$row->dictionarySpeciality->title;
+            } elseif ($row->dictionarySpeciality->short_name) {
+                $name = $row->dictionarySpeciality->short_name;
+            } else {
+                $name = $row->dictionarySpeciality->title;
+            }
+
+            $result[$name] = $name;
         }
         return $result;
     }
