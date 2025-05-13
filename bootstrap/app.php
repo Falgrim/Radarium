@@ -20,44 +20,40 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $readSourceCron = Repositories::setting()->findByName('read_source_cron');
 
-        // Поиск новых постов из источников
-        $schedule->command('app:tg_parse:specialist')->everyFiveMinutes()->sendOutputTo(base_path('tg_parse_specialist_5.log'));;
-
         if ($readSourceCron?->value) {
             if ($readSourceCron->value <= 59) {
                 // Каждые X минут
                 $schedule->cron('*/'.$readSourceCron->value.' * * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse_specialist.log'));
-                        $schedule->command('app:tg_parse:builder')->sendOutputTo(base_path('tg_parse.log'));
-                        $schedule->command('app:tg_parse:company')->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:specialist')->withoutOverlapping()->sendOutputTo(base_path('tg_parse_specialist.log'));
+                        $schedule->command('app:tg_parse:builder')->withoutOverlapping()->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:company')->withoutOverlapping()->sendOutputTo(base_path('tg_parse.log'));
                 });
             } elseif ($readSourceCron->value <= 1439) {
                 // Каждые Х часов
                 $schedule->cron('0 */'.ceil($readSourceCron->value/60).' * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse_specialist.log'));
-                        $schedule->command('app:tg_parse:builder')->sendOutputTo(base_path('tg_parse.log'));
-                        $schedule->command('app:tg_parse:company')->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:specialist')->withoutOverlapping()->sendOutputTo(base_path('tg_parse_specialist.log'));
+                        $schedule->command('app:tg_parse:builder')->withoutOverlapping()->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:company')->withoutOverlapping()->sendOutputTo(base_path('tg_parse.log'));
                     });
             } else {
                 // Каждый день в 00:00
                 $schedule->cron('0 0 * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->sendOutputTo(base_path('tg_parse_specialist.log'));
-                        $schedule->command('app:tg_parse:builder')->sendOutputTo(base_path('tg_parse.log'));
-                        $schedule->command('app:tg_parse:company')->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:specialist')->withoutOverlapping()->sendOutputTo(base_path('tg_parse_specialist.log'));
+                        $schedule->command('app:tg_parse:builder')->withoutOverlapping()->sendOutputTo(base_path('tg_parse.log'));
+                        $schedule->command('app:tg_parse:company')->withoutOverlapping()->sendOutputTo(base_path('tg_parse.log'));
                     });
             }
         } else {
-            $schedule->command('app:tg_parse:specialist')->hourly()->sendOutputTo(base_path('tg_parse_specialist.log'));;
-            $schedule->command('app:tg_parse:builder')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
-            $schedule->command('app:tg_parse:company')->hourly()->sendOutputTo(base_path('tg_parse.log'));;
+            $schedule->command('app:tg_parse:specialist')->withoutOverlapping()->hourly()->sendOutputTo(base_path('tg_parse_specialist.log'));;
+            $schedule->command('app:tg_parse:builder')->withoutOverlapping()->hourly()->sendOutputTo(base_path('tg_parse.log'));;
+            $schedule->command('app:tg_parse:company')->withoutOverlapping()->hourly()->sendOutputTo(base_path('tg_parse.log'));;
         }
 
         // Отправка запросов в ИИ
         $schedule->everyThirtyMinutes()
-            ->runInBackground()
             ->withoutOverlapping()
             ->group(function (Schedule $schedule) {
                 $schedule->command('app:ai_parse:specialist');
@@ -68,11 +64,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Синхронизация с Тубус
         $schedule->command('app:tubus')->hourly()->withoutOverlapping();
 
-        $schedule->command('app:tariff:users')->everyFifteenMinutes();
+        $schedule->command('app:tariff:users')->withoutOverlapping()->everyFifteenMinutes();
 
         // Проверка статуса новых платежей
-        $schedule->command('app:payments:check')->everyTwoMinutes();
+        $schedule->command('app:payments:check')->withoutOverlapping()->everyTwoMinutes();
 
         // Удаление просроченных токенов восстановления паролей
-        $schedule->command('auth:clear-resets')->everyFifteenMinutes();
+        $schedule->command('auth:clear-resets')->withoutOverlapping()->everyFifteenMinutes();
     })->create();
