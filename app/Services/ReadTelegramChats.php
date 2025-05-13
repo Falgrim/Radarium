@@ -60,7 +60,9 @@ class ReadTelegramChats
         $settings = (new \danog\MadelineProto\Settings\Logger)->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
         $MadelineProto->updateSettings($settings);
 
-        $MadelineProto->start();
+        if (!$MadelineProto->getSelf()) {
+            $MadelineProto->start();
+        }
 
         if (!$this->apiChannel->last_date_check) {
             $offsetDate = $this->apiChannel->post_from_date ? $this->apiChannel->post_from_date : '2025-01-01 00:00:00';
@@ -236,6 +238,8 @@ class ReadTelegramChats
         $this->setInfoMsg('Прочитано '.$countMsg.'; Допущенных: '.$countMsgFiltered);
         $this->setInfoMsg('Последний ID: '.$this->apiChannel->last_post_id);
         $this->setInfoMsg('Последняя дата: '.$this->apiChannel->last_date_check);
+
+        gc_collect_cycles();
 
         return [
             'readed'    => $countMsg,
