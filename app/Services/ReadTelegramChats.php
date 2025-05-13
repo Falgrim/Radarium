@@ -232,6 +232,9 @@ class ReadTelegramChats
                     $this->apiChannel->save();
                 }
             }
+        } elseif (!$this->apiChannel->last_date_check OR !$this->apiChannel->last_post_id) {
+            $this->apiChannel->last_date_check = Carbon::parse($offsetDate)->addDays(3);
+            $this->apiChannel->save();
         }
 
         Log::channel('post_parser')->info($apiChannel->id.': Всего постов '.$countMsg.'; Отфильтровано '.$countMsgFiltered.'; Новых '.$addedCount);
