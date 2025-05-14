@@ -102,8 +102,12 @@ class ApiPostUser extends Model
                 $name = Str::limit($name, $substr);
             }
 
-            $result[$name] = $name;
+            $result[$name] = [
+                'name' => $name,
+                'key_words' => $row->dictionarySpeciality->key_words,
+            ];
         }
+
         return $result;
     }
 

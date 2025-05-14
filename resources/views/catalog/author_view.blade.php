@@ -1,3 +1,7 @@
+@php
+    $specialtiesWithShortName = $author->specialtiesWithShortName();
+@endphp
+
 <x-global-layout>
     @session('status')
     <div class="alert alert-info">
@@ -50,9 +54,11 @@
                     <div class="col-6">
                         <h4>Специализации</h4>
                         <div class="bg-block-blue">
-                        @if(count($author->specialtiesWithShortName()))
-                            <span class="badge text-bg-secondary">{!! implode('</span> <span class="badge text-bg-secondary">', $author->specialtiesWithShortName()) !!}</span>
-                        @endif
+                            @if(count($specialtiesWithShortName))
+                                @foreach($specialtiesWithShortName as $shotName)
+                                    <span class="badge text-bg-secondary">{!! $shotName['name'] !!}</span>
+                                @endforeach
+                            @endif
                         </div>
                     </div>
                     <div class="col-6 pr-0.5">

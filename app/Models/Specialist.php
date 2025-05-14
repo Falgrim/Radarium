@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class Specialist extends Model
 {
@@ -126,7 +127,7 @@ class Specialist extends Model
         return $result;
     }
 
-    public function specialtiesWithShortName(): array
+    public function specialtiesWithShortName(int $substr = 0): array
     {
         $data = $this->through('specialities')
             ->has('dictionarySpeciality')
@@ -134,7 +135,18 @@ class Specialist extends Model
             ->get();
         $result = [];
         foreach ($data as $row) {
-            $result[$row->id] = $row->short_name ? $row->short_name : $row->title;
+            $name = $row->short_name ? $row->short_name : $row->title;
+
+            if ($substr) {
+                $name = Str::limit($name, $substr);
+            }
+
+            $result[$name] = [
+                'name' => $name,
+                'key_words' => [],
+            ];
+
+            $result[$row->id] = $name;
         }
         return $result;
     }

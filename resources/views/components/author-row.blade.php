@@ -2,6 +2,7 @@
     $lastPost = $author->lastPost();
     $specialties = $author->specialtiesWithShortName(15);
     $checkOpenContact = Auth::user()->checkOpenContact($author);
+    $specialistData = $author->specialistData();
 @endphp
 
 <tr id="author-id-{{ $author->id }}">
@@ -34,11 +35,20 @@
     </td>
     <td style="white-space: nowrap;">
         @if(count($specialties))
-        {!! implode('<br />', $specialties) !!}
+            @foreach($specialties as $specialist)
+                {!! $specialist['name'] !!}<br />
+            @endforeach
         @endif
     </td>
     <td>
-        {{ implode('; ', $author->specialistData()['soft_experience']) }}
+        <span class="badge text-bg-secondary">{!! implode('</span> <span class="badge text-bg-secondary">', $specialistData['soft_experience']) !!}</span>
+        @if(count($specialties))
+            @foreach($specialties as $specialist)
+                @if(is_array($specialist['key_words']) AND count($specialist['key_words']))
+                    <span class="badge text-bg-secondary">{!! implode('</span> <span class="badge text-bg-secondary">', $specialist['key_words']) !!}</span>
+                @endif
+            @endforeach
+        @endif
     </td>
     <td class="text-">
         @if($lastPost?->post)
@@ -55,6 +65,8 @@
             @else
                 <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Открыть контакт</a>
             @endif
+        @else
+            <a href="#" data-bs-toggle="modal" data-bs-target="#loginAlert" class="btn btn-light btn-sm ">Открыть контакт</a>
         @endif
     </td>
 </tr>
