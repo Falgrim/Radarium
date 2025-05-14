@@ -52,9 +52,14 @@ class ReadTelegramChats
             return [];
         }
 
-        $settings = (new \danog\MadelineProto\Settings\AppInfo)
-            ->setApiId($this->apiChannel->options['api_id'])
-            ->setApiHash($this->apiChannel->options['api_hash']);
+        if (config('database.redis.default.password')) {
+            $settings = (new \danog\MadelineProto\Settings\Database\Redis)
+                ->setUri('redis://' . config('database.redis.default.host'))
+                ->setPassword(config('database.redis.default.password'));
+        } else {
+            $settings = (new \danog\MadelineProto\Settings\Database\Redis)
+                ->setUri('redis://' . config('database.redis.default.host'));
+        }
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
         $settings = (new \danog\MadelineProto\Settings\Logger)->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
