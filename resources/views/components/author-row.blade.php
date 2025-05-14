@@ -1,6 +1,6 @@
 @php
     $lastPost = $author->lastPost();
-    $specialties = $author->specialtiesWithShortName();
+    $specialties = $author->specialtiesWithShortName(15);
     $checkOpenContact = Auth::user()->checkOpenContact($author);
 @endphp
 
@@ -32,9 +32,9 @@
             <i>Скрыто</i>
         @endif
     </td>
-    <td>
+    <td style="white-space: nowrap;">
         @if(count($specialties))
-        <span class="badge text-bg-secondary">{!! implode('</span><span class="badge text-bg-secondary">', $specialties) !!}</span>
+        {!! implode('<br />', $specialties) !!}
         @endif
     </td>
     <td>

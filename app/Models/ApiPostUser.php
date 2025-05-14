@@ -82,7 +82,7 @@ class ApiPostUser extends Model
         return $this->hasMany(Builder::class, 'api_post_user_id', 'id');
     }
 
-    public function specialtiesWithShortName(): array
+    public function specialtiesWithShortName(int $substr = 0): array
     {
         $data = $this->through('specialists')
             ->has('specialities')
@@ -96,6 +96,10 @@ class ApiPostUser extends Model
                 $name = $row->dictionarySpeciality->short_name;
             } else {
                 $name = $row->dictionarySpeciality->title;
+            }
+
+            if ($substr) {
+                $name = Str::limit($name, $substr);
             }
 
             $result[$name] = $name;
