@@ -47,30 +47,28 @@ class ParseTelegramBuilderChats extends Command
             return 1;
         }
 
-        for ($i=0; $i<=2; $i++) {
-            foreach ($channels as $channel) {
-                $readTelegramChats->read($channel);
+        foreach ($channels as $channel) {
+            $readTelegramChats->read($channel);
 
-                $infoMsg = $readTelegramChats->getInfoMsg();
-                $warnMsg = $readTelegramChats->getWarnMsg();
-                $errorMsg = $readTelegramChats->getErrorMsg();
+            $infoMsg = $readTelegramChats->getInfoMsg();
+            $warnMsg = $readTelegramChats->getWarnMsg();
+            $errorMsg = $readTelegramChats->getErrorMsg();
 
-                if (count($infoMsg)) {
-                    foreach ($infoMsg as $item) {
-                        $this->info($item);
-                    }
+            if (count($infoMsg)) {
+                foreach ($infoMsg as $item) {
+                    $this->info($item);
                 }
+            }
 
-                if (count($warnMsg)) {
-                    foreach ($warnMsg as $item) {
-                        $this->warn($item);
-                    }
+            if (count($warnMsg)) {
+                foreach ($warnMsg as $item) {
+                    $this->warn($item);
                 }
+            }
 
-                if (count($errorMsg)) {
-                    foreach ($errorMsg as $item) {
-                        $this->error($item);
-                    }
+            if (count($errorMsg)) {
+                foreach ($errorMsg as $item) {
+                    $this->error($item);
                 }
             }
         }

@@ -8,6 +8,7 @@ use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use danog\MadelineProto\PeerNotInDbException;
+use danog\MadelineProto\Settings;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -52,18 +53,33 @@ class ReadTelegramChats
             return [];
         }
 
+        $settings = new Settings;
+        $settings->setAppInfo(
+            (new \danog\MadelineProto\Settings\AppInfo)
+                ->setApiId($this->apiChannel->options['api_id'])
+                ->setApiHash($this->apiChannel->options['api_hash'])
+                ->setLangCode('RU')
+        );
+
+        $settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
+
         if (config('database.redis.default.password')) {
-            $settings = (new \danog\MadelineProto\Settings\Database\Redis)
-                ->setUri('redis://' . config('database.redis.default.host'))
-                ->setPassword(config('database.redis.default.password'));
+            $settings->setDb(
+                (new \danog\MadelineProto\Settings\Database\Redis)
+                    ->setUri('redis://' . config('database.redis.default.host'))
+                    ->setPassword(config('database.redis.default.password'))
+            );
         } else {
-            $settings = (new \danog\MadelineProto\Settings\Database\Redis)
-                ->setUri('redis://' . config('database.redis.default.host'));
+            $settings->setDb(
+                (new \danog\MadelineProto\Settings\Database\Redis)
+                    ->setUri('redis://' . config('database.redis.default.host'))
+            );
         }
 
+        $settings->setConnection((new Settings\Connection())->setTimeout(10));
+        $settings->setSerialization((new Settings\Serialization())->setInterval(30));
+
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $settings = (new \danog\MadelineProto\Settings\Logger)->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
-        $MadelineProto->updateSettings($settings);
 
         if (!$MadelineProto->getSelf()) {
             $MadelineProto->start();
@@ -246,6 +262,14 @@ class ReadTelegramChats
         $this->setInfoMsg('Прочитано '.$countMsg.'; Допущенных: '.$countMsgFiltered);
         $this->setInfoMsg('Последний ID: '.$this->apiChannel->last_post_id);
         $this->setInfoMsg('Последняя дата: '.$this->apiChannel->last_date_check);
+
+        if ($MadelineProto) {
+            try {
+                unset($MadelineProto);
+            } catch (\Throwable $e) {
+                $this->setErrorMsg('Shutdown error: ' . $e->getMessage());
+            }
+        }
 
         gc_collect_cycles();
 
