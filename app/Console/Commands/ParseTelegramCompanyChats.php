@@ -15,7 +15,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class ParseTelegramComapnyChats extends Command
+class ParseTelegramCompanyChats extends Command
 {
     /**
      * The name and signature of the console command.
@@ -42,8 +42,8 @@ class ParseTelegramComapnyChats extends Command
             ->get();
 
         if (!count($channels)) {
-            $this->warn('Нет списка каналов для парсинга');
-            return 1;
+            $this->info('Нет списка каналов для парсинга');
+            return 0;
         }
 
         foreach ($channels as $channel) {

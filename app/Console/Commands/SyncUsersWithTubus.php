@@ -51,8 +51,8 @@ class SyncUsersWithTubus extends Command
             ->get();
 
         if (!count($users)) {
-            $this->warn('Нет пользователей для синхронизации');
-            return 1;
+            $this->info('Нет пользователей для синхронизации');
+            return 0;
         }
 
         $usersAll = User::whereNull('tubus_id')

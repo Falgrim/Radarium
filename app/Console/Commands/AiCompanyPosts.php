@@ -53,8 +53,8 @@ class AiCompanyPosts extends Command
             ->get();
 
         if (!count($posts)) {
-            $this->warn('Нет списка постов для парсинга');
-            return 1;
+            $this->info('Нет списка постов для парсинга');
+            return 0;
         }
 
         $postsAll = ApiChannelPost::select('api_channel_posts.*')

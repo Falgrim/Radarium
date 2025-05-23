@@ -43,8 +43,8 @@ class ParseTelegramBuilderChats extends Command
             ->get();
 
         if (!count($channels)) {
-            $this->warn('Нет списка каналов для парсинга');
-            return 1;
+            $this->info('Нет списка каналов для парсинга');
+            return 0;
         }
 
         foreach ($channels as $channel) {
