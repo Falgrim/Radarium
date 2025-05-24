@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Amp\Ipc\Sync\ChannelException;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
@@ -99,7 +100,17 @@ class ReadTelegramChats
 
         $this->setInfoMsg('Выборка с даты: '.date('H:i:s d.m.Y', $params['offset_date']));
 
-        $messages = $MadelineProto->messages->getHistory($params);
+        try {
+            $messages = $MadelineProto->messages->getHistory($params);
+        } catch (ChannelException $e) {
+            $this->setErrorMsg('ChannelException: ' . $e->getMessage());
+            unset($MadelineProto);
+            return [];
+        } catch (\Exception $e) {
+            $this->setErrorMsg('Exception: ' . $e->getMessage());
+            unset($MadelineProto);
+            return [];
+        }
 
         /* Сообщения, сортировка по дате (новые сверху) */
         $messages = array_reverse($messages['messages']);
