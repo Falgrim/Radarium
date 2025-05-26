@@ -41,14 +41,7 @@
         @endif
     </td>
     <td>
-        <span class="badge text-bg-secondary">{!! implode('</span> <span class="badge text-bg-secondary">', $builderData['soft_experience']) !!}</span>
-        @if(count($specialties))
-            @foreach($specialties as $specialist)
-                @if(is_array($specialist['key_words']) AND count($specialist['key_words']))
-                    <span class="badge text-bg-secondary">{!! implode('</span> <span class="badge text-bg-secondary">', $specialist['key_words']) !!}</span>
-                @endif
-            @endforeach
-        @endif
+        <span class="badge text-bg-secondary">{!! implode('</span> <span class="badge text-bg-secondary">', \App\Models\ApiPostUser::profileSkillsFront($builderData['soft_experience'], $specialties)) !!}</span>
     </td>
     <td class="text-">
         @if($lastPost?->post)
