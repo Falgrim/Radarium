@@ -181,6 +181,7 @@ class ReadTelegramChats
                     ], [
                         'user_id' => $message['from_id'],
                         'channel_source' => $this->apiChannel->channel_source,
+                        'is_company'    => $this->apiChannel->is_company,
                         'first_name'    => $userData['first_name'],
                         'username'      => $userData['username'],
                         'user_type'     => $userData['user_type'],
