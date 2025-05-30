@@ -9,18 +9,26 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Enum\MailingMessageStatusEnum;
 use App\Models\ApiPostUser;
 use App\Models\DictionarySpeciality;
 use App\Models\Specialist;
 use App\Services\ReadTelegramChats;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CompanyJob;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\View\ComponentAttributeBag;
+use MoonShine\ActionButtons\ActionButton;
+use MoonShine\Decorations\Collapse;
+use MoonShine\Fields\Checkbox;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Image;
+use MoonShine\Fields\Markdown;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Select;
@@ -75,7 +83,7 @@ class CompanyAuthorsResource extends ModelResource
 
     public function getActiveActions(): array
     {
-        return ['view', 'massDelete'];
+        return ['view', 'update'];
     }
 
     /**
@@ -90,17 +98,6 @@ class CompanyAuthorsResource extends ModelResource
         ];
     }
 
-    /**
-     * @param Specialist $item
-     *
-     * @return array<string, string[]|string>
-     * @see https://laravel.com/docs/validation#available-validation-rules
-     */
-    public function rules(Model $item): array
-    {
-        return [];
-    }
-
     public function search(): array
     {
         return ['posts.post', 'username'];
@@ -108,15 +105,7 @@ class CompanyAuthorsResource extends ModelResource
 
     public function filters(): array
     {
-        return [
-            /*Text::make('ID', 'id'),
-            DateRange::make('Дата сообщения', 'post_date')->withTime(),
-            DateRange::make('Создан', 'created_at')->withTime(),
-            Select::make('Статус', 'status')
-                ->options(
-                    CompanyJobStatusEnum::getList()
-                ),*/
-        ];
+        return [];
     }
 
     public function indexFields(): array
@@ -127,6 +116,8 @@ class CompanyAuthorsResource extends ModelResource
             Text::make('Пользователь', 'username'),
             Text::make('Фамилия', 'last_name'),
             Text::make('Имя', 'first_name'),
+            Checkbox::make('Отпр. приветствие', 'send_welcome_msg'),
+            Checkbox::make('Руч. отправка', 'send_new_msg')->updateOnPreview(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
     }
@@ -155,9 +146,42 @@ class CompanyAuthorsResource extends ModelResource
         ];
     }
 
+    public function rules(Model $item): array
+    {
+        return [
+            'send_new_msg' => ['sometimes', 'integer'],
+        ];
+    }
+
     public function formFields(): array
     {
         $fields = [];
+        $fields[] = Text::make('ID', 'id')->disabled()->readonly();
+        $fields[] = Image::make('Фото', 'photo')->disk('public')->dir(ReadTelegramChats::PHOTO_PATH)->disabled()->readonly();
+        $fields[] = Text::make('Пользователь', 'username')->disabled()->readonly();
+        $fields[] = Text::make('Фамилия', 'last_name')->disabled()->readonly();
+        $fields[] = Text::make('Имя', 'first_name')->disabled()->readonly();
+        $fields[] = Checkbox::make('Приветствие', 'is_main')
+            ->onValue(1)
+            ->offValue(0)
+            ->hint('Автоматическое сообщение для новых компаний, может быть только одно')->disabled()->readonly();
+        $fields[] = Checkbox::make('Руч. отправка', 'send_new_msg');
+        $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
         return $fields;
+    }
+
+    public function indexPageComponents(): array
+    {
+        return [
+            Collapse::make('Форма отправки сообщения', [
+                //Textarea::make('Текст сообщения'),
+                Markdown::make('Текст рассылки', 'content')
+                    ->addOption('blockStyles', ['bold' => '*', 'italic' => '_'])
+                    ->toolbar(['bold', 'italic', 'code', '|', 'link', '|', 'preview', 'side-by-side', 'fullscreen'])
+                    ->required(),
+                ActionButton::make('Отправить', fn() => $this->indexPageUrl())
+                    ->customAttributes(['class' => 'btn-primary btn-lg']),
+            ])
+        ];
     }
 }

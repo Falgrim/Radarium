@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\MailingMessage;
 use App\MoonShine\Resources\ApiAiResource;
 use App\MoonShine\Resources\ApiChannelPostResource;
 use App\MoonShine\Resources\ApiChannelResource;
@@ -15,6 +16,7 @@ use App\MoonShine\Resources\CompanyJobResource;
 use App\MoonShine\Resources\CompanyJobReviewResource;
 use App\MoonShine\Resources\ConfigurationResource;
 use App\MoonShine\Resources\DictionarySpecialityResource;
+use App\MoonShine\Resources\MailingMessageResource;
 use App\MoonShine\Resources\ModerationAlertResource;
 use App\MoonShine\Resources\PaymentTariffResource;
 use App\MoonShine\Resources\ReviewCustomFieldResource;
@@ -89,6 +91,11 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
 
             MenuItem::make('Управление тарифами', new PaymentTariffResource(), 'heroicons.users'),
 
+            MenuGroup::make('Продвижение', [
+                MenuItem::make('Работодатели', new CompanyAuthorsResource(), 'heroicons.users'),
+                MenuItem::make('Рассылка', new MailingMessageResource(), 'heroicons.users'),
+            ], 'heroicons.users'),
+
             MenuGroup::make('Проектирование', [
                 MenuItem::make('Проектирование', new SpecialistResource(), 'heroicons.users'),
                 MenuItem::make('Отзывы', new ReviewResource(), 'heroicons.users'),
@@ -100,7 +107,6 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
             ], 'heroicons.users'),
 
             MenuGroup::make('Вакансии', [
-                MenuItem::make('Работодатели', new CompanyAuthorsResource(), 'heroicons.users'),
                 MenuItem::make('Вакансии', new CompanyJobResource(), 'heroicons.users'),
                 MenuItem::make('Отзывы', new CompanyJobReviewResource(), 'heroicons.users'),
             ], 'heroicons.users'),

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('api_post_users', function (Blueprint $table) {
-            $table->smallInteger('send_welcome_msg')->default(1);
+            $table->smallInteger('send_welcome_msg')->default(0);
         });
     }
 

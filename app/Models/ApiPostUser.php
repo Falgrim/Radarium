@@ -34,6 +34,7 @@ class ApiPostUser extends Model
         'external_info',
         'is_company',
         'send_welcome_msg',
+        'send_new_msg',
         'created_at',
         'updated_at',
     ];

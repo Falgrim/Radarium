@@ -70,7 +70,7 @@ class ConfigurationResource extends ModelResource
     {
         return [
             Text::make('Ключ', 'name'),
-            Text::make('Название', 'title'),
+            Preview::make('Название', 'title', static fn($item) => $item->title_hint ? ($item->title."<br /><small>".$item->title_hint."</small>") : $item->title),
             Td::make('Значение', function (Configuration $v) {
                 $value = $this->configurationController->valueByType($v->type, $v->options, $v->value);
                 if ($v->type == 'checkbox') {

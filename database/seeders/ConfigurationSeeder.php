@@ -76,6 +76,16 @@ class ConfigurationSeeder extends Seeder
             'title_hint' => 'Выберите как часто вы хотите, чтобы система обновляла информацию о новых сообщениях из источников',
         ];
 
+        $configs[] = [
+            'title' => 'Отправка приветствия для компаний',
+            'name' => 'mailing_tg_new_company',
+            'type' => 'checkbox',
+            'value' => 1,
+            'order' => ++$maxOrder,
+            'options' => '',
+            'title_hint' => 'Отправлять новым контактам "Компания" текст приветствия. Текст настраивается в разделе "Продвижение -> Рассылка"',
+        ];
+
         foreach ($configs as $config) {
             Configuration::updateOrCreate([
                 'name' => $config['name']
