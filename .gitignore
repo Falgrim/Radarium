@@ -24,4 +24,5 @@ yarn-error.log
 /dev
 /.env
 /session.madeline
+/session.madeline.*
 /*.log

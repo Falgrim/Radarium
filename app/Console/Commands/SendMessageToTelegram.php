@@ -6,12 +6,15 @@ use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Enum\ApiDataTypeEnum;
+use App\Enum\MailingMessageStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\MailingMessage;
 use App\Services\ReadTelegramChats;
 use App\Services\SendMessageTelegram;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -37,17 +40,73 @@ class SendMessageToTelegram extends Command
      */
     public function handle(SendMessageTelegram $sendMessageTelegram)
     {
+        $settings = Repositories::setting()->getByNames(['mailing_tg_api_id', 'mailing_tg_api_hash']);
+
+        if (!isset($settings['mailing_tg_api_id']) OR !$settings['mailing_tg_api_id']) {
+            $this->info('Не заполнена настройка: mailing_tg_api_id');
+            return 0;
+        }
+
+        if (!isset($settings['mailing_tg_api_hash']) OR !$settings['mailing_tg_api_hash']) {
+            $this->info('Не заполнена настройка: mailing_tg_api_hash');
+            return 0;
+        }
+
+        $mailing = MailingMessage::where('is_main', 0)
+            ->where('status', MailingMessageStatusEnum::ToSend)
+            ->where('date_send', '<=', Carbon::now())
+            ->orderBy('date_send', 'ASC')
+            ->first();
+
+        if (!$mailing) {
+            $this->info('Нет сообщения для отправки');
+            return 0;
+        }
+
         $users = ApiPostUser::where('is_company', ApiDataTypeEnum::Company)
-            ->where('send_welcome_msg', 0)
-            ->orderBy('created_at', 'ASC')
+            ->where('send_new_msg', 1)
             ->get();
 
         if (!count($users)) {
             $this->info('Нет списка компаний для рассылки');
-            //return 0;
+            return 0;
         }
 
-        $sendMessageTelegram->send();
+        $sendMessageTelegram->send(
+            $settings['mailing_tg_api_id']['value'],
+            $settings['mailing_tg_api_hash']['value'],
+            $mailing,
+            $users
+        );
+
+        $infoMsg = $sendMessageTelegram->getInfoMsg();
+        $warnMsg = $sendMessageTelegram->getWarnMsg();
+        $errorMsg = $sendMessageTelegram->getErrorMsg();
+
+        if (count($infoMsg)) {
+            foreach ($infoMsg as $item) {
+                $this->info($item);
+            }
+        }
+
+        if (count($warnMsg)) {
+            foreach ($warnMsg as $item) {
+                $this->warn($item);
+            }
+        }
+
+        if (count($errorMsg)) {
+            foreach ($errorMsg as $item) {
+                Log::channel('mailing_tg')->error('Рассылка ID '.$mailing->id.': '.$item);
+                $this->error($item);
+            }
+
+            $mailing->status = MailingMessageStatusEnum::Error;
+        } else {
+            $mailing->status = MailingMessageStatusEnum::Sended;
+        }
+
+        $mailing->save();
 
         $this->info('Завершено');
     }

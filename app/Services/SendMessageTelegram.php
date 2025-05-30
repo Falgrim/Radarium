@@ -4,13 +4,17 @@ namespace App\Services;
 
 use Amp\Ipc\Sync\ChannelException;
 use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\MailingMessageLogStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\MailingMessage;
+use App\Models\MailingMessageLog;
 use danog\MadelineProto\PeerNotInDbException;
 use danog\MadelineProto\RPCErrorException;
 use danog\MadelineProto\Settings;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -41,16 +45,11 @@ class SendMessageTelegram
         ];
     }
 
-    public function send(): bool
+    public function send(string $apiId, string $apiHash, MailingMessage $mailingMessage, Collection $users): bool
     {
         $this->unsetMessages();
 
-        $tgParams = [
-            'api_id' => '25969424',
-            'api_hash' => '4a6a2be56a49a7439059a74aab4d3e33',
-        ];
-
-        if (!isset($tgParams['api_id']) OR !isset($tgParams['api_hash'])) {
+        if (!isset($apiId) OR !isset($apiHash)) {
             $this->setWarnMsg('Нет конфигурации бота для чата: нет api_id и/или api_hash');
             return false;
         }
@@ -58,8 +57,8 @@ class SendMessageTelegram
         $settings = new Settings;
         $settings->setAppInfo(
             (new \danog\MadelineProto\Settings\AppInfo)
-                ->setApiId($tgParams['api_id'])
-                ->setApiHash($tgParams['api_hash'])
+                ->setApiId($apiId)
+                ->setApiHash($apiHash)
                 ->setLangCode('RU')
         );
 
@@ -81,124 +80,58 @@ class SendMessageTelegram
         $settings->setConnection((new Settings\Connection())->setTimeout(10));
         $settings->setSerialization((new Settings\Serialization())->setInterval(30));
 
-        $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
+        $MadelineProto = new \danog\MadelineProto\API('session.madeline.'.$apiId, $settings);
 
         if (!$MadelineProto->getSelf()) {
             $MadelineProto->start();
         }
 
-        $message = "🎯 Новый тир для IPSC открыт!   Безопасные тренировки на электронных мишенях!
+        $stats = [
+            'success' => 0,
+            'errors' => 0,
+        ];
 
+        foreach ($users as $user) {
+            $user->send_new_msg = 0;
+            $id = 0;
+            $status = MailingMessageLogStatusEnum::Error;
 
-Уважаемые спортсмены и любители IPSC!
+            try {
+                // https://docs.madelineproto.xyz/PHP/danog/MadelineProto/API.html#sendMessage
+                $sentMessage = $MadelineProto->messages->sendMessage([
+                    'peer' => $user->username ? '@'.$user->username : $user->user_id,
+                    'message' => $mailingMessage->text,
+                    'no_webpage' => true,
+                ]);
 
-Мы рады сообщить о запуске нового тира с упором на IPSC — дисциплину, где важны не только меткость, но и скорость, тактика и адаптация к меняющимся условиям!
+                $id = $sentMessage['id'] ?? 0;
+                $status = MailingMessageLogStatusEnum::Success;
 
+                $this->setInfoMsg('UserID ['.$user->id.']: Сообщение отправлено');
+                $stats['success'] ++;
+            } catch (RPCErrorException $e) {
+                $this->setErrorMsg('UserID ['.$user->id.'] RPCErrorException: '.$e->getMessage());
+                $stats['errors'] ++;
+            } catch (PeerNotInDbException $e) {
+                $this->setErrorMsg('UserID ['.$user->id.'] PeerNotInDbException: '.$e->getMessage());
+                $stats['errors'] ++;
+            } catch (\Exception $e) {
+                $this->setErrorMsg('UserID ['.$user->id.'] Exception: '.$e->getMessage());
+                $stats['errors'] ++;
+            }
 
-••• Что вас ждёт:
-1. Современные электронные мишени — безопасно, реалистично, с мгновенной обратной связью.
-2. Холостые тренировки IPSC — идеально для новичков и тех, кто хочет отточить навыки без боевых патронов.
+            $user->save();
 
-
-••• Что такое «холостые тренировки IPSC»?
-Это практика без живого огня: вместо патронов — лазерные модули и учебные макеты оружия. Электронные мишени фиксируют ваши действия, позволяя:
-
-- 🎯 Тренировать скорость, точность и перемещение между укрытиями;
-
-- 🔄 Отрабатывать сложные сценарии (движение под углом, стрельба в ограниченном пространстве);
-
-- ✅ Безопасно начинать — никакого риска случайного выстрела;
-
-- 💰 Экономить — платите только за время тренировки.
-
-
-Записывайтесь уже сегодня и погрузитесь в мир динамичной стрельбы!
-
-Ваша безопасность — наш приоритет.
-
-Ждем вас в Смольном Тире!
-
-📍 Адрес: [указать]
-📞 Запись: [телефон/ссылка]
-⏰ Часы работы: [расписание]
-
- ✨ IPSC — это не просто стрельба. Это стиль жизни!";
-
-        try {
-            // https://docs.madelineproto.xyz/PHP/danog/MadelineProto/API.html#sendMessage
-            $sentMessage = $MadelineProto->messages->sendMessage([
-                'peer' => '@shapeshifter08',
-                'message' => $message,
-                'no_webpage' => true,
+            MailingMessageLog::create([
+                'mailing_message_id' => $mailingMessage->id,
+                'api_post_user_id' => $user->id,
+                'msg_id' => $id,
+                'status' => $status,
             ]);
-
-            /*
-             * Array
-(
-    [_] => updateShortSentMessage
-    [out] => 1
-    [id] => 70
-    [pts] => 127
-    [pts_count] => 1
-    [date] => 1748546555
-    [request] => Array
-        (
-            [_] => messages.sendMessage
-            [body] => Array
-                (
-                    [peer] => @shapeshifter08
-                    [message] => 🎯 Новый тир для IPSC открыт!   Безопасные тренировки на электронных мишенях!
-
-
-Уважаемые спортсмены и любители IPSC!
-
-Мы рады сообщить о запуске нового тира с упором на IPSC — дисциплину, где важны не только меткость, но и скорость, тактика и адаптация к меняющимся условиям!
-
-
-••• Что вас ждёт:
-1. Современные электронные мишени — безопасно, реалистично, с мгновенной обратной связью.
-2. Холостые тренировки IPSC — идеально для новичков и тех, кто хочет отточить навыки без боевых патронов.
-
-
-••• Что такое «холостые тренировки IPSC»?
-Это практика без живого огня: вместо патронов — лазерные модули и учебные макеты оружия. Электронные мишени фиксируют ваши действия, позволяя:
-
-- 🎯 Тренировать скорость, точность и перемещение между укрытиями;
-
-- 🔄 Отрабатывать сложные сценарии (движение под углом, стрельба в ограниченном пространстве);
-
-- ✅ Безопасно начинать — никакого риска случайного выстрела;
-
-- 💰 Экономить — платите только за время тренировки.
-
-
-Записывайтесь уже сегодня и погрузитесь в мир динамичной стрельбы!
-
-Ваша безопасность — наш приоритет.
-
-Ждем вас в Смольном Тире!
-
-📍 Адрес: [указать]
-📞 Запись: [телефон/ссылка]
-⏰ Часы работы: [расписание]
-
- ✨ IPSC — это не просто стрельба. Это стиль жизни!
-                    [no_webpage] => 1
-                )
-
-        )
-
-)
-
-             */
-
-        } catch (RPCErrorException $e) {
-            $this->setErrorMsg('RPCErrorException: '.$e->getMessage());
-        } catch (PeerNotInDbException $e) {
-            $this->setErrorMsg('PeerNotInDbException: '.$e->getMessage());
-        } catch (\Exception $e) {
-            $this->setErrorMsg('Exception: '.$e->getMessage());
         }
+
+        Log::channel('mailing_tg')->info('Всего чатов: '.count($users).'; Доставлено: '.$stats['success'].'; Ошибок: '.$stats['errors']);
+        $this->setInfoMsg('Всего чатов: '.count($users).'; Доставлено: '.$stats['success'].'; Ошибок: '.$stats['errors']);
 
         if ($MadelineProto) {
             try {
@@ -210,7 +143,7 @@ class SendMessageTelegram
 
         gc_collect_cycles();
 
-        return isset($sentMessage['id']);
+        return true;
     }
 
     private function setInfoMsg(string $text)

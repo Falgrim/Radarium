@@ -86,6 +86,26 @@ class ConfigurationSeeder extends Seeder
             'title_hint' => 'Отправлять новым контактам "Компания" текст приветствия. Текст настраивается в разделе "Продвижение -> Рассылка"',
         ];
 
+        $configs[] = [
+            'title' => 'ТГ Бот для отправки сообщений. App ID',
+            'name' => 'mailing_tg_api_id',
+            'type' => 'string',
+            'value' => '',
+            'order' => ++$maxOrder,
+            'options' => '',
+            'title_hint' => '',
+        ];
+
+        $configs[] = [
+            'title' => 'ТГ Бот для отправки сообщений. App Hash',
+            'name' => 'mailing_tg_api_hash',
+            'type' => 'string',
+            'value' => '',
+            'order' => ++$maxOrder,
+            'options' => '',
+            'title_hint' => '',
+        ];
+
         foreach ($configs as $config) {
             Configuration::updateOrCreate([
                 'name' => $config['name']

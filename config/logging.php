@@ -156,6 +156,12 @@ return [
             'level' => 'info',
             'path' => storage_path('logs/payments.log'),
         ],
+
+        'mailing_tg' => [
+            'driver' => 'single',
+            'level' => 'info',
+            'path' => storage_path('logs/mailing_tg.log'),
+        ],
     ],
 
 ];

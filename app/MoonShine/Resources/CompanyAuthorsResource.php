@@ -105,7 +105,10 @@ class CompanyAuthorsResource extends ModelResource
 
     public function filters(): array
     {
-        return [];
+        return [
+            Checkbox::make('Отпр. приветствие', 'send_welcome_msg'),
+            Checkbox::make('Руч. отправка', 'send_new_msg'),
+        ];
     }
 
     public function indexFields(): array
@@ -168,20 +171,5 @@ class CompanyAuthorsResource extends ModelResource
         $fields[] = Checkbox::make('Руч. отправка', 'send_new_msg');
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
         return $fields;
-    }
-
-    public function indexPageComponents(): array
-    {
-        return [
-            Collapse::make('Форма отправки сообщения', [
-                //Textarea::make('Текст сообщения'),
-                Markdown::make('Текст рассылки', 'content')
-                    ->addOption('blockStyles', ['bold' => '*', 'italic' => '_'])
-                    ->toolbar(['bold', 'italic', 'code', '|', 'link', '|', 'preview', 'side-by-side', 'fullscreen'])
-                    ->required(),
-                ActionButton::make('Отправить', fn() => $this->indexPageUrl())
-                    ->customAttributes(['class' => 'btn-primary btn-lg']),
-            ])
-        ];
     }
 }

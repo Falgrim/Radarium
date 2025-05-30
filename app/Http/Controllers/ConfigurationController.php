@@ -13,7 +13,7 @@ class ConfigurationController extends Controller
             return $this->getOptionValue($options, $value);
         }
 
-        return $value;
+        return (string)$value;
     }
 
     public function getOptionValue(string $option, string $selected): string
