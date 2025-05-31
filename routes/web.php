@@ -31,7 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return redirect(route('catalog.specialists'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/tariff/{id}', [TariffController::class, 'buy'])->name('tariff.buy');
