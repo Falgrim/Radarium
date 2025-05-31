@@ -28,6 +28,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $redirectTo = session('redirect_auth');
+        if ($redirectTo) {
+            return redirect()->intended(redirect($redirectTo));
+        }
+
         return redirect()->intended(route('catalog.specialists', absolute: false));
     }
 

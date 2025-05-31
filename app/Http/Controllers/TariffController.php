@@ -25,6 +25,10 @@ class TariffController extends Controller
             ->where('status', PaymentTariffStatusEnum::Active)
             ->firstOrFail();
 
+        if (!Auth::user()) {
+            session(['redirect_auth' => route('tariff.buy', ['id' => $request->id], absolute: false)]);
+        }
+
         return view('tariff.buy', [
             'tariff' => $paymentTariff,
             'paymentLink' => $this->getPaymentLink($paymentTariff),

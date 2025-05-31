@@ -66,6 +66,11 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        $redirectTo = session('redirect_auth');
+        if ($redirectTo) {
+            return redirect($redirectTo);
+        }
+
         return redirect(route('dashboard', absolute: false));
     }
 }
