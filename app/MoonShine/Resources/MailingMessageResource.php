@@ -23,6 +23,7 @@ use MoonShine\Fields\Enum;
 use MoonShine\Fields\Image;
 use MoonShine\Fields\Markdown;
 use MoonShine\Fields\Preview;
+use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
 use MoonShine\Handlers\ExportHandler;
@@ -145,6 +146,7 @@ class MailingMessageResource extends ModelResource
             Text::make('Текст сообщения', 'text', fn($item) => Str::limit($item->text, 150)),
             Date::make('Дата отправки', 'date_send', fn($item) => $item->is_main ? Carbon::now()->format("Y-m-d H:i") : $item->date_send)->withTime(),
             Enum::make('Статус', 'status', fn($item) => $item->is_main ? '---' : $item->status)->attach(MailingMessageStatusEnum::class),
+            HasMany::make('Сообщения', 'posts', resource: new MailingMessageLogResource())->onlyLink(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
     }
@@ -158,6 +160,7 @@ class MailingMessageResource extends ModelResource
             Enum::make('Статус', 'status')->attach(MailingMessageStatusEnum::class),
             Checkbox::make('Приветствие', 'is_main'),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
+            HasMany::make('Сообщения', 'posts', resource: new MailingMessageLogResource()),
         ];
     }
 

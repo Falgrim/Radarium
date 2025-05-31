@@ -16,6 +16,7 @@ use App\MoonShine\Resources\CompanyJobResource;
 use App\MoonShine\Resources\CompanyJobReviewResource;
 use App\MoonShine\Resources\ConfigurationResource;
 use App\MoonShine\Resources\DictionarySpecialityResource;
+use App\MoonShine\Resources\MailingMessageLogResource;
 use App\MoonShine\Resources\MailingMessageResource;
 use App\MoonShine\Resources\ModerationAlertResource;
 use App\MoonShine\Resources\PaymentTariffResource;
@@ -45,6 +46,7 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
     {
         return [
             new ReviewCustomFieldResource(),
+            new MailingMessageLogResource(),
         ];
     }
 
@@ -94,6 +96,7 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
             MenuGroup::make('Продвижение', [
                 MenuItem::make('Работодатели', new CompanyAuthorsResource(), 'heroicons.users'),
                 MenuItem::make('Рассылка', new MailingMessageResource(), 'heroicons.users'),
+                /*MenuItem::make('Рассылка. Лог', new MailingMessageLogResource(), 'heroicons.users'),*/
             ], 'heroicons.users'),
 
             MenuGroup::make('Проектирование', [
