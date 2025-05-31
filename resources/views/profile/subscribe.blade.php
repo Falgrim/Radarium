@@ -14,7 +14,7 @@
                         @foreach($payments as $row)
                             <div class="col py-3">
                                 <p>Тариф "{{ $row->paymentTariff->title }}". Создан платеж {{ $row->created_at->format('H:i d.m.Y') }} на сумму {{ number_format($row->sum, 0, '.', ' ') }} руб.</p>
-                                <p><a href="https://auth.robokassa.ru/Merchant/Index/{{ $row->payment_hash }}" target="_blank" class="btn btn-primary btn-sm">Ожидает активации</a></p>
+                                <p><a href="https://auth.robokassa.ru/Merchant/Index/{{ $row->payment_hash }}" target="_blank" class="btn btn-primary btn-sm">Оплатить</a></p>
                                 <hr />
                             </div>
                         @endforeach
