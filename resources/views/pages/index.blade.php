@@ -107,6 +107,20 @@
         <h2 class="display-5 fw-bold text-center" id="buy_tariff">Стоимость подключения</h2>
 
         <div class="row row-cols-1 row-cols-md-3 mb-3 mt-5 landing_price">
+            <div class="col">
+                <div class="card mb-4 rounded-3 shadow-sm ">
+                    <div class="card-header py-3 ">
+                        <h4 class="my-0 fw-normal text-center">Тест-драйв</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Подключайте тариф и пользуетесь им бесплатно в течении 3 дней.  Доступно 3 объявления.</p>
+                        <h3 class="card-title pricing-card-title">0 ₽ <small class="text-body-secondary fw-light">за 3 дней</small></h3>
+                        <h3 class="card-title pricing-card-title">3 <small class="text-body-secondary fw-light"> контактов</small></h3>
+                    </div>
+
+                    <a href="{{ route('register') }}" class="w-100 btn btn-lg btn-outline-primary">Зарегистрироваться</a>
+                </div>
+            </div>
             @foreach($tariffs as $tariff)
                 <div class="col">
                     <div class="card mb-4 rounded-3 shadow-sm @if($tariff->is_hot) border-primary @endif">

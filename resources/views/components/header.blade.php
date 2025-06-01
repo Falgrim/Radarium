@@ -2,8 +2,8 @@
     $contactsLimit = Auth::check() ? Auth::user()->getLeftContacts() : [];
 @endphp
 
-<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom text-bg-dark">
-    <div class="col-md-3 mb-2 mb-md-0">
+<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom text-bg-dark fixed-top">
+    <div class="col-md-3 mb-2 mb-md-0 d-none d-md-block">
         <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
             Radarium
         </a>
@@ -41,3 +41,4 @@
         @endif
     </div>
 </header>
+<div style="height: 110px;"></div>
