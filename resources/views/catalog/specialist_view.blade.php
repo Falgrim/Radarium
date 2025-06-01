@@ -27,7 +27,7 @@
                     @if($specialist->user?->username)
                         <a href="https://t.me/{{ $specialist->user->username }}" target="_blank">{{ $specialist->user->username }}</a>
                     @elseif($specialist->user?->user_id)
-                        <a href="tg://user?id=5127911621{{ $specialist->user->user_id }}" target="_blank">{{ $specialist->user->user_id }}</a>
+                        <a href="tg://user?id={{ $specialist->user->user_id }}" target="_blank">{{ $specialist->user->user_id }}</a>
                     @else
                         <i>Не известно</i>
                     @endif

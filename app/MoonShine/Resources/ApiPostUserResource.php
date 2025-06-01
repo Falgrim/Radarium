@@ -17,15 +17,18 @@ use App\MoonShine\Pages\ApiPostUser\ApiPostUserDetailPage;
 
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use MoonShine\Components\Link;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Image;
 use MoonShine\Fields\Json;
+use MoonShine\Fields\Preview;
 use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
+use MoonShine\Fields\Url;
 use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
 use MoonShine\Resources\ModelResource;
@@ -127,11 +130,15 @@ class ApiPostUserResource extends ModelResource
     {
         return [
             Text::make('ID', 'id')->sortable(),
-            Text::make('Source ID', 'user_id')->sortable(),
+            Url::make('Source ID', 'user_id', fn($item) => 'tg://user?id='.$item->user_id)
+                ->title(fn(string $url, Url $ctx) => str_replace('tg://user?id=', '', $url))
+                ->blank(),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->sortable(),
             Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
             Image::make('Фото', 'photo')->disk('public')->dir(ReadTelegramChats::PHOTO_PATH),
-            Text::make('Логин', 'username')->sortable(),
+            Url::make('Логин', 'username', fn($item) => $item->username ? 'https://t.me/'.$item->username : '#')
+                ->title(fn(string $url, Url $ctx) => str_replace('https://t.me/', '', $url))
+                ->blank(),
             Text::make('Имя', 'first_name'),
             Text::make('Фамилия', 'last_name'),
             Text::make('Телефон', 'phone')->sortable(),
@@ -146,10 +153,14 @@ class ApiPostUserResource extends ModelResource
     {
         return [
             Text::make('ID', 'id')->sortable(),
-            Text::make('Source ID', 'user_id')->sortable(),
+            Url::make('Source ID', 'user_id', fn($item) => 'tg://user?id='.$item->user_id)
+                ->title(fn(string $url, Url $ctx) => str_replace('tg://user?id=', '', $url))
+                ->blank(),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->sortable(),
             Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
-            Text::make('Логин', 'username')->sortable(),
+            Url::make('Логин', 'username', fn($item) => $item->username ? 'https://t.me/'.$item->username : '#')
+                ->title(fn(string $url, Url $ctx) => str_replace('https://t.me/', '', $url))
+                ->blank(),
             Image::make('Фото', 'photo')->disk('public')->dir(ReadTelegramChats::PHOTO_PATH),
             Text::make('Имя', 'first_name'),
             Text::make('Фамилия', 'last_name'),

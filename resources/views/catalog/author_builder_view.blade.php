@@ -31,7 +31,7 @@
                     @if($author->username)
                         <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
                     @elseif($author->user_id)
-                        <a href="tg://user?id=5127911621{{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
+                        <a href="tg://user?id={{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
                     @else
                         <i>Не известно</i>
                     @endif
