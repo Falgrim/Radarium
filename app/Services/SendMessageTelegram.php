@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Amp\Ipc\Sync\ChannelException;
 use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\MailingMessageLogStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
@@ -92,7 +93,12 @@ class SendMessageTelegram
         ];
 
         foreach ($users as $user) {
-            $user->send_new_msg = 0;
+            if ($mailingMessage->is_main) {
+                $user->send_welcome_msg = ApiPostUserMailingStatusEnum::Error;
+            } else {
+                $user->send_new_msg = 0;
+            }
+
             $id = 0;
             $status = MailingMessageLogStatusEnum::Error;
 
@@ -107,16 +113,20 @@ class SendMessageTelegram
                 $id = $sentMessage['id'] ?? 0;
                 $status = MailingMessageLogStatusEnum::Success;
 
-                $this->setInfoMsg('UserID ['.$user->id.']: Сообщение отправлено');
+                $this->setInfoMsg('UserID ['.$user->id.'] MID ['.$mailingMessage->id.']: Сообщение отправлено');
                 $stats['success'] ++;
+
+                if ($mailingMessage->is_main) {
+                    $user->send_welcome_msg = ApiPostUserMailingStatusEnum::Sended;
+                }
             } catch (RPCErrorException $e) {
-                $this->setErrorMsg('UserID ['.$user->id.'] RPCErrorException: '.$e->getMessage());
+                $this->setErrorMsg('UserID ['.$user->id.'] MID ['.$mailingMessage->id.'] RPCErrorException: '.$e->getMessage());
                 $stats['errors'] ++;
             } catch (PeerNotInDbException $e) {
-                $this->setErrorMsg('UserID ['.$user->id.'] PeerNotInDbException: '.$e->getMessage());
+                $this->setErrorMsg('UserID ['.$user->id.'] MID ['.$mailingMessage->id.'] PeerNotInDbException: '.$e->getMessage());
                 $stats['errors'] ++;
             } catch (\Exception $e) {
-                $this->setErrorMsg('UserID ['.$user->id.'] Exception: '.$e->getMessage());
+                $this->setErrorMsg('UserID ['.$user->id.'] MID ['.$mailingMessage->id.'] Exception: '.$e->getMessage());
                 $stats['errors'] ++;
             }
 
@@ -130,8 +140,8 @@ class SendMessageTelegram
             ]);
         }
 
-        Log::channel('mailing_tg')->info('Всего чатов: '.count($users).'; Доставлено: '.$stats['success'].'; Ошибок: '.$stats['errors']);
-        $this->setInfoMsg('Всего чатов: '.count($users).'; Доставлено: '.$stats['success'].'; Ошибок: '.$stats['errors']);
+        Log::channel('mailing_tg')->info('MID ['.$mailingMessage->id.'] Всего чатов: '.count($users).'; Доставлено: '.$stats['success'].'; Ошибок: '.$stats['errors']);
+        $this->setInfoMsg('MID ['.$mailingMessage->id.'] Всего чатов: '.count($users).'; Доставлено: '.$stats['success'].'; Ошибок: '.$stats['errors']);
 
         if ($MadelineProto) {
             try {
