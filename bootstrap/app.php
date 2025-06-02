@@ -69,6 +69,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Проверка статуса новых платежей
         $schedule->command('app:payments:check')->withoutOverlapping()->everyTwoMinutes();
 
+        // Отправка текста в ТГ чаты
+        $schedule->command('app:tg_chat:send_company')->withoutOverlapping()->everyMinute();
+
         // Удаление просроченных токенов восстановления паролей
         $schedule->command('auth:clear-resets')->withoutOverlapping()->everyFifteenMinutes();
     })->create();
