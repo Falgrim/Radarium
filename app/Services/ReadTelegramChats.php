@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Amp\Ipc\Sync\ChannelException;
 use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
@@ -175,23 +176,41 @@ class ReadTelegramChats
                 }
 
                 if (count($userData)) {
-                    $user = ApiPostUser::updateOrCreate([
-                        'user_id' => $message['from_id'],
-                        'channel_source' => $this->apiChannel->channel_source,
-                    ], [
-                        'user_id' => $message['from_id'],
-                        'channel_source' => $this->apiChannel->channel_source,
-                        'is_company'    => $this->apiChannel->is_company,
-                        'first_name'    => $userData['first_name'],
-                        'username'      => $userData['username'],
-                        'user_type'     => $userData['user_type'],
-                        'phone'         => $userData['phone'],
-                        'last_online_date' => $userData['last_online'],
-                    ]);
 
-                    if ($user->wasRecentlyCreated === true) {
+                    $user = ApiPostUser::where('user_id', $message['from_id'])
+                        ->where('channel_source', $this->apiChannel->channel_source)
+                        ->first();
+
+                    if (!$user) {
+                        $mailingTgNewCompany = Repositories::setting()->findByName('mailing_tg_new_company');
+                        $sendWelcomeMsg = ApiPostUserMailingStatusEnum::Disabled;
+
+                        if ($this->apiChannel->is_company AND $mailingTgNewCompany?->value) {
+                            $sendWelcomeMsg = ApiPostUserMailingStatusEnum::ToSend;
+                        }
+
+                        $user = ApiPostUser::create([
+                            'user_id' => $message['from_id'],
+                            'channel_source' => $this->apiChannel->channel_source,
+                            'is_company' => $this->apiChannel->is_company,
+                            'send_welcome_msg' => $sendWelcomeMsg,
+                            'first_name' => $userData['first_name'],
+                            'username' => $userData['username'],
+                            'user_type' => $userData['user_type'],
+                            'phone' => $userData['phone'],
+                            'last_online_date' => $userData['last_online'],
+                        ]);
+
                         $this->setInfoMsg('Создан новый пользователь: '.$user->id);
                     } else {
+                        $user->is_company = $this->apiChannel->is_company;
+                        $user->first_name = $userData['first_name'];
+                        $user->username = $userData['username'];
+                        $user->user_type = $userData['user_type'];
+                        $user->phone = $userData['phone'];
+                        $user->last_online_date = $userData['last_online'];
+                        $user->save();
+
                         $this->setInfoMsg('Обновлен пользователь: ' . $user->id);
                     }
 

@@ -7,6 +7,7 @@ namespace App\MoonShine\Resources;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiDataTypeEnum;
+use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\MailingMessageStatusEnum;
@@ -119,7 +120,7 @@ class CompanyAuthorsResource extends ModelResource
             Text::make('Пользователь', 'username'),
             Text::make('Фамилия', 'last_name'),
             Text::make('Имя', 'first_name'),
-            Checkbox::make('Отпр. приветствие', 'send_welcome_msg'),
+            Enum::make('Отпр. приветствие', 'send_welcome_msg')->attach(ApiPostUserMailingStatusEnum::class)->sortable(),
             Checkbox::make('Руч. отправка', 'send_new_msg')->updateOnPreview(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
@@ -133,6 +134,8 @@ class CompanyAuthorsResource extends ModelResource
             Text::make('Пользователь', 'username'),
             Text::make('Фамилия', 'last_name'),
             Text::make('Имя', 'first_name'),
+            Enum::make('Отпр. приветствие', 'send_welcome_msg')->attach(ApiPostUserMailingStatusEnum::class),
+            Checkbox::make('Руч. отправка', 'send_new_msg')->updateOnPreview(),
 
             HasMany::make('Сообщения', 'posts', resource: new ApiChannelPostResource())->fields([
                 Text::make('ID', 'id'),
