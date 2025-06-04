@@ -104,11 +104,11 @@ class SendMessageTelegram
 
             try {
                 // https://docs.madelineproto.xyz/PHP/danog/MadelineProto/API.html#sendMessage
-                /*$sentMessage = $MadelineProto->messages->sendMessage([
+                $sentMessage = $MadelineProto->messages->sendMessage([
                     'peer' => $user->username ? '@'.$user->username : $user->user_id,
                     'message' => $mailingMessage->text,
                     'no_webpage' => true,
-                ]);*/
+                ]);
 
                 $id = $sentMessage['id'] ?? 0;
                 $status = MailingMessageLogStatusEnum::Success;
