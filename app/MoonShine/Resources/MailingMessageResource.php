@@ -100,7 +100,7 @@ class MailingMessageResource extends ModelResource
     {
         return [
             QueryTag::make(
-                'Приветствие', // Заголовок тега
+                'Авторассылка', // Заголовок тега
                 fn(Builder $query) => $query->where('is_main', 1)
             ),
             QueryTag::make(
@@ -158,7 +158,7 @@ class MailingMessageResource extends ModelResource
             Preview::make('Текст сообщения', 'text'),
             Date::make('Дата отправки', 'date_send')->withTime(),
             Enum::make('Статус', 'status')->attach(MailingMessageStatusEnum::class),
-            Checkbox::make('Приветствие', 'is_main'),
+            Checkbox::make('Авторассылка', 'is_main'),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
             HasMany::make('Сообщения', 'posts', resource: new MailingMessageLogResource()),
         ];
@@ -186,7 +186,7 @@ class MailingMessageResource extends ModelResource
         $fields[] = Textarea::make('Текст сообщения', 'text')->customAttributes(['autocomplete' => 'off', 'rows' => '5']);
         $fields[] = Date::make('Дата отправки', 'date_send')->withTime();
         $fields[] = Enum::make('Статус', 'status')->attach(MailingMessageStatusEnum::class);
-        $fields[] = Checkbox::make('Приветствие', 'is_main')
+        $fields[] = Checkbox::make('Авторассылка', 'is_main')
             ->onValue(1)
             ->offValue(0)
             ->hint('Автоматическое сообщение для новых компаний, может быть только одно. На данный тип сообщения не влияет дата отправки и статусы.');

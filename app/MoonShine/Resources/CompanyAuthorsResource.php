@@ -107,7 +107,7 @@ class CompanyAuthorsResource extends ModelResource
     public function filters(): array
     {
         return [
-            Checkbox::make('Отпр. приветствие', 'send_welcome_msg'),
+            Checkbox::make('Отпр. авторассылка', 'send_welcome_msg'),
             Checkbox::make('Руч. отправка', 'send_new_msg'),
         ];
     }
@@ -120,7 +120,7 @@ class CompanyAuthorsResource extends ModelResource
             Text::make('Пользователь', 'username'),
             Text::make('Фамилия', 'last_name'),
             Text::make('Имя', 'first_name'),
-            Enum::make('Отпр. приветствие', 'send_welcome_msg')->attach(ApiPostUserMailingStatusEnum::class)->sortable(),
+            Enum::make('Отпр. авторассылка', 'send_welcome_msg')->attach(ApiPostUserMailingStatusEnum::class)->sortable(),
             Checkbox::make('Руч. отправка', 'send_new_msg')->updateOnPreview(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
         ];
@@ -134,7 +134,7 @@ class CompanyAuthorsResource extends ModelResource
             Text::make('Пользователь', 'username'),
             Text::make('Фамилия', 'last_name'),
             Text::make('Имя', 'first_name'),
-            Enum::make('Отпр. приветствие', 'send_welcome_msg')->attach(ApiPostUserMailingStatusEnum::class),
+            Enum::make('Отпр. авторассылка', 'send_welcome_msg')->attach(ApiPostUserMailingStatusEnum::class),
             Checkbox::make('Руч. отправка', 'send_new_msg')->updateOnPreview(),
 
             HasMany::make('Сообщения', 'posts', resource: new ApiChannelPostResource())->fields([
@@ -167,7 +167,7 @@ class CompanyAuthorsResource extends ModelResource
         $fields[] = Text::make('Пользователь', 'username')->disabled()->readonly();
         $fields[] = Text::make('Фамилия', 'last_name')->disabled()->readonly();
         $fields[] = Text::make('Имя', 'first_name')->disabled()->readonly();
-        $fields[] = Checkbox::make('Приветствие', 'is_main')
+        $fields[] = Checkbox::make('Авторассылка', 'is_main')
             ->onValue(1)
             ->offValue(0)
             ->hint('Автоматическое сообщение для новых компаний, может быть только одно')->disabled()->readonly();
