@@ -1,0 +1,53 @@
+@font-face {
+	font-family: 'Mont';
+	src: url(../fonts/Mont-3bbaf574ce592cc668b00055ce19021d.woff2) format('woff2'),
+	url(../fonts/Mont-14fdab55f16d09c8c5e5af48a00b33aa.woff) format('woff');
+	font-weight: normal;
+	font-style: normal;
+	font-display: auto;
+}
+
+@font-face {
+	font-family: 'Mont';
+	src: url(../fonts/Mont-d0222042dcd651dfd10ccd3298d03dff.woff2) format('woff2'),
+	url(../fonts/Mont-c005c502cc890c30b99c7237bc336e26.woff) format('woff');
+	font-weight: normal;
+	font-style: italic;
+	font-display: auto;
+}
+
+@font-face {
+	font-family: 'Mont';
+	src: url(../fonts/Mont-cd14b2437c0b7e4d386a038bde26a7f9.woff2) format('woff2'),
+	url(../fonts/Mont-82a3de2232cfd1dc507024134c04b43a.woff) format('woff');
+	font-weight: 600;
+	font-style: normal;
+	font-display: auto;
+}
+
+@font-face {
+	font-family: 'Mont';
+	src: url(../fonts/Mont-98f99d4f2abed3eabd6ee629c0b4155d.woff2) format('woff2'),
+	url(../fonts/Mont-800c06c3703b26a0c01f41efffa37537.woff) format('woff');
+	font-weight: 600;
+	font-style: italic;
+	font-display: auto;
+}
+
+@font-face {
+	font-family: 'Mont';
+	src: url(../fonts/Mont-5fa488f61fdb635f21b9bdf4e8768972.woff2) format('woff2'),
+	url(../fonts/Mont-db8b3fe129c86adb3d56b3328b8edfb2.woff) format('woff');
+	font-weight: bold;
+	font-style: normal;
+	font-display: auto;
+}
+
+@font-face {
+	font-family: 'Mont';
+	src: url(../fonts/Mont-2a44fe6788d0447a9794bc83fa969e56.woff2) format('woff2'),
+	url(../fonts/Mont-2f0015f37f8c10ed20b1ebf4177b7431.woff) format('woff');
+	font-weight: bold;
+	font-style: italic;
+	font-display: auto;
+}
