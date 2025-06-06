@@ -268,21 +268,6 @@ class ApiPostUser extends Model
             }
         }
 
-        if (count($specialties)) {
-            foreach ($specialties as $specialty) {
-                foreach ($specialty['key_words'] as $skill) {
-                    $tags = explode(',', $skill);
-                    foreach ($tags as $tag) {
-                        if (Str::length($tag) > 5) {
-                            continue;
-                        }
-
-                        $params[] = $tag;
-                    }
-                }
-            }
-        }
-
         return $params;
     }
 }
