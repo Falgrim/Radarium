@@ -122,6 +122,11 @@ class BuilderController extends Controller
             });
         }
 
+        $authors = $authors->where(function (Builder $query) {
+            $query->whereNotNull('phone')
+                ->orWhere('username', '<>', '');
+        });
+
         $sortField = $validated['sort'] ?? 'latest_post_date';
         $sortDirection = $validated['direction'] ?? 'desc';
 
@@ -159,7 +164,16 @@ class BuilderController extends Controller
 
         $validated = $validator->validateWithBag('specialist');
 
-        $author = ApiPostUser::where('id', $validated['id'])->with(['specialists', 'postsComplete', 'specialistReviews'])->firstOrFail();
+        $author = ApiPostUser::where('id', $validated['id'])
+            ->with(['specialists', 'postsComplete', 'specialistReviews']);
+
+        $author = $author->where(function (Builder $query) {
+            $query->whereNotNull('phone')
+                ->orWhere('username', '<>', '');
+        });
+
+        $author = $author->firstOrFail();
+
         $reviews = $author->builderReviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
 
         if (!$this->tariffService->checkContactAccess($author)) {
