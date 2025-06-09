@@ -2,6 +2,7 @@
 
 namespace App\View\Components;
 
+use App\Infrastructures\Facades\Repositories;
 use Illuminate\View\Component;
 use Illuminate\View\View;
 
@@ -12,6 +13,10 @@ class LandingLayout extends Component
      */
     public function render(): View
     {
-        return view('layouts.landing');
+        $userRoleList = Repositories::userRole()->getList();
+
+        return view('layouts.landing', [
+            'userRoleList' => $userRoleList,
+        ]);
     }
 }
