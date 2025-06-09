@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\PaymentTariffStatusEnum;
+use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
 use App\Models\PaymentTariff;
 use Carbon\Carbon;
@@ -26,10 +27,13 @@ class IndexController extends Controller
             ->orderBy('period', 'ASC')
             ->get();
 
+        $userRoleList = Repositories::userRole()->getList();
+
         return view('pages.index', [
             'contactSum' => $contactSum,
             'contactTodaySum' => $contactTodaySum,
             'tariffs' => $tariffs,
+            'userRoleList' => $userRoleList,
         ]);
     }
 }
