@@ -1,7 +1,7 @@
 @php
     $lastPost = $author->lastPost();
     $specialties = $author->specialtiesWithShortName(15);
-    $checkOpenContact = Auth::user()->checkOpenContact($author);
+    $checkOpenContact = isset($userOpenLog[$author->id]);
     $specialistData = $author->specialistData();
 @endphp
 
@@ -52,8 +52,8 @@
 
     </td>
     <td class="align-middle">
-        @if(Auth::user()->checkAccessToContact($author))
-            @if($checkOpenContact)
+        @if($tariffAccess OR $checkOpenContact)
+            @if(!$checkOpenContact)
                 <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-primary btn-sm ">Контакт открыт</a>
             @else
                 <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Открыть контакт</a>

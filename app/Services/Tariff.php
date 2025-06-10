@@ -96,4 +96,38 @@ class Tariff
     {
         return $payment->id.config('payment.order_id_extra');
     }
+
+    public function getAllContactsByUser(User $user): array
+    {
+        $contacts = UserOpenContact::where('user_id', $user->id)->get();
+
+        $resultIds = [];
+        foreach ($contacts as $contact) {
+            $resultIds[$contact->api_post_user_id] = $contact->api_post_user_id;
+        }
+
+        return $resultIds;
+    }
+
+    /**
+     * Проверка только на возможность открыть контакт, если по тарифу остались контакты
+     *
+     * @return bool
+     */
+    public function checkAccessToOpen(): bool
+    {
+        if (is_null($this->user)) {
+            return false;
+        }
+
+        if ($this->user->getLeftContacts()['count_contacts_left'] > 0) {
+            return true;
+        }
+
+        if ($this->user->free_contacts) {
+            return true;
+        }
+
+        return false;
+    }
 }

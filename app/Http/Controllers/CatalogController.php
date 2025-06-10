@@ -138,11 +138,14 @@ class CatalogController extends Controller
             ->paginate($this->onPage)
             ->withQueryString();
 
+        $userOpenLog = $this->tariffService->getAllContactsByUser(Auth::user());
+
         return view('catalog.authors', [
             'request' => $request,
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
-            'tariffAccess' => $this->tariffService->checkContactAccess(),
+            'tariffAccess' => $this->tariffService->checkOpenContact(),
+            'userOpenLog' => $userOpenLog,
         ]);
     }
 

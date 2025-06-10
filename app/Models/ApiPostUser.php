@@ -88,6 +88,7 @@ class ApiPostUser extends Model
     {
         $data = $this->through('specialists')
             ->has('specialities')
+            ->with('dictionarySpeciality')
             ->get();
 
         $result = [];
