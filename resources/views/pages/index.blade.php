@@ -252,15 +252,8 @@
                             <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-1" aria-expanded="false" aria-controls="accordion-1 .item-1">Какие данные о специалистах вы собираете?</button></h2>
                             <div class="accordion-collapse collapse item-1" role="tabpanel" data-bs-parent="#accordion-1">
                                 <div class="accordion-body">
-                                    <p class="mb-0">Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" role="tab"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-2" aria-expanded="true" aria-controls="accordion-1 .item-2">Что это за сервис и как он работает?</button></h2>
-                            <div class="accordion-collapse collapse show item-2" role="tabpanel" data-bs-parent="#accordion-1">
-                                <div class="accordion-body">
-                                    <p class="mb-0">Наш сервис помогает находить специалистов в области проектирования, собирая и систематизируя данные из 50+ профильных источников. Вы получаете актуальную базу исполнителей и можете связаться с ними в один клик.</p>
+                                    <p class="mb-0">Мы собираем только те данные, которые специалист сам предоставил в открытых Telegram-каналах и посчитал достаточными для определения его квалификации.</p>
+                                    <p class="mt-3">В большинстве случаев исполнитель предоставляет информацию о своих специализациях, профильных навыках, программном обеспечении, которым владеет, в сообщении раскрывает детальную информацию, которая поможет вам определиться с выбором специалиста, а также контактные данные для связи с ним.</p>
                                 </div>
                             </div>
                         </div>
@@ -268,7 +261,9 @@
                             <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-3" aria-expanded="false" aria-controls="accordion-1 .item-3">Как выбрать подходящий тариф</button></h2>
                             <div class="accordion-collapse collapse item-3" role="tabpanel" data-bs-parent="#accordion-1">
                                 <div class="accordion-body">
-                                    <p class="mb-0">Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus.</p>
+                                    <p class="mb-0">В первую очередь решение, какой тариф вам выбрать, зависит от потребностей, которые вы желаете закрыть.</p>
+                                    <p class="mt-3">Для ознакомления с сервисом каждому новому пользователю доступен тестовый период, в рамках которого можно изучить систему и сразу найти нужного специалиста.</p>
+                                    <p class="mt-3">Определите примерное количество контактов, которое вам нужно, и выберите тариф, максимально соответствующий вашим потребностям по цене и объему. Система тарифов выстроена по принципу «скользящей шкалы»: чем больше объем услуг, тем дешевле стоимость. Если вы регулярно осуществляете поиск специалистов, то для оптимизации расходов при подборе исполнителей, рекомендуем выбирать самый большой тариф для экономии.  ( Если вы регулярно ищете специалистов, для оптимизации расходов на подбор исполнителей рекомендуем выбрать самый большой тариф. Это поможет сэкономить средства в долгосрочной перспективе.)</p>
                                 </div>
                             </div>
                         </div>
@@ -276,7 +271,7 @@
                             <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-4" aria-expanded="false" aria-controls="accordion-1 .item-4">Насколько точна ваша выборка?</button></h2>
                             <div class="accordion-collapse collapse item-4" role="tabpanel" data-bs-parent="#accordion-1">
                                 <div class="accordion-body">
-                                    <p class="mb-0">Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus.</p>
+                                    <p class="mb-0">Мы — эксперты в области BIM-проектирования. При создании Radarium мы опирались на наш богатый опыт в подборе персонала и внедрили передовые технологии искусственного интеллекта. В результате получился продукт, который позволяет найти профильного специалиста всего за несколько кликов. Точность поиска обеспечивается использованием современных решений и тщательным ручным контролем. Кроме того, мы осуществляем модерацию данных для исключения нерелевантной информации, гарантируя высокое качество результатов.</p>
                                 </div>
                             </div>
                         </div>
@@ -284,23 +279,18 @@
                             <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-5" aria-expanded="false" aria-controls="accordion-1 .item-5">Можно ли настроить фильтрацию специалистов по&nbsp;своим критериям?</button></h2>
                             <div class="accordion-collapse collapse item-5" role="tabpanel" data-bs-parent="#accordion-1">
                                 <div class="accordion-body">
-                                    <p class="mb-0">Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus.</p>
+                                    <p class="mb-0">На данный момент в система имеет только два фильтра для поиска, похвастаться особо нечем. Предлагаю переформулировать вопрос следующим образом:</p>
                                 </div>
                             </div>
                         </div>
                         <div class="accordion-item">
-                            <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-6" aria-expanded="false" aria-controls="accordion-1 .item-6">Как быстро я&nbsp;смогу связаться с&nbsp;найденными специалистами?</button></h2>
+                            <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-6" aria-expanded="false" aria-controls="accordion-1 .item-6">Как осуществляется поиск специалистов?</button></h2>
                             <div class="accordion-collapse collapse item-6" role="tabpanel" data-bs-parent="#accordion-1">
                                 <div class="accordion-body">
-                                    <p class="mb-0">Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-7" aria-expanded="false" aria-controls="accordion-1 .item-7">Чем ваш сервис лучше ручного поиска?</button></h2>
-                            <div class="accordion-collapse collapse item-7" role="tabpanel" data-bs-parent="#accordion-1">
-                                <div class="accordion-body">
-                                    <p class="mb-0">Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus.</p>
+                                    <p class="mb-0">Наш сервис ищет исполнителей по вашему запросу среди большого количества профильных каналов в Телеграмм, где специалисты оставляют свои резюме, делятся опытом, ищут заказчиков и так далее. Сервис обрабатывает информацию и собирает нужных людей в одном месте – и вы сразу можете написать каждому из них.</p>
+                                    <p class="mt-3">Чтобы найти подходящего именно вам исполнителя просто укажите нужную отрасль, специализацию или навыки. Также вы можете указать вашу конкретную задачу и найти исполнителей, которые имеют опыт в этом.</p>
+                                    <p class="mt-3">После этого перед вами появится список подходящих по ваш запрос специалистов с краткой информацией об их опыте, квалификации и навыках</p>
+                                    <p class="mt-3">Хотите узнать больше информации о специалисте или связаться с ним? Просто зайдите в карточку исполнителя</p>
                                 </div>
                             </div>
                         </div>
@@ -308,7 +298,19 @@
                             <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-8" aria-expanded="false" aria-controls="accordion-1 .item-8">Как я могу получить доступ к архивным данным?</button></h2>
                             <div class="accordion-collapse collapse item-8" role="tabpanel" data-bs-parent="#accordion-1">
                                 <div class="accordion-body">
-                                    <p class="mb-0">Nullam id dolor id nibh ultricies vehicula ut id elit. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus.</p>
+                                    <p class="mb-0">Радариум позволяет мгновенно связываться с исполнителем, поскольку каждый из них оставляет свои контакты. Это может быть ссылка на его аккаунт, мобильный телефон или электронная почта.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" role="tab"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-1 .item-9" aria-expanded="false" aria-controls="accordion-1 .item-9">Чем ваш сервис лучше ручного поиска?</button></h2>
+                            <div class="accordion-collapse collapse item-9" role="tabpanel" data-bs-parent="#accordion-1">
+                                <div class="accordion-body">
+                                    <p class="mb-0">Наш сервис на основе ИИ превосходит ручной поиск по нескольким ключевым причинам:</p>
+                                    <p class="mt-3">Быстрота и эффективность: Radarium способен обрабатывать большие объемы данных за короткое время, находя нужную информацию мгновенно, тогда как ручной поиск занимает значительно больше времени.</p>
+                                    <p class="mt-3">Точность и релевантность: Radarium использует алгоритмы машинного обучения и анализа данных для определения наиболее подходящих результатов, что повышает качество поиска и уменьшает количество нерелевантных результатов.</p>
+                                    <p class="mt-3">Автоматизация процессов: Radarium может автоматически фильтровать, сортировать и анализировать данные, освобождая пользователя от рутинных задач и позволяя сосредоточиться на более важных аспектах.</p>
+                                    <p class="mt-3">В целом, использование Radarium в поиске обеспечивает более быстрый, точный и удобный процесс нахождения нужной информации по сравнению с традиционными ручными методами.</p>
                                 </div>
                             </div>
                         </div>
