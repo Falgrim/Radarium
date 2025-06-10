@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ asset('v2/fonts/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/fonts/fontawesome5-overrides.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.1">
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.2">
 </head>
 
 <body>

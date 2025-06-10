@@ -360,7 +360,7 @@ footer .btn-profile:hover, footer .btn-profile:focus {
   margin: 0 0 40px 0;
   padding: 60px;
   background: transparent;
-  background-image: url("../../assets/img/banner-bg.png");
+  background-image: url("../img/banner-bg.png");
   background-repeat: no-repeat;
   background-size: 48%;
   background-position: 120% 30%;
@@ -1078,7 +1078,7 @@ footer .btn-profile:hover, footer .btn-profile:focus {
 }
 
 .plastic-double {
-  background-image: url(../../assets/img//plastic-double.png);
+  background-image: url(../img//plastic-double.png);
   background-size: contain;
   background-repeat: no-repeat;
   background-position: 100% 100%;
