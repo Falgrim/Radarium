@@ -77,7 +77,7 @@ class CatalogController extends Controller
             'sort' => [
                 'nullable',
                 'string',
-                Rule::in(['specialist_reviews_avg_rating', 'latest_post_date']),
+                Rule::in(['specialist_reviews_avg_rating', 'last_post_date']),
             ],
             'direction' => [
                 'nullable',
@@ -125,12 +125,11 @@ class CatalogController extends Controller
                 ->orWhere('username', '<>', '');
         });
 
-        $sortField = $validated['sort'] ?? 'latest_post_date';
+        $sortField = $validated['sort'] ?? 'last_post_date';
         $sortDirection = $validated['direction'] ?? 'desc';
 
         $authors = $authors
             ->with(['specialistReviews'])
-            ->withMax('posts as latest_post_date', 'post_date')
             ->withAvg(['specialistReviews' => function ($query) {
                 $query->where('rating', '>', 0);
             }], 'rating')

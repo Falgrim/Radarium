@@ -45,7 +45,7 @@
                     <th scope="col">
                         Последнее сообщение
                         {{--<a href="{{ route('catalog.builders', array_merge(request()->query(), [
-                    'sort' => 'latest_post_date',
+                    'sort' => 'last_post_date',
                     'direction' => request('direction') === 'asc' ? 'desc' : 'asc'
                 ])) }}">Последнее сообщение</a>--}}
                     </th>

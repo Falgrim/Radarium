@@ -79,7 +79,7 @@ class BuilderController extends Controller
             'sort' => [
                 'nullable',
                 'string',
-                Rule::in(['builder_reviews_avg_rating', 'latest_post_date']),
+                Rule::in(['builder_reviews_avg_rating', 'last_post_date']),
             ],
             'direction' => [
                 'nullable',
@@ -127,12 +127,11 @@ class BuilderController extends Controller
                 ->orWhere('username', '<>', '');
         });
 
-        $sortField = $validated['sort'] ?? 'latest_post_date';
+        $sortField = $validated['sort'] ?? 'last_post_date';
         $sortDirection = $validated['direction'] ?? 'desc';
 
         $authors = $authors
             ->with(['builderReviews'])
-            ->withMax('posts as latest_post_date', 'post_date')
             ->withAvg(['builderReviews' => function ($query) {
                 $query->where('rating', '>', 0);
             }], 'rating')

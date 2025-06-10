@@ -35,6 +35,7 @@ class ApiPostUser extends Model
         'is_company',
         'send_welcome_msg',
         'send_new_msg',
+        'last_post_date',
         'created_at',
         'updated_at',
     ];
@@ -56,6 +57,7 @@ class ApiPostUser extends Model
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'last_online_date' => 'datetime:Y-m-d H:i:s',
+            'last_post_date' => 'datetime:Y-m-d H:i:s',
             'channel_source' => ApiChannelSourceEnum::class,
             'is_company' => ApiDataTypeEnum::class,
             'external_info' => 'array',
