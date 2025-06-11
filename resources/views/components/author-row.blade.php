@@ -53,7 +53,7 @@
     </td>
     <td class="align-middle">
         @if($tariffAccess OR $checkOpenContact)
-            @if(!$checkOpenContact)
+            @if($checkOpenContact)
                 <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-primary btn-sm ">Контакт открыт</a>
             @else
                 <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Открыть контакт</a>

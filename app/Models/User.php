@@ -23,6 +23,8 @@ class User extends Authenticatable implements MustVerifyEmail
     use ModelTableName;
     use CanResetPassword;
 
+    protected const FREE_CONTACTS = 3;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -99,10 +101,17 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('status', UserTariffStatusEnum::Active)
             ->first();
 
-        return [
-            'count_contacts_left' => !is_null($contacts) ? $contacts->count_contacts_left : 0,
-            'count_contacts' => !is_null($contacts) ? $contacts->count_contacts : 0,
-        ];
+        if (!is_null($contacts) AND !is_null($contacts->count_contacts_left)) {
+            return [
+                'count_contacts_left' => $contacts->count_contacts_left,
+                'count_contacts' => $contacts->count_contacts,
+            ];
+        } else {
+            return [
+                'count_contacts_left' => $this->free_contacts,
+                'count_contacts' => self::FREE_CONTACTS,
+            ];
+        }
     }
 
     public function checkAccessToContact(ApiPostUser $postUser)

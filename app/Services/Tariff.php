@@ -37,6 +37,12 @@ class Tariff
         return false;
     }
 
+    /**
+     * Проверка может ли пользователь открыть контакт (ранее открывал или позволяет тариф)
+     *
+     * @param ApiPostUser|null $postUser
+     * @return bool
+     */
     public function checkOpenContact(?ApiPostUser $postUser = null): bool
     {
         if (is_null($this->user)) {
@@ -44,6 +50,10 @@ class Tariff
         }
 
         if (!is_null($postUser) AND $this->getOpenContactLog($this->user, $postUser)) {
+            return true;
+        }
+
+        if ($this->checkAccessToOpen()) {
             return true;
         }
 
@@ -80,14 +90,16 @@ class Tariff
             return false;
         }
 
-        $this->user->free_contacts = $this->user->free_contacts-1;
-        $this->user->save();
-
-        UserOpenContact::firstOrCreate([
+        $check = UserOpenContact::firstOrCreate([
             'user_id' => $this->user->id,
             'api_post_user_id' => $postUser->id,
             'user_tariff_id' => 0,
         ]);
+
+        if ($check->wasRecentlyCreated) {
+            $this->user->free_contacts = $this->user->free_contacts-1;
+            $this->user->save();
+        }
 
         return true;
     }
