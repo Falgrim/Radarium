@@ -6,60 +6,73 @@
 @endphp
 
 <tr id="author-id-{{ $author->id }}">
-    <td>
-        <img src="{{ $author->getPhoto() }}" class="avatar_row">
+    <td class="def-cell-01">
+        <figure class="figure pers">
+            <img class="img-fluid figure-img" src="{{ $author->getPhoto() }}">
+            <figcaption class="figure-caption">{{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}</figcaption>
+        </figure>
     </td>
-    <td class="align-middle text-center">
-        {{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}
-    </td>
-    <td class="align-middle">
-        @if($checkOpenContact)
-            @if($author->username)
-                <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
-            @elseif($author->user_id)
-                <a href="tg://user?id={{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
+    <td class="def-cell-02">
+        @if($tariffAccess OR $checkOpenContact)
+            @if($checkOpenContact)
+        <div class="show-room open" onclick="window.location.href='{{ route('catalog.specialist.view', ['id' => $author->id]) }}'">
             @else
-                <i>Не известно</i>
-            @endif
-
-            @if($author->first_name)
-                <br />{{ trim($author->last_name.' '.$author->first_name) }}
-            @endif
-
-            @if($author->phone)
-                <br />{{ trim($author->phone) }}
+        <div class="show-room" onclick="window.location.href='{{ route('catalog.specialist.view', ['id' => $author->id]) }}'">
             @endif
         @else
-            <i>Скрыто</i>
+            <div class="show-room" data-bs-toggle="modal" data-bs-target="#loginAlert">
         @endif
+            <div class="contact-box">
+                <p>Открыть контакт</p>
+            </div>
+            <div class="contact-info">
+                @if($checkOpenContact)
+                    <p class="nickname">
+                    @if($author->username)
+                        <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
+                    @elseif($author->user_id)
+                        <a href="tg://user?id={{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
+                    @else
+                        <i>Не известно</i>
+                    @endif
+                    </p>
+
+                    @if($author->first_name)
+                        <p class="name">{{ trim($author->last_name.' '.$author->first_name) }}</p>
+                    @endif
+
+                    @if($author->phone)
+                        <p class="email">{{ trim($author->phone) }}</p>
+                    @endif
+                @else
+                    <i>Скрыто</i>
+                @endif
+            </div>
+        </div>
     </td>
-    <td style="white-space: nowrap;">
+    <td class="def-cell-03">
         @if(count($specialties))
             @foreach($specialties as $specialist)
-                {!! $specialist['name'] !!}<br />
+                <p class="ellipse" title="{{ $specialist['name'] }}">{!! $specialist['name'] !!}</p>
             @endforeach
         @endif
     </td>
-    <td>
-        <span class="badge text-bg-secondary">{!! implode('</span> <span class="badge text-bg-secondary">', \App\Models\ApiPostUser::profileSkillsFront($specialistData['soft_experience'], $specialties)) !!}</span>
+    <td class="def-cell-04">
+        <p>
+            <span class="pro-tag">{!! implode('</span> <span class="pro-tag">', \App\Models\ApiPostUser::profileSkillsFront($specialistData['soft_experience'], $specialties)) !!}</span>
+        </p>
     </td>
-    <td class="text-">
+    <td class="def-cell-05">
         @if($lastPost?->post)
-            <em>{{ $lastPost->post_date->format('d.m.Y') }}<br />{{ \App\Models\ApiPostUser::prepareLastPostText($lastPost->post, $checkOpenContact)  }}</em>
+            <p class="line-clamp"><span class="txt-date">{{ $lastPost->post_date->format('d.m.Y') }}</span>{{ \App\Models\ApiPostUser::prepareLastPostText($lastPost->post, $checkOpenContact)  }}</p>
         @endif
     </td>
-    <td>
-
+    <td class="def-cell-06">
+        {{--<p class="line-clamp"><span class="txt-date">13.04.2025</span>Делает только под ключ, долго выполняет работу и не качестве...</p>--}}
     </td>
-    <td class="align-middle">
-        @if($tariffAccess OR $checkOpenContact)
-            @if($checkOpenContact)
-                <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-primary btn-sm ">Контакт открыт</a>
-            @else
-                <a href="{{ route('catalog.specialist.view', ['id' => $author->id]) }}" class="btn btn-light btn-sm ">Открыть контакт</a>
-            @endif
-        @else
-            <a href="#" data-bs-toggle="modal" data-bs-target="#loginAlert" class="btn btn-light btn-sm ">Открыть контакт</a>
-        @endif
+</tr>
+<tr>
+    <td class="row-divider" colspan="6">
+        <div></div>
     </td>
 </tr>

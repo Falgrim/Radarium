@@ -45,7 +45,7 @@
                         <p class="line-number"><span>1</span>Выберите специализацию и&nbsp;нужные&nbsp;навыки</p>
                         <p class="line-number"><span>2</span>Смотрите список подходящих специалистов</p>
                         <p class="line-number"><span>3</span>Связывайтесь с теми, кто подходит лучше&nbsp;всего</p>
-                        <button class="btn btn-color btn-grey plastic" type="button">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
+                        <button class="btn btn-color btn-grey plastic" type="button" data-bs-toggle="modal" data-bs-target="#rd-public">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
                     </div>
                     <div class="drive-col--item dc-divider"><span></span></div>
                     <div class="drive-col--item">
@@ -77,7 +77,8 @@
                     <h3 class="title">Строители г.&nbsp;Москва</h3>
                     <p>Специалисты и&nbsp;подрядчики в&nbsp;области проектирования</p><span class="note">в разработке</span>
                 </div>
-                <div class="tricols-item depo-plus"><button class="btn" type="button"><span class="plus-circle">+</span></button>
+                <div class="tricols-item depo-plus">
+                    <button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#rd-industry"><span class="plus-circle">+</span></button>
                     <p>Нужна другая отрасль</p>
                 </div>
             </div>
@@ -312,7 +313,7 @@
                     <div class="box-simple box-faq">
                         <h2 class="text-center title-50semibold">Остались<br>Вопросы?</h2>
                         <p>Если у вас остались вопросы — не&nbsp;стесняйтесь обращаться. Команда поддержки быстро даст ответ и&nbsp;поможет с любым этапом.</p>
-                        <button class="btn btn-color btn-accent" type="button">Нужна консультация</button>
+                        <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-question">Нужна консультация</button>
                         <img class="faqman" src="{{ asset('v2/img/faqman.png') }}">
                     </div>
                 </div>

@@ -2,43 +2,39 @@
     $contactsLimit = Auth::check() ? Auth::user()->getLeftContacts() : [];
 @endphp
 
-<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom text-bg-dark fixed-top">
-    <div class="col-md-3 mb-2 mb-md-0 d-none d-md-block">
-        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
-            Radarium
-        </a>
-    </div>
-
-    <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-        <li><a href="{{ route('index') }}" class="nav-link px-2">Главная</a></li>
-
-        <li>
-            <div class="dropdown">
-                <a class="nav-link px-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Специалисты @if(Auth::check() AND $contactsLimit['count_contacts']) <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">{{ $contactsLimit['count_contacts_left'] }} из {{ $contactsLimit['count_contacts'] }}<span> @endif
+<header>
+    <div class="container">
+        <nav class="navbar navbar-expand-xl client-in">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="{{ route('index') }}">
+                    <img src="{{ asset('v2/img/logo-radarium-b.svg') }}">
                 </a>
-                <ul class="dropdown-menu">
-                    <li><a href="{{ route('catalog.specialists') }}" class="dropdown-item px-2">Проектирование</a></li>
-                    <li><a href="{{ route('catalog.builders') }}" class="dropdown-item px-2">Строительство</a></li>
-                </ul>
+                <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-3">
+                    <span class="visually-hidden">Toggle navigation</span>
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navcol-3">
+                    <ul class="navbar-nav mx-auto">
+                        <li class="nav-item"><a class="nav-link" href="{{ route('catalog.specialists') }}">Проектирование</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('catalog.builders') }}">Строительство</a></li>
+                    </ul>
+                    <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
+                        <img src="{{ asset('v2/img/icon-profile.svg') }}"><span>Войти</span>
+                    </button>
+                </div>
+                @if(Auth::check())
+                <div class="client-id">
+                    <a href="{{ route('profile.edit') }}">
+                        <span>{{ Auth::user()->name }}&nbsp;</span>
+                        <img src="{{ asset('v2/img/icon-client-id.svg') }}">
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}" class="logout_form">
+                        @csrf
+                        <button onclick="event.preventDefault(); this.closest('form').submit();" class="btn btn-primary">{{ __('Выйти') }}</button>
+                    </form>
+                </div>
+                @endif
             </div>
-        </li>
-
-        <li><a href="{{ route('catalog.companyjobs') }}" class="nav-link px-2">Вакансии</a></li>
-    </ul>
-
-    <div class="col-md-3 text-end">
-        @if(Auth::check())
-            <a href="{{ route('profile.edit') }}" class="btn btn-light me-2">{{ Auth::user()->name }}</a>
-            <!-- Authentication -->
-            <form method="POST" action="{{ route('logout') }}" class="logout_form">
-                @csrf
-                <button onclick="event.preventDefault(); this.closest('form').submit();" class="btn btn-primary">{{ __('Выйти') }}</button>
-            </form>
-        @else
-            <a href="{{ route('login') }}" class="btn btn-light me-2">Вход</a>
-            <a href="{{ route('register') }}" class="btn btn-primary">Регистрация</a>
-        @endif
+        </nav>
     </div>
 </header>
-<div style="height: 110px;"></div>

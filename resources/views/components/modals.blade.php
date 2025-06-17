@@ -1,0 +1,251 @@
+<div class="modal fade modal-registr" role="dialog" tabindex="-1" id="rd-registr">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Вход в личный кабинет</h4>
+                <button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+                    <div class="registration-form">
+                        <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
+                        <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="formCheck-1" name="remember">
+                            <label class="form-check-label" for="formCheck-1">Запомнить меня</label>
+                        </div>
+                        <div class="box-btn-line">
+                            <button class="btn btn-color btn-accent" type="submit">Вход</button>
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}">Забыли пароль?</a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="ftr-img"><img src="{{ asset('v2/img/icon-man-grey.svg') }}"></div>
+                <div>
+                    <h4 class="footer-title">У вас нет аккаунта?</h4>
+                    <p><button class="btn btn-trans btn-link" type="submit" data-bs-toggle="modal" data-bs-target="#rd-account">Пройдите быструю регистрацию</button></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr" role="dialog" tabindex="-1" id="rd-account">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Регистрация аккаунта</h4>
+                <button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ route('register') }}">
+                    @csrf
+                    <div class="registration-form">
+                        <input class="form-control" type="text" name="name" placeholder="ФИО" required="required">
+                        <input class="form-control" type="text" name="phone" placeholder="+79991112233" required="required">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="from_company" value="1" id="formCheck-2">
+                            <label class="form-check-label" for="formCheck-2">Представляю компанию</label>
+                        </div>
+                        <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
+                        <select class="form-select" name="user_role_id">
+                            @foreach ($userRoleList as $userRole)
+                                <option value="{{ $userRole['id'] }}">{{ $userRole['value'] }}</option>
+                            @endforeach
+                        </select>
+                        <hr>
+                        <h4>Пароль</h4>
+                        <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
+                        <input class="form-control" type="password" name="password_confirmation" placeholder="Подтвердите пароль" required="required">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="user_agree" value="1" id="formCheck-user_agree" required>
+                            <label class="form-check-label" for="formCheck-user_agree"><a href="{{ asset('storage/documents/user-agreement.pdf') }}" target="_blank">{{ __('С пользовательским соглашением ознакомлен') }}</a></label>
+                        </div>
+                        <div class="box-btn-line">
+                            <button class="btn btn-normal btn-color" type="submit">Зарегистрироваться</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr" role="dialog" tabindex="-1" id="rd-drive">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-accent">
+                <h4 class="modal-title">Получи тест-драйв</h4>
+                <button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-4">Тест-драйв доступен для&nbsp;всех новых пользователей при&nbsp;входе в&nbsp;систему. Вы можете попробовать функции поиска, а&nbsp;также иметь доступ к&nbsp;открытию контактов и&nbsp;карточек исполнителей для просмотра функций системы. Пожалуйста, зарегистрируйтесь</p>
+                <form method="POST" action="{{ route('register') }}">
+                    @csrf
+                    <div class="registration-form">
+                        <input class="form-control" type="text" name="name" placeholder="ФИО" required="required">
+                        <input class="form-control" type="text" name="phone" placeholder="+79991112233" required="required">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="from_company" value="1" id="formCheck-2">
+                            <label class="form-check-label" for="formCheck-2">Представляю компанию</label>
+                        </div>
+                        <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
+                        <select class="form-select" name="user_role_id">
+                            @foreach ($userRoleList as $userRole)
+                                <option value="{{ $userRole['id'] }}">{{ $userRole['value'] }}</option>
+                            @endforeach
+                        </select>
+                        <hr>
+                        <h4>Пароль</h4>
+                        <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
+                        <input class="form-control" type="password" name="password_confirmation" placeholder="Подтвердите пароль" required="required">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="user_agree" value="1" id="formCheck-user_agree2" required>
+                            <label class="form-check-label" for="formCheck-user_agree2"><a href="{{ asset('storage/documents/user-agreement.pdf') }}" target="_blank">{{ __('С пользовательским соглашением ознакомлен') }}</a></label>
+                        </div>
+                        <div class="box-btn-line">
+                            <button class="btn btn-normal btn-color" type="submit">Зарегистрироваться</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr" role="dialog" tabindex="-1" id="rd-industry">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Добавить новую отрасль</h4><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form"><input class="form-control" type="text" placeholder="ФИО" required="required"><input class="form-control" type="text" placeholder="Телефон" required="required"><input class="form-control" type="text" placeholder="Новая отрасль" required="required"><textarea class="form-control" placeholder="Комментарий"></textarea>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Добавить</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr" role="dialog" tabindex="-1" id="rd-question">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Остались вопросы?</h4><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form"><input class="form-control" type="text" placeholder="ФИО" required="required"><input class="form-control" type="text" placeholder="Телефон" required="required"><textarea class="form-control" placeholder="Ваш вопрос"></textarea>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Отправить</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr" role="dialog" tabindex="-1" id="rd-public">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Оставить публичный отзыв</h4><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form"><input class="form-control" type="text" placeholder="ФИО" required="required"><input class="form-control" type="text" placeholder="Телефон" required="required"><textarea class="form-control" placeholder="Ваш отзыв"></textarea>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" id="formCheck-4"><label class="form-check-label" for="formCheck-4">Оставить отзыв анонимно</label></div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Отправить</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr" role="dialog" tabindex="-1" id="rd-tarif">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Оформить тариф</h4><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form">
+                        <h4 class="tarif-name">Тариф:&nbsp;<span>1 Год</span></h4>
+                        <div class="tarif-description"><span>Количество дней</span><span>365</span></div>
+                        <div class="tarif-description"><span>Количество контактов</span><span>365</span></div>
+                        <div class="tarif-note">
+                            <p>Для оформления тарифа сначала нужно авторизоваться или&nbsp;зарегистрироваться</p><button class="btn btn-trans btn-link" type="button" data-bs-toggle="modal" data-bs-target="#rd-account">Войти / Зарегистрироваться</button>
+                        </div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Оплатить</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="moderationAlert" tabindex="-1" aria-labelledby="moderationAlertLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="moderationAlertLabel">Есть ошибка!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <form method="POST" id="moderationAlertForm" name="moderationAlertForm">
+                        <input type="hidden" name="type" id="moderationAlert_type" value="" />
+                        <input type="hidden" name="row_id" id="moderationAlert_row_id" value="" />
+
+                        <div class="mb-3">
+                            <label for="message-text" class="col-form-label">Комментарий:</label>
+                            <textarea class="form-control" name="description" id="message-text"></textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary moderation-alert-save">Отправить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="moderationAlertResult" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Результат запроса</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <p></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="loginAlert" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Доступ ограничен.</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <p>Для просмотра контактных данных Вам необходимо <a href="/#buy_tariff">купить подписку</a></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>

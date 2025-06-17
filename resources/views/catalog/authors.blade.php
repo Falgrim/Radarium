@@ -1,66 +1,79 @@
 <x-global-layout>
-
-    <div class="container my-5">
-        <h2>Проектирование</h2>
-    </div>
-
-    <x-search-specialists :$specialitiesList :$request :$errors />
-
-    @if ($errors->any())
-
-        <div class="alert alert-danger">
-            <ul>
-                @foreach ($errors->all() as $key => $error)
-                    <li>{{ $key }} - {{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div class="container my-5">
-        <div class="row justify-content-between border py-2">
-            <div class="col-4">
-                Результат выборки:
-            </div>
-            <div class="col-4 text-end">
-                Найдено: {{ $authors->total() }}
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('catalog.specialists') }}"><span>Проектирование</span></a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('catalog.specialists') }}"><span>Поиск</span></a></li>
+                        <li class="breadcrumb-item active"><span>Специалист</span></li>
+                    </ol>
+                </div>
             </div>
         </div>
 
-        <div class="row table-responsive py-5">
-            <table class="table table-striped table-sm result_table">
-                <thead>
-                <tr>
-                    <th scope="col"></th>
-                    <th scope="col">
-                        Рейтинг
-                        {{--<a href="{{ route('catalog.specialists', array_merge(request()->query(), [
-                    'sort' => 'specialist_reviews_avg_rating',
-                    'direction' => request('direction') === 'asc' ? 'desc' : 'asc'
-                ])) }}">Рейтинг</a>--}}
-                    </th>
-                    <th scope="col">Открытые данные</th>
-                    <th scope="col">Специализация</th>
-                    <th scope="col">Профильные навыки</th>
-                    <th scope="col">
-                        Последнее сообщение
-                        {{--<a href="{{ route('catalog.specialists', array_merge(request()->query(), [
-                    'sort' => 'last_post_date',
-                    'direction' => request('direction') === 'asc' ? 'desc' : 'asc'
-                ])) }}">Последнее сообщение</a>--}}
-                    </th>
-                    <th scope="col">Последний комментарий</th>
-                    <th scope="col"></th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach ($authors as $author)
-                    <x-author-row :$author :$tariffAccess :$userOpenLog />
-                @endforeach
-                </tbody>
-            </table>
+        <x-search-specialists :$authors :$specialitiesList :$request :$errors />
 
-            {{ $authors->links() }}
+        <div class="container">
+            <div class="table-box">
+                <div class="table-responsive text-start">
+                    <table class="table table-borderless tbl-default">
+                        <thead>
+                        <tr>
+                            <th>&nbsp;</th>
+                            <th>Открытые данные</th>
+                            <th>Специализация</th>
+                            <th>Профильные навыки</th>
+                            <th>Последнее сообщение</th>
+                            <th>Последний&nbsp;комментарий</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        @foreach ($authors as $author)
+                            <x-author-row :$author :$tariffAccess :$userOpenLog />
+                        @endforeach
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
+        <div class="container">
+            <div class="pagination-box">
+                <nav class="bg-transparent border-0 shadow-none">
+                    {{ $authors->links() }}
+                </nav>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row section-finish">
+                <div class="col">
+                    <div class="finish-item">
+                        <div class="finish-text">
+                            <h3 class="title-40semibold">Предложите<br>Свою Идею</h3>
+                            <p>
+                                <a href="#"><img class="social" src="{{ asset('v2/img/icon-telegram.svg') }}"></a>
+                                <a href="#"><img class="social" src="{{ asset('v2/img/icon-whatsapp.svg') }}"></a>
+                            </p>
+                        </div>
+                        <div class="finish-img"><img src="{{ asset('v2/img/plastic-metall.png') }}"></div>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-6">
+                    <div class="finish-item">
+                        <div class="finish-text">
+                            <h1 class="title-40semibold">Техническая<br>Поддержка</h1>
+                            <p>
+                                <a href="#"><img class="social" src="{{ asset('v2/img/icon-telegram.svg') }}"></a>
+                                <a href="#"><img class="social" src="{{ asset('v2/img/icon-whatsapp.svg') }}"></a>
+                            </p>
+                        </div>
+                        <div class="finish-img"><img src="{{ asset('v2/img/plastic-base.png') }}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
 </x-global-layout>

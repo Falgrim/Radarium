@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Enum\UserTariffStatusEnum;
 use App\Services\Tariff;
 use App\Traits\ModelTableName;
+use Carbon\Carbon;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -97,19 +98,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getLeftContacts(): array
     {
         $contacts = $this->hasMany(UserTariff::class)
-            ->selectRaw('SUM(count_contacts_left) as count_contacts_left, SUM(count_contacts) as count_contacts')
+            ->selectRaw('SUM(count_contacts_left) as count_contacts_left, SUM(count_contacts) as count_contacts, MAX(date_end) as date_end')
             ->where('status', UserTariffStatusEnum::Active)
             ->first();
 
         if (!is_null($contacts) AND !is_null($contacts->count_contacts_left)) {
+            $daysDiff = ceil($contacts->date_end->diffInDays(Carbon::now())); // Разница будет в минусе
+            $daysDiff = $daysDiff < 0 ? abs($daysDiff) : 0;
+
             return [
                 'count_contacts_left' => $contacts->count_contacts_left,
                 'count_contacts' => $contacts->count_contacts,
+                'days_left' => $daysDiff,
             ];
         } else {
             return [
                 'count_contacts_left' => $this->free_contacts,
                 'count_contacts' => self::FREE_CONTACTS,
+                'days_left' => $this->free_contacts ? 30 : 0,
             ];
         }
     }

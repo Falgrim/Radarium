@@ -2,6 +2,7 @@
 
 namespace App\View\Components;
 
+use App\Infrastructures\Facades\Repositories;
 use Illuminate\View\Component;
 use Illuminate\View\View;
 
@@ -12,6 +13,9 @@ class GlobalLayout extends Component
      */
     public function render(): View
     {
-        return view('layouts.global');
+        $userRoleList = Repositories::userRole()->getList();
+        return view('layouts.global', [
+            'userRoleList' => $userRoleList,
+        ]);
     }
 }
