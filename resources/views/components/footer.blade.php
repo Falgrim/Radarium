@@ -10,7 +10,7 @@
                         <li class="nav-item"><a class="nav-link active" href="#">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Почему Radarium</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Тарифы</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Авторы</a></li>
+                        <!--<li class="nav-item"><a class="nav-link" href="#">Авторы</a></li>-->
                         <li class="nav-item"><a class="nav-link" href="#">Как работает?</a></li>
                     </ul>
                     <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">

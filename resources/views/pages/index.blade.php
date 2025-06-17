@@ -221,6 +221,7 @@
                 </div>
             </div>
         </div>
+        <!--
         <div class="container">
             <div id="authors" class="section-heading">
                 <h2>Авторы</h2>
@@ -242,6 +243,7 @@
                 </div>
             </div>
         </div>
+        -->
         <div class="container">
             <div id="faq2" class="section-heading">
                 <h2>Ответы на Вопросы</h2>

@@ -34,7 +34,7 @@
                         <li class="nav-item"><a class="nav-link active" href="{{ route('index') }}#industries">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#why">Почему Radarium</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#buy_tariff">Тарифы</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#authors">Авторы</a></li>
+                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#authors">Авторы</a></li>-->
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#faq">Как работает?</a></li>
                     </ul>
                     <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
