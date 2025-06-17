@@ -37,7 +37,7 @@
                     <div class="search-action search-item">
                         <div class="row">
                             <div class="col-lg-12 col-xl-6">
-                                <select class="form-select" name="speciality_id[]" id="speciality_id" multiple>
+                                <select class="form-select select-search-multiple" name="speciality_id[]" id="speciality_id" multiple>
                                     <option value="">Выберите специализацию</option>
                                     @foreach ($specialitiesList as $speciality)
                                         <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
@@ -81,6 +81,16 @@
 @pushOnce('scripts')
     <script type="module">
         $(document).ready(function() {
+            $('.select-search-multiple').select2({
+                theme: "bootstrap-5",
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: "select2--small",
+                placeholder: 'Выберите...',
+                allowClear: true,
+                language: 'ru',
+                closeOnSelect: false
+            });
+
             $('#key_word').on('keypress', function(e) {
                 if (e.which === 13) {
                     e.preventDefault();

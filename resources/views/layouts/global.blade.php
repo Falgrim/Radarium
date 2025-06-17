@@ -11,8 +11,11 @@
     <link rel="stylesheet" href="{{ asset('v2/css/Mont.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.3">
+    <link rel="stylesheet" href="{{ asset('css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/select2-bootstrap-5-theme.min.css') }}">
 
     <script type="application/javascript" src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
+    <script type="application/javascript" src="{{ asset('js/select2.full.min.js') }}"></script>
 </head>
     <body>
         <x-header />
