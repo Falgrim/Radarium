@@ -26,7 +26,7 @@
                     <div class="search-info search-item">
                         <h4>Найдено<span>{{ $authors->total() }}</span></h4>
                         <div class="form-check">
-                            <input class="form-check-input" name="open_contacts" type="checkbox" id="formCheck-5" @checked(old('open_contacts', $request->open_contacts))>
+                            <input class="form-check-input" name="open_contacts" value="1" type="checkbox" id="formCheck-5" @checked(old('open_contacts', $request->open_contacts))>
                             <label class="form-check-label" for="formCheck-5">Показать только открытые</label>
                         </div>
                         <hr>
@@ -116,9 +116,8 @@
         });
 
         function dynamicButtonRemove() {
-            $('.dynamic-button').on('click', function() {
-                $(this).next('input').remove();
-                $(this).remove();
+            $(document).on("click", ".dynamic-button", function() {
+                $(this).closest('.list-group-item').remove();
             });
         }
     </script>

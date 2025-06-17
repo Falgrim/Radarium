@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ asset('v2/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Mont.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.2">
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.3">
 
     <script type="application/javascript" src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
 </head>
