@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="{{ asset('v2/fonts/fontawesome5-overrides.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.3">
+    <!--строка загрузки favcion добавлена А. Головин 1806 -->
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+
 </head>
 
 <body>
@@ -58,7 +61,7 @@
                         <li class="nav-item"><a class="nav-link active" href="{{ route('index') }}#industries">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#why">Почему Radarium</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#buy_tariff">Тарифы</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#authors">Авторы</a></li>
+                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#authors">Авторы</a></li>-->
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#faq">Как работает?</a></li>
                     </ul>
                     <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
