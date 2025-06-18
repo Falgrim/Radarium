@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use Symfony\Component\Mailer\Exception\UnexpectedResponseException;
 
 class RegisteredUserController extends Controller
 {
@@ -62,7 +63,11 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        event(new Registered($user));
+        try {
+            event(new Registered($user));
+        } catch (UnexpectedResponseException $e) {
+            // Игнорим ошибку отправки письма, если введенная почта с проблемой валидации
+        }
 
         Auth::login($user);
 
