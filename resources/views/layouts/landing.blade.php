@@ -7,17 +7,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Radarium') }}</title>
 
-
     <link rel="stylesheet" href="{{ asset('v2/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Mont.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/fonts/fontawesome-all.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/fonts/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/fonts/fontawesome5-overrides.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.3">
-    <!--строка загрузки favcion добавлена А. Головин 1806 -->
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.4">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
-
 </head>
 
 <body>

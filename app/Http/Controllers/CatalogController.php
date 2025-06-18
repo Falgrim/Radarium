@@ -216,7 +216,10 @@ class CatalogController extends Controller
         $validated = $validator->validateWithBag('specialist');
 
         $author = ApiPostUser::where('id', $validated['id'])
-            ->with(['specialists', 'postsComplete', 'specialistReviews']);
+            ->with(['specialists', 'postsComplete', 'specialistReviews'])
+            ->withAvg(['specialistReviews' => function ($query) {
+                $query->where('rating', '>', 0);
+            }], 'rating');
 
         $author = $author->where(function (Builder $query) {
             $query->whereNotNull('phone')

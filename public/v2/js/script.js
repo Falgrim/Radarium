@@ -13,3 +13,11 @@ for (let listTag of listTags) {
         listTag.classList.add('d-none');
     });
 }
+
+const rateStars = document.querySelectorAll('.rate-stars .star');
+
+for (let star of rateStars) {
+    star.addEventListener('click', ()=> {
+        star.classList.toggle('yes');
+    });
+}

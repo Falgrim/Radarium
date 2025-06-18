@@ -38,7 +38,7 @@ class ModerationAlertController extends Controller
 
         return response()->json([
             'code' => 200,
-            'message' => 'Ващ запрос успешно отправлен.'
+            'message' => 'Ваш запрос успешно отправлен.'
         ], 200);
     }
 }
