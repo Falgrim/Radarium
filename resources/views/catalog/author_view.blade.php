@@ -125,7 +125,7 @@
                                 <div class="cards-item">
                                     <h4>Профессиональные навыки</h4>
                                     <p class="pro-tags">
-                                        <span class="pro-tag">{{ implode('</span><span class="pro-tag">', $author->specialistData()['soft_experience']) }}</span>
+                                        <span class="pro-tag">{!! implode('</span><span class="pro-tag">', $author->specialistData()['soft_experience']) !!}</span>
                                     </p>
                                 </div>
                             </article>
