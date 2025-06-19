@@ -43,7 +43,7 @@
                     <div class="col-lg-4 col-xxl-3">
                         <div class="pers-box">
                             <figure class="figure pers">
-                                <img class="img-fluid figure-img" src="{{asset('images/avatar.jpg')}}">
+                                <img class="img-fluid figure-img" src="{{ $author->getPhoto() }}">
                                 <figcaption class="figure-caption">{{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}</figcaption>
                                 <button class="btn btn-trans btn-link likes" type="button"><img src="{{ asset('v2/img/icon-heart-btn.svg') }}"></button>
                             </figure>
