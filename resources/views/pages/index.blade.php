@@ -78,7 +78,7 @@
                     <p>Специалисты и&nbsp;подрядчики в&nbsp;области проектирования</p><span class="note">в разработке</span>
                 </div>
                 <div class="tricols-item depo-plus">
-                    <button class="btn" type="button" data-bs-target="#rd-industry"><span class="plus-circle">+</span></button>
+                    <button class="btn" type="button" onclick="window.open('https://t.me/radarium_tech', '_blank')"><span class="plus-circle">+</span></button>
                     <p>Нужна другая отрасль</p>
                 </div>
             </div>
@@ -111,9 +111,9 @@
                             </li>
                         </ul>
                         <div class="tab-content">
-                            <div class="tab-pane active pane-01" role="tabpanel" id="tab-1"><img class="img-fluid" width="1501" height="1112" src="{{ asset('v2/img/screen-search.png') }}"></div>
-                            <div class="tab-pane pane-02" role="tabpanel" id="tab-2"><img class="img-fluid" width="1501" height="1089" src="{{ asset('v2/img/screen-db-pers.png') }}"></div>
-                            <div class="tab-pane pane-03" role="tabpanel" id="tab-3"><img class="img-fluid" width="1238" height="976" src="{{ asset('v2/img/screen-card-pers.png') }}"></div>
+                            <div class="tab-pane active" role="tabpanel" id="tab-1"><img class="img-fluid" width="1501" height="1112" src="{{ asset('v2/img/screen-search.png') }}"></div>
+                            <div class="tab-pane" role="tabpanel" id="tab-2"><img class="img-fluid" width="1501" height="1089" src="{{ asset('v2/img/screen-db-pers.png') }}"></div>
+                            <div class="tab-pane" role="tabpanel" id="tab-3"><img class="img-fluid" width="1238" height="976" src="{{ asset('v2/img/screen-card-pers.png') }}"></div>
                         </div>
                     </div>
                 </div>
@@ -304,7 +304,7 @@
                     <div class="box-simple box-faq">
                         <h2 class="text-center title-50semibold">Остались<br>Вопросы?</h2>
                         <p>Если у вас остались вопросы — не&nbsp;стесняйтесь обращаться. Команда поддержки быстро даст ответ и&nbsp;поможет с любым этапом.</p>
-                        <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-question">Нужна консультация</button>
+                        <button class="btn btn-color btn-accent" type="button" onclick="window.open('https://t.me/radarium_tech', '_blank')">Нужна консультация</button>
                         <img class="faqman" src="{{ asset('v2/img/faqman.png') }}">
                     </div>
                 </div>
