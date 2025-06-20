@@ -26,7 +26,7 @@
                 <!-- Phone -->
                 <div class="mb-3 col-12 col-lg-4 col-md-6">
                     <x-input-label for="phone" :value="__('Телефон')" />
-                    <x-text-input id="phone" class="block mt-1 w-full" placeholder="+79991112233" type="text" name="phone" :value="old('phone')" required autofocus autocomplete="phone" />
+                    <x-text-input id="phone" class="block mt-1 w-full input_tel" placeholder="+7 (916) 111-22-33" type="text" name="phone" :value="old('phone')" required autofocus autocomplete="phone" />
                     <x-input-error :messages="$errors->get('phone')" class="mt-2" />
                 </div>
 

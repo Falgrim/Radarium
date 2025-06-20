@@ -46,7 +46,7 @@
                     @csrf
                     <div class="registration-form">
                         <input class="form-control" type="text" name="name" placeholder="ФИО" required="required">
-                        <input class="form-control" type="text" name="phone" placeholder="+79991112233" required="required">
+                        <input class="form-control input_tel" type="text" name="phone" placeholder="+7 (916) 111-22-33" required="required">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="from_company" value="1" id="formCheck-2">
                             <label class="form-check-label" for="formCheck-2">Представляю компанию</label>
@@ -87,7 +87,7 @@
                     @csrf
                     <div class="registration-form">
                         <input class="form-control" type="text" name="name" placeholder="ФИО" required="required">
-                        <input class="form-control" type="text" name="phone" placeholder="+79991112233" required="required">
+                        <input class="form-control input_tel" type="text" name="phone" placeholder="+7 (916) 111-22-33" required="required">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="from_company" value="1" id="formCheck-2">
                             <label class="form-check-label" for="formCheck-2">Представляю компанию</label>

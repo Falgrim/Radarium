@@ -9,7 +9,7 @@
     <td class="def-cell-01">
         <figure class="figure pers">
             <img class="img-fluid figure-img" src="{{ $author->getPhoto() }}">
-            <figcaption class="figure-caption">{{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}</figcaption>
+            <figcaption class="figure-caption" hidden="">{{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}</figcaption>
         </figure>
     </td>
     <td class="def-cell-02">

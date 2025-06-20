@@ -44,7 +44,7 @@
                         <div class="pers-box">
                             <figure class="figure pers">
                                 <img class="img-fluid figure-img" src="{{ $author->getPhoto() }}">
-                                <figcaption class="figure-caption">{{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}</figcaption>
+                                <figcaption class="figure-caption" hidden="">{{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}</figcaption>
                                 <button class="btn btn-trans btn-link likes" type="button"><img src="{{ asset('v2/img/icon-heart-btn.svg') }}"></button>
                             </figure>
                             <div class="pers-info">
@@ -74,7 +74,7 @@
                             @endif
 
                             <div class="pers-comment">
-                                <h5>Мои комментарии</h5><button class="btn btn-trans w-100" type="button">Оставить комментарий</button>
+                                <h5>Мои комментарии</h5><button class="btn w-100 btn-trans" type="button">Оставить комментарий</button>
                                 <p><span>02.12.2025</span>Делает только многоэтажку, не работаем</p>
                                 <p><span>02.12.2025</span>Перезвонить через месяц</p>
                                 <p><span>02.12.2025</span>Позвонить когда начнем проект по перестройке помещения( у него есть бригада)</p>
@@ -108,7 +108,7 @@
                                     </svg>
                                 </p>
                             </div>
-                            <button class="btn btn-trans w-100 moderation-alert" type="button" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}">Сообщить об ошибке</button>
+                            <button class="btn w-100 btn-trans moderation-alert" type="button" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}">Сообщить об ошибке</button>
                         </div>
                     </div>
                     <div class="col">
@@ -194,7 +194,7 @@
                                         </svg></a>
                                     <div class="collapse show show" id="collapse-3">
                                         <div class="rd-card-body">
-                                            <button class="btn btn-trans mb-4" type="button"  data-bs-toggle="modal" data-bs-target="#reviewModal">Оставить публичный отзыв</button>
+                                            <button class="btn mb-4 btn-trans" type="button"  data-bs-toggle="modal" data-bs-target="#reviewModal">Оставить публичный отзыв</button>
 
                                             @if($reviews->count())
                                                 @foreach ($reviews as $review)

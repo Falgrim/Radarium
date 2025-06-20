@@ -11,10 +11,13 @@
     <link rel="stylesheet" href="{{ asset('v2/css/Mont.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/fonts/fontawesome-all.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/fonts/font-awesome.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/fonts/fontawesome5-overrides.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('v2/css/slimselect.css') }}?v=1.5">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.4">
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.5">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+
+    <script type="application/javascript" src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
+    <script type="application/javascript" src="{{ asset('v2/js/jquery.mask.min.js') }}"></script>
 </head>
 
 <body>
@@ -33,9 +36,9 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item"><a class="nav-link active" href="{{ route('index') }}#industries">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#why">Почему Radarium</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#buy_tariff">Тарифы</a></li>
-                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#authors">Авторы</a></li>-->
-                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#faq">Как работает?</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#tarifs">Тарифы</a></li>
+                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>-->
+                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                     </ul>
                     <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
                         <img src="{{ asset('v2/img/icon-profile.svg') }}"><span>Войти</span>
@@ -57,9 +60,9 @@
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item"><a class="nav-link active" href="{{ route('index') }}#industries">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#why">Почему Radarium</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#buy_tariff">Тарифы</a></li>
-                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#authors">Авторы</a></li>-->
-                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#faq">Как работает?</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#tarifs">Тарифы</a></li>
+                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>-->
+                        <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                     </ul>
                     <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
                         <img src="{{ asset('v2/img/icon-profile.svg') }}"><span>Войти</span>
@@ -73,7 +76,8 @@
 <x-modals :$userRoleList />
 
 <script src="{{ asset('v2/bootstrap/js/bootstrap.min.js') }}"></script>
-<script src="{{ asset('v2/bootstrap/js/script.js') }}"></script>
+<script src="{{ asset('v2/js/slimselect.min.js') }}"></script>
+<script src="{{ asset('v2/js/script.js') }}"></script>
 
 @stack('scripts')
 

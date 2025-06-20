@@ -9,13 +9,15 @@
 
     <link rel="stylesheet" href="{{ asset('v2/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/Mont.css') }}">
+    <link rel="stylesheet" href="{{ asset('v2/css/slimselect.css') }}?v=1.5">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.4">
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.5">
     <link rel="stylesheet" href="{{ asset('css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/select2-bootstrap-5-theme.min.css') }}">
 
     <script type="application/javascript" src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
     <script type="application/javascript" src="{{ asset('js/select2.full.min.js') }}"></script>
+    <script type="application/javascript" src="{{ asset('v2/js/jquery.mask.min.js') }}"></script>
 </head>
     <body>
         <x-header />
@@ -27,6 +29,7 @@
         <x-modals :$userRoleList />
 
         <script src="{{ asset('v2/bootstrap/js/bootstrap.min.js') }}"></script>
+        <script src="{{ asset('v2/js/slimselect.min.js') }}"></script>
         <script src="{{ asset('v2/js/script.js') }}"></script>
 
         @stack('scripts')

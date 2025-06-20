@@ -21,3 +21,15 @@ for (let star of rateStars) {
         star.classList.toggle('yes');
     });
 }
+
+new SlimSelect({
+    //select: '#selectElement'
+    select: document.querySelector('#selectElement'),
+    settings: {
+        placeholderText: 'Выберите специализацию'
+    }
+});
+
+$(document).ready(function () {
+    $('.input_tel').mask('+7 (000) 000-00-00');
+});

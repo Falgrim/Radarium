@@ -20,12 +20,12 @@
                     <table class="table table-borderless tbl-default">
                         <thead>
                         <tr>
-                            <th>&nbsp;</th>
-                            <th>Открытые данные</th>
-                            <th>Специализация</th>
-                            <th>Профильные навыки</th>
-                            <th>Последнее сообщение</th>
-                            <th>Последний&nbsp;комментарий</th>
+                            <th class="def-cell-01">&nbsp;</th>
+                            <th class="def-cell-02">Открытые данные</th>
+                            <th class="def-cell-03">Специализация</th>
+                            <th class="def-cell-04">Профильные навыки</th>
+                            <th class="def-cell-05">Последнее сообщение</th>
+                            <th class="def-cell-06">Последний комментарий</th>
                         </tr>
                         </thead>
                         <tbody>

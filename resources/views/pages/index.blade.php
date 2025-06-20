@@ -5,8 +5,8 @@
                 <div>
                     <h1>Сервис для поиска специалистов и подрядчиков с помощью ИИ</h1>
                     <p class="rowline">
-                        <button class="btn rowline-item btn-trans btn-light" type="button"><br># Проектирование<br><br></button>
-                        <button class="btn rowline-item btn-trans btn-light" type="button"><br># Строительство МСК<br><br></button>
+                        <a class="btn rowline-item btn-trans btn-light" role="button" href="#industries"><br># Проектирование<br><br></a>
+                        <a class="btn rowline-item btn-trans btn-light" role="button" href="#industries"><br># Строительство МСК<br><br></a>
                     </p>
                 </div>
                 <div>
@@ -45,7 +45,7 @@
                         <p class="line-number"><span>1</span>Выберите специализацию и&nbsp;нужные&nbsp;навыки</p>
                         <p class="line-number"><span>2</span>Смотрите список подходящих специалистов</p>
                         <p class="line-number"><span>3</span>Связывайтесь с теми, кто подходит лучше&nbsp;всего</p>
-                        <button class="btn btn-color btn-grey plastic" type="button" data-bs-toggle="modal" data-bs-target="#rd-public">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
+                        <button class="btn btn-color btn-grey plastic" type="button" data-bs-target="#rd-public">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
                     </div>
                     <div class="drive-col--item dc-divider"><span></span></div>
                     <div class="drive-col--item">
@@ -78,53 +78,42 @@
                     <p>Специалисты и&nbsp;подрядчики в&nbsp;области проектирования</p><span class="note">в разработке</span>
                 </div>
                 <div class="tricols-item depo-plus">
-                    <button class="btn" type="button" data-bs-toggle="modal" data-bs-target="#rd-industry"><span class="plus-circle">+</span></button>
+                    <button class="btn" type="button" data-bs-target="#rd-industry"><span class="plus-circle">+</span></button>
                     <p>Нужна другая отрасль</p>
                 </div>
             </div>
         </div>
         <div class="container">
             <div id="faq" class="section-heading">
-                <h2>Как работает Radarium?</h2>
+                <h2 id="howto">Как работает Radarium?</h2>
             </div>
             <div class="row section-mb">
-                <div class="col-12 col-xl-8">
-                    <div class="carousel slide pds" data-bs-ride="false" id="carousel-1">
-                        <div class="carousel-inner">
-                            <div class="carousel-item active"><img class="w-100 d-block" src="{{ asset('v2/img/image001-carousel-1.jpg') }}"></div>
-                            <div class="carousel-item"><img class="w-100 d-block" src="{{ asset('v2/img/image001-carousel-1.jpg') }}"></div>
-                            <div class="carousel-item"><img class="w-100 d-block" src="{{ asset('v2/img/image001-carousel-1.jpg') }}"></div>
-                        </div>
-                        <div>
-                            <a class="carousel-control-prev" href="#carousel-1" role="button" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon"><i class="fas fa-chevron-left"></i></span>
-                                <span class="visually-hidden">Previous</span>
-                            </a>
-                            <a class="carousel-control-next" href="#carousel-1" role="button" data-bs-slide="next">
-                                <span class="carousel-control-next-icon"><i class="fas fa-chevron-right"></i></span>
-                                <span class="visually-hidden">Next</span>
-                            </a>
-                        </div>
-                        <div class="carousel-indicators">
-                            <button type="button" data-bs-target="#carousel-1" data-bs-slide-to="0" class="active"></button>
-                            <button type="button" data-bs-target="#carousel-1" data-bs-slide-to="1"></button>
-                            <button type="button" data-bs-target="#carousel-1" data-bs-slide-to="2"></button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-xl-4">
-                    <div class="box-incol">
-                        <div class="box-incol--item box-blue">
-                            <h4>Выберите специализацию и&nbsp;настройте фильтры</h4>
-                            <p>Можно выбрать одну или несколько. Поиск покажет всех, у кого встречается хотя бы одна.</p>
-                        </div>
-                        <div class="box-incol--item">
-                            <h4>Изучите подборку, найдите интересующих Вас кандидатов</h4>
-                            <p>В подборке доступны основные данные, ключевые теги, а также фрагмент последнего сообщения.</p>
-                        </div>
-                        <div class="box-incol--item">
-                            <h4>Откройте карточку специалиста</h4>
-                            <p>В карточке специалиста представлены данные о&nbsp;специалисте и&nbsp;история объявлений. Свяжитесь со специалистами доступными способами.</p>
+                <div class="col">
+                    <div class="tabs-box">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item box-simple" role="presentation">
+                                <a class="nav-link active" role="tab" data-bs-toggle="tab" href="#tab-1">
+                                    <h4>Выберите&nbsp; специализацию и настройте фильтры</h4>
+                                    <p>Можно выбрать одну или несколько. Поиск покажет всех, у&nbsp;кого встречается хотя бы&nbsp;одна.</p>
+                                </a>
+                            </li>
+                            <li class="nav-item box-simple" role="presentation">
+                                <a class="nav-link" role="tab" data-bs-toggle="tab" href="#tab-2">
+                                    <h4>Изучите подборку, найдите интересующих Вас кандидатов</h4>
+                                    <p>В подборке доступны основные данные, ключевые теги, а также фрагмент последнего сообщения.</p>
+                                </a>
+                            </li>
+                            <li class="nav-item box-simple" role="presentation">
+                                <a class="nav-link" role="tab" data-bs-toggle="tab" href="#tab-3">
+                                    <h4>Откройте карточку специалиста</h4>
+                                    <p>В карточке специалиста представлены данные о специалисте и история объявлений. Свяжитесь со специалистами доступными способами.</p>
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active pane-01" role="tabpanel" id="tab-1"><img class="img-fluid" width="1501" height="1112" src="{{ asset('v2/img/screen-search.png') }}"></div>
+                            <div class="tab-pane pane-02" role="tabpanel" id="tab-2"><img class="img-fluid" width="1501" height="1089" src="{{ asset('v2/img/screen-db-pers.png') }}"></div>
+                            <div class="tab-pane pane-03" role="tabpanel" id="tab-3"><img class="img-fluid" width="1238" height="976" src="{{ asset('v2/img/screen-card-pers.png') }}"></div>
                         </div>
                     </div>
                 </div>
@@ -132,7 +121,7 @@
         </div>
         <div class="container">
             <div class="section-heading">
-                <h2>Почему Radarium уникален?</h2>
+                <h2 id="why">Почему Radarium уникален?</h2>
             </div>
             <div class="row section-mb">
                 <div class="col-12 col-xl-8 garden">
@@ -188,7 +177,7 @@
         </div>
         <div class="container">
             <div id="buy_tariff" class="section-heading">
-                <h2>Тарифы</h2>
+                <h2 id="tarifs">Тарифы</h2>
             </div>
             <div class="box-tarif">
                 @foreach($tariffs as $tariff)
@@ -224,14 +213,14 @@
         <!--
         <div class="container">
             <div id="authors" class="section-heading">
-                <h2>Авторы</h2>
+                <h2 id="author">Авторы</h2>
             </div>
             <div class="row section-mb">
                 <div class="col-12 col-lg-5">
                     <figure class="figure h-100"><img class="figure-img" src="{{ asset('v2/img/author1.jpg') }}"></figure>
                 </div>
                 <div class="col-12 col-lg-7">
-                    <div class="box-simple h-100">
+                    <div class="h-100 box-simple">
                         <h3 class="txt-28semibold">Немного о наших успехах</h3>
                         <p>Идея разработки сервиса принадлежит ООО “БИМПРО”, действующему&nbsp;лидеру и интегратору в области ТИМ (технологий информационного моделирования) и&nbsp;проектирования.</p>
                         <p>ООО “БИМПРО” является консультантом МИНСТРОЙ РФ и НОТИМ по&nbsp;<br>вопросам аналитики в&nbsp;области информационного моделирования</p>
