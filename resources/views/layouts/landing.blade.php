@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="{{ asset('v2/fonts/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/slimselect.css') }}?v=1.5">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.5">
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.6">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 
     <script type="application/javascript" src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>
@@ -37,7 +37,7 @@
                         <li class="nav-item"><a class="nav-link active" href="{{ route('index') }}#industries">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#why">Почему Radarium</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#tarifs">Тарифы</a></li>
-                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>-->
+                        <li class="nav-item" hidden=""><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                     </ul>
                     <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
@@ -61,7 +61,7 @@
                         <li class="nav-item"><a class="nav-link active" href="{{ route('index') }}#industries">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#why">Почему Radarium</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#tarifs">Тарифы</a></li>
-                        <!--<li class="nav-item"><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>-->
+                        <li class="nav-item" hidden=""><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                     </ul>
                     <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">

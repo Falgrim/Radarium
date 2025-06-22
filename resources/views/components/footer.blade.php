@@ -5,7 +5,7 @@
                 <a class="navbar-brand d-flex align-items-center" href="{{ route('index') }}">
                     <img src="{{ asset('v2/img/logo-radarium-w.svg') }}">
                 </a>
-                <div class="collapse navbar-collapse">
+                <div class="collapse navbar-collapse" hidden="">
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item"><a class="nav-link active" href="#">Отрасли</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Почему Radarium</a></li>

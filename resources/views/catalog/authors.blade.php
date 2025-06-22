@@ -41,6 +41,7 @@
         </div>
         <div class="container">
             <div class="pagination-box">
+                <h5 hidden="">Показать&nbsp;еще 20&nbsp;соискателей</h5>
                 <nav class="bg-transparent border-0 shadow-none">
                     {{ $authors->links() }}
                 </nav>

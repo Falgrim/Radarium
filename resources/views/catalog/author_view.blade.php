@@ -45,7 +45,7 @@
                             <figure class="figure pers">
                                 <img class="img-fluid figure-img" src="{{ $author->getPhoto() }}">
                                 <figcaption class="figure-caption" hidden="">{{ is_null($author->specialist_reviews_avg_rating) ? 0 : number_format($author->specialist_reviews_avg_rating, 1, '.', ' ') }}</figcaption>
-                                <button class="btn btn-trans btn-link likes" type="button"><img src="{{ asset('v2/img/icon-heart-btn.svg') }}"></button>
+                                <button class="btn btn-trans btn-link likes" type="button" hidden=""><img src="{{ asset('v2/img/icon-heart-btn.svg') }}"></button>
                             </figure>
                             <div class="pers-info">
                                 <p>
@@ -64,25 +64,24 @@
                                 </p>
                                 <p>
                                     @if($author->phone)
-                                        <span>{{ trim($author->phone) }}</span>
+                                        <span><strong><strong>{{ trim($author->phone) }}</strong></strong></span>
                                     @endif
                                 </p>
                             </div>
 
-                            @if($author->username)
-                            <button class="btn btn-color btn-accent" type="button" onclick="window.location.href='https://t.me/{{ $author->username }}'">Написать в Telegram</button>
-                            @endif
-
-                            <div class="pers-comment">
+                            <div class="pers-comment" hidden="">
                                 <h5>Мои комментарии</h5><button class="btn w-100 btn-trans" type="button">Оставить комментарий</button>
                                 <p><span>02.12.2025</span>Делает только многоэтажку, не работаем</p>
                                 <p><span>02.12.2025</span>Перезвонить через месяц</p>
                                 <p><span>02.12.2025</span>Позвонить когда начнем проект по перестройке помещения( у него есть бригада)</p>
                             </div>
 
+                            @if($author->username)
+                                <button class="btn btn-color btn-accent" type="button" onclick="window.location.href='https://t.me/{{ $author->username }}'">Написать в Telegram</button>
+                            @endif
+
                             <div class="rate-box">
-                                <h5
-                                >Моя оценка
+                                <h5>Моя оценка
                                     <span><span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -32 576 576" width="1em" height="1em" fill="currentColor">
                                                 <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
                                                 <path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
@@ -140,16 +139,16 @@
                                     @endif
                                 </div>
                             </article>
-                            <article>
+                            <article hidden="">
                                 <div class="show-content">
-                                    <a class="btn show-me" data-bs-toggle="collapse" aria-expanded="true" aria-controls="collapse-1" href="#collapse-1" role="button">Полезные данные<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="chevron-up">
+                                    <a class="btn show-me" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapse-1" href="#collapse-1" role="button">Полезные данные<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="chevron-up">
                                             <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
                                             <path d="M233.4 105.4c12.5-12.5 32.8-12.5 45.3 0l192 192c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L256 173.3 86.6 342.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l192-192z"></path>
                                         </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="chevron-down">
                                             <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
                                             <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"></path>
                                         </svg></a>
-                                    <div class="collapse show" id="collapse-1">
+                                    <div class="collapse" id="collapse-1">
                                         <div class="rd-card-body">
                                             <p>Сертифицированный специалист в области BIM (Building Information Modeling) с опытом внедрения и сопровождения BIM-процессов на всех стадиях жизненного цикла объекта. Владение Revit, Navisworks, Dynamo, AutoCAD, Civil 3D, Archicad. Участвовал в крупных инфраструктурных и гражданских проектах. Есть опыт координации многодисциплинарных моделей, работы с clash detection, а также подготовки документации в соответствии с стандартами (ГОСТ, ISO 19650).</p>
                                         </div>
@@ -158,7 +157,7 @@
                             </article>
                             <article>
                                 <div class="show-content">
-                                    <a class="btn show-me" data-bs-toggle="collapse" aria-expanded="true" aria-controls="collapse-2" href="#collapse-2" role="button">История сообщений<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="chevron-up">
+                                    <a class="btn show-me" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapse-2" href="#collapse-2" role="button">История сообщений<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="chevron-up">
                                             <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc. -->
                                             <path d="M233.4 105.4c12.5-12.5 32.8-12.5 45.3 0l192 192c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L256 173.3 86.6 342.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l192-192z"></path>
                                         </svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" class="chevron-down">
@@ -166,7 +165,7 @@
                                             <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"></path>
                                         </svg>
                                     </a>
-                                    <div class="collapse show" id="collapse-2">
+                                    <div class="collapse" id="collapse-2">
                                         <div class="rd-card-body">
                                             @if($author->posts->count())
                                                 @foreach ($author->posts as $post)
