@@ -15,9 +15,9 @@
     <td class="def-cell-02">
         @if($tariffAccess OR $checkOpenContact)
             @if($checkOpenContact)
-        <div class="show-room open" onclick="window.location.href='{{ route('catalog.specialist.view', ['id' => $author->id]) }}'">
+        <div class="show-room open" onclick="window.open('{{ route('catalog.specialist.view', ['id' => $author->id]) }}', '_blank');">
             @else
-        <div class="show-room" onclick="window.location.href='{{ route('catalog.specialist.view', ['id' => $author->id]) }}'">
+        <div class="show-room" onclick="window.open('{{ route('catalog.specialist.view', ['id' => $author->id]) }}', '_blank'); setTimeout(() => location.reload(), 1000);">
             @endif
         @else
             <div class="show-room" data-bs-toggle="modal" data-bs-target="#loginAlert">
