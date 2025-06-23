@@ -27,7 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/builders/builder/{id}', [BuilderController::class, 'builderStoreReview'])->name('catalog.builder.store');
     Route::post('/builders/builder/{id}/review', [BuilderController::class, 'builderEditReview'])->name('catalog.builder.edit_review');
 
-    Route::get('/profile/subscribe', [SubscribeController::class, 'main'])->name('profile.subscribe');
+    //Route::get('/profile/subscribe', [SubscribeController::class, 'main'])->name('profile.subscribe');
 });
 
 Route::get('/dashboard', function () {
