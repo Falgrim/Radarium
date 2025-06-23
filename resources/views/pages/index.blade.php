@@ -111,9 +111,9 @@
                             </li>
                         </ul>
                         <div class="tab-content">
-                            <div class="tab-pane active" role="tabpanel" id="tab-1"><img class="img-fluid" width="1501" height="1112" src="{{ asset('v2/img/screen-search.png') }}"></div>
-                            <div class="tab-pane" role="tabpanel" id="tab-2"><img class="img-fluid" width="1501" height="1089" src="{{ asset('v2/img/screen-db-pers.png') }}"></div>
-                            <div class="tab-pane" role="tabpanel" id="tab-3"><img class="img-fluid" width="1238" height="976" src="{{ asset('v2/img/screen-card-pers.png') }}"></div>
+                            <div class="tab-pane active pane-01" role="tabpanel" id="tab-1"><img class="img-fluid" width="1501" height="1112" src="{{ asset('v2/img/image1.png') }}"></div>
+                            <div class="tab-pane pane-02" role="tabpanel" id="tab-2"><img class="img-fluid" width="1501" height="1112" src="{{ asset('v2/img/image2.png') }}"></div>
+                            <div class="tab-pane pane-03" role="tabpanel" id="tab-3"><img class="img-fluid" width="1501" height="1112" src="{{ asset('v2/img/image3.png') }}"></div>
                         </div>
                     </div>
                 </div>

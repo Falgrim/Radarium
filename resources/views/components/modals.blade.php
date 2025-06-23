@@ -155,8 +155,14 @@
             </div>
             <div class="modal-body">
                 <form>
-                    <div class="registration-form"><input class="form-control" type="text" placeholder="ФИО" required="required"><input class="form-control" type="text" placeholder="Телефон" required="required"><textarea class="form-control" placeholder="Ваш отзыв"></textarea>
-                        <div class="form-check"><input class="form-check-input" type="checkbox" id="formCheck-4"><label class="form-check-label" for="formCheck-4">Оставить отзыв анонимно</label></div>
+                    <div class="registration-form">
+                        <input class="form-control" type="text" placeholder="ФИО" required="required">
+                        <input class="form-control" type="text" placeholder="Телефон" required="required">
+                        <textarea class="form-control" placeholder="Ваш отзыв"></textarea>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="formCheck-4">
+                            <label class="form-check-label" for="formCheck-4">Оставить отзыв анонимно</label>
+                        </div>
                         <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Отправить</button></div>
                     </div>
                 </form>
