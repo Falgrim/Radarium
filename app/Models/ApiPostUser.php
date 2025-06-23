@@ -249,7 +249,7 @@ class ApiPostUser extends Model
 
     public static function prepareLastPostText(string $post, bool $checkOpenContact)
     {
-        $post = Str::limit($post, 50);
+        $post = Str::limit($post, 250);
         if (!$checkOpenContact) {
             $post = preg_replace(
                 '/(?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s\-()]*\d{2}[\s\-()]*\d{2}/',
