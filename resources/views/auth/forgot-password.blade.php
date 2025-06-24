@@ -1,30 +1,54 @@
 <x-global-layout>
-    <div class="bg-body-tertiary">
-        <div class="container py-3">
-            <h2 class="text-body-emphasis">Восстановление пароля</h2>
-            <div class="mb-4 text-sm text-gray-600">
-                {{ __('Забыли ваш пароль? Укажите ваш почтовы адрес, на который регистрировали аккаунт и мы вышлем вам ссылку для сброса.') }}
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('index') }}"><span>Главная</span></a></li>
+                        <li class="breadcrumb-item active"><span>Восстановление пароля</span></li>
+                    </ol>
+                </div>
             </div>
-
-            <!-- Session Status -->
-            <x-auth-session-status class="mb-4" :status="session('status')" />
-
-            <form method="POST" action="{{ route('password.email') }}">
-                @csrf
-
-                <!-- Email Address -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="email" :value="__('Почта')" />
-                    <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                </div>
-
-                <div class="flex items-center justify-end mt-4">
-                    <x-primary-button>
-                        {{ __('Отправить') }}
-                    </x-primary-button>
-                </div>
-            </form>
         </div>
-    </div>
+        <div class="container pers-account">
+            <div class="row">
+                <div class="col">
+                    <div class="div2cols">
+                        <div class="box-simple">
+                            <h3 class="box-heading c-blue">{{ __('Восстановление пароля') }}</h3>
+
+                            <p>{{ __('Забыли ваш пароль? Укажите ваш почтовы адрес, на который регистрировали аккаунт и мы вышлем вам ссылку для сброса.') }}</p>
+
+                            <!-- Session Status -->
+                            <x-auth-session-status class="mb-4" :status="session('status')" />
+
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <form method="POST" action="{{ route('password.email') }}">
+                                @csrf
+
+                                <div class="registration-form on-light">
+                                    <input class="form-control" type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Почта" required="required">
+
+                                    <div class="box-bttn" style="margin-top: auto;">
+                                        <button class="btn btn-normal btn-color" type="submit">{{ __('Отправить') }}</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <x-footer-finish />
+    </main>
 </x-global-layout>

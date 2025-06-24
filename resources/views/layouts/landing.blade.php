@@ -35,7 +35,6 @@
                 @if(Auth::check())
                     <div class="collapse navbar-collapse" id="navcol-3">
                         <ul class="navbar-nav mx-auto">
-                            {{--<li class="nav-item"><a class="nav-link active" href="{{ route('index') }}">Radarium</a></li>--}}
                             <li class="nav-item"><a class="nav-link" href="{{ route('catalog.specialists') }}">Перейти к поиску</a></li>
                         </ul>
                     </div>
@@ -54,7 +53,7 @@
                             <li class="nav-item" hidden=""><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                         </ul>
-                        <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
+                        <button class="btn btn-profile" type="button" onclick="window.open('{{ route('login') }}', '_self', false);">
                             <img src="{{ asset('v2/img/icon-profile.svg') }}"><span>Войти</span>
                         </button>
                     </div>
@@ -71,6 +70,14 @@
         <nav class="navbar">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" href="{{ route('index') }}"><img src="{{ asset('v2/img/logo-radarium-w.svg') }}"></a>
+
+                @if(Auth::check())
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav mx-auto">
+                        <li class="nav-item"><a class="nav-link" href="{{ route('catalog.specialists') }}">Перейти к поиску</a></li>
+                    </ul>
+                </div>
+                @else
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav mx-auto">
                         <li class="nav-item"><a class="nav-link active" href="{{ route('index') }}#industries">Отрасли</a></li>
@@ -79,10 +86,11 @@
                         <li class="nav-item" hidden=""><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                     </ul>
-                    <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
+                    <button class="btn btn-profile" type="button" onclick="window.open('{{ route('login') }}', '_self', false);">
                         <img src="{{ asset('v2/img/icon-profile.svg') }}"><span>Войти</span>
                     </button>
                 </div>
+                @endif
             </div>
         </nav>
     </div>

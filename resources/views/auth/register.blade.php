@@ -1,114 +1,77 @@
 <x-global-layout>
-    <div class="bg-body-tertiary">
-        <div class="container py-3">
-            <h2 class="text-body-emphasis">Регистрация</h2>
-
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('index') }}"><span>Главная</span></a></li>
+                        <li class="breadcrumb-item active"><span>Регистрация</span></li>
+                    </ol>
                 </div>
-            @endif
-
-            <form method="POST" action="{{ route('register') }}">
-                @csrf
-
-                <!-- Name -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="name" :value="__('ФИО')" />
-                    <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-                    <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                </div>
-
-                <!-- Phone -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="phone" :value="__('Телефон')" />
-                    <x-text-input id="phone" class="block mt-1 w-full input_tel" placeholder="+7 (916) 111-22-33" type="text" name="phone" :value="old('phone')" required autofocus autocomplete="phone" />
-                    <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-                </div>
-
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <label>
-                        <input type="checkbox" name="from_company" value="1" /> {{ __('Представляю компанию') }}
-                    </label>
-                    <x-input-error :messages="$errors->get('from_company')" class="mt-2" />
-                </div>
-
-                <div class="mb-3 col-12 col-lg-4 col-md-6 company_field" style="display: none;">
-                    <x-input-label for="company_title" :value="__('Название компании')" />
-                    <x-text-input id="company_title" class="block mt-1 w-full" type="text" name="company_title" :value="old('company_title')" autofocus autocomplete="company_title" />
-                    <x-input-error :messages="$errors->get('company_title')" class="mt-2" />
-                </div>
-
-                <div class="mb-3 col-12 col-lg-4 col-md-6 company_field" style="display: none;">
-                    <x-input-label for="company_inn" :value="__('ИНН')" />
-                    <x-text-input id="company_inn" class="block mt-1 w-full" type="text" name="company_inn" :value="old('company_inn')" autofocus autocomplete="company_inn" />
-                    <x-input-error :messages="$errors->get('company_inn')" class="mt-2" />
-                </div>
-
-
-                <!-- Email Address -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="email" :value="__('Почта')" />
-                    <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                </div>
-
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="role_id" :value="__('Тип записи')" />
-                    <select class="form-select" id="role_id" name="user_role_id" required>
-                        <option value="">Выберите...</option>
-                        @foreach ($userRoleList as $userRole)
-                            <option value="{{ $userRole['id'] }}" {{ (collect(old('user_role_id', $request['user_role_id']))->contains($userRole['id'])) ? 'selected':'' }}>{{ $userRole['value'] }}</option>
-                        @endforeach
-                    </select>
-                    <x-input-error :messages="$errors->get('role_id')" class="mt-2" />
-                </div>
-
-                <!-- Password -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="password" :value="__('Пароль')" />
-                    <x-text-input id="password" class="block mt-1 w-full"
-                                    type="password"
-                                    name="password"
-                                    required autocomplete="new-password" />
-
-                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
-                </div>
-
-                <!-- Confirm Password -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="password_confirmation" :value="__('Подтвердите пароль')" />
-
-                    <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                    type="password"
-                                    name="password_confirmation" required autocomplete="new-password" />
-
-                    <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-                </div>
-
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <label>
-                        <input type="checkbox" name="user_agree" value="1" required /> <a href="{{ asset('storage/documents/user-agreement.pdf') }}" target="_blank">{{ __('С пользовательским соглашением ознакомлен') }}</a>
-                    </label>
-                    <x-input-error :messages="$errors->get('from_company')" class="mt-2" />
-                </div>
-
-                <div class="flex items-center justify-end mt-4">
-                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                        {{ __('Уже есть аккаунт?') }}
-                    </a>
-
-                    <x-primary-button class="ms-4">
-                        {{ __('Регистрация') }}
-                    </x-primary-button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+        <div class="container pers-account">
+            <div class="row">
+                <div class="col">
+                    <div class="div2cols">
+                        <div class="box-simple">
+                            <h3 class="box-heading c-blue">{{ __('Регистрация') }}</h3>
+
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <form method="POST" action="{{ route('register') }}">
+                                @csrf
+
+                                <div class="registration-form on-light">
+                                    <input class="form-control" type="text" placeholder="ФИО" id="name"  name="name" value="{{ old('name') }}" required="required">
+                                    <input class="form-control input_tel" type="text" placeholder="+7 (916) 111-22-33" id="phone" name="phone" value="{{ old('phone') }}" required="required">
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="from_company" name="from_company" value="1" >
+                                        <label class="form-check-label" for="from_company">Представляю компанию</label>
+                                    </div>
+
+                                    <input class="form-control company_field" style="display: none;" type="text" name="company_title" value="{{ old('company_title') }}" placeholder="Название компании">
+                                    <input class="form-control company_field" style="display: none;" type="text" name="company_inn" value="{{ old('company_inn') }}" placeholder="ИНН компании">
+
+                                    <select class="form-select" id="role_id" name="user_role_id" required>
+                                        <option value="">Выберите...</option>
+                                        @foreach ($userRoleList as $userRole)
+                                            <option value="{{ $userRole['id'] }}" {{ (collect(old('user_role_id', $request['user_role_id']))->contains($userRole['id'])) ? 'selected':'' }}>{{ $userRole['value'] }}</option>
+                                        @endforeach
+                                    </select>
+
+                                    <input class="form-control" type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Почта" required="required">
+
+                                    <input class="form-control" type="password" name="password" placeholder="Новый пароль">
+                                    <input class="form-control" type="password" name="password_confirmation" placeholder="Повторите новый пароль">
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="user_agree" name="user_agree" value="1" required>
+                                        <label class="form-check-label" for="user_agree"><a href="{{ asset('storage/documents/user-agreement.pdf') }}" target="_blank">{{ __('С пользовательским соглашением ознакомлен') }}</a></label>
+                                    </div>
+
+                                    <div class="box-bttn" style="margin-top: auto;">
+                                        <button class="btn btn-normal btn-color" type="submit">{{ __('Регистрация') }}</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <x-footer-finish />
+    </main>
 
     @pushOnce('scripts')
         <script type="module">

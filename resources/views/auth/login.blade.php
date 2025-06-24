@@ -1,53 +1,61 @@
 <x-global-layout>
-    <div class="bg-body-tertiary">
-        <div class="container py-3">
-
-            <h2 class="text-body-emphasis">Вход</h2>
-
-            <!-- Session Status -->
-            <x-auth-session-status class="mb-4" :status="session('status')" />
-
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
-
-                <!-- Email Address -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="email" :value="__('Почта')" />
-                    <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('index') }}"><span>Главная</span></a></li>
+                        <li class="breadcrumb-item active"><span>Вход</span></li>
+                    </ol>
                 </div>
-
-                <!-- Password -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <x-input-label for="password" :value="__('Пароль')" />
-                    <x-text-input id="password" class="block mt-1 w-full"
-                                    type="password"
-                                    name="password"
-                                    required autocomplete="current-password" />
-
-                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
-                </div>
-
-                <!-- Remember Me -->
-                <div class="mb-3 col-12 col-lg-4 col-md-6">
-                    <label for="remember_me" class="inline-flex items-center">
-                        <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                        <span class="ms-2 text-sm text-gray-600">{{ __('Запомнить меня') }}</span>
-                    </label>
-                </div>
-
-                <div class="flex items-center justify-end mt-4 col-12 col-lg-4 col-md-6">
-                    @if (Route::has('password.request'))
-                        <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                            {{ __('Забыли пароль?') }}
-                        </a>
-                    @endif
-
-                    <x-primary-button class="ms-3">
-                        {{ __('Вход') }}
-                    </x-primary-button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+        <div class="container pers-account">
+            <div class="row">
+                <div class="col">
+                    <div class="div2cols">
+                        <div class="box-simple">
+                            <h3 class="box-heading c-blue">{{ __('Вход') }}</h3>
+
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <form method="POST" action="{{ route('login') }}">
+                                @csrf
+
+                                <div class="registration-form on-light">
+                                    <input class="form-control" type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Почта" required="required">
+                                    <input class="form-control" type="password" name="password" placeholder="Пароль">
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="remember_me" name="remember_me" value="1" >
+                                        <label class="form-check-label" for="remember_me">{{ __('Запомнить меня') }}</label>
+                                    </div>
+
+                                    <div class="box-bttn" style="margin-top: auto;">
+                                        <button class="btn btn-normal btn-color" type="submit">{{ __('Вход') }}</button>
+                                    </div>
+
+                                    @if (Route::has('password.request'))
+                                        <div class="box-bttn" style="margin-top: auto;">
+                                            <button class="btn btn-normal btn-color" onclick="window.open('{{ route('password.request') }}', '_self', false);" type="button">{{ __('Забыли пароль?') }}</button>
+                                        </div>
+                                    @endif
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <x-footer-finish />
+    </main>
 </x-global-layout>
