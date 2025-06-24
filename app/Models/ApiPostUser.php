@@ -267,10 +267,20 @@ class ApiPostUser extends Model
         if (count($softExperience)) {
             foreach ($softExperience as $item) {
                 $tmp = explode(';', $item);
-                $params = $params+$tmp;
+                $params = $params+self::softExperienceUniq($tmp);
             }
         }
 
         return $params;
+    }
+
+    public static function softExperienceUniq(array $skills)
+    {
+        $result = [];
+        foreach ($skills as $skill) {
+            $result[Str::lower($skill)] = $skill;
+        }
+
+        return $result;
     }
 }
