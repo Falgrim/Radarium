@@ -58,7 +58,19 @@ body p:last-child {
 
 @media only screen and (max-width: 576px) {
   body p, .tricols-item p {
-    font-size: 16px !important;
+    font-size: 18px !important;
+  }
+}
+
+@media only screen and (max-width: 576px) {
+  .tbl-default td .contact-box p {
+    font-size: 12px !important;
+  }
+}
+
+@media only screen and (max-width: 576px) {
+  .txt-30bold {
+    font-size: 28px !important;
   }
 }
 
@@ -915,6 +927,8 @@ footer .btn-profile:hover, footer .btn-profile:focus {
   justify-content: space-between;
   text-align: center;
   transition: box-shadow .4s ease-in-out;
+  flex-grow: 1;
+  width: 100%;
 }
 
 .box-tarif--item:hover {
@@ -960,7 +974,7 @@ footer .btn-profile:hover, footer .btn-profile:focus {
   .box-tarif .box-tarif--item.box-blue {
     margin-top: 0;
     margin-bottom: 0;
-    width: 100%;
+    /*width: 100%;*/
   }
 }
 
@@ -1732,7 +1746,8 @@ a:has(.social) {
 }
 
 .tbl-default td .contact-box p {
-  font-size: 14px;
+  font-size: 12px;
+  margin-bottom: 0;
 }
 
 .tbl-default td p.ellipse {
@@ -2098,6 +2113,21 @@ figure.pers figcaption {
 
 .rate-stars .star.yes {
   fill: var(--color-sun);
+}
+
+.rate-mode {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.rate-mode .rate-stars {
+  width: fit-content;
+  margin: -4px 0 0 0;
+  font-size: 22px !important;
 }
 
 .par2cols .rate-stars {
