@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -22,18 +24,33 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request): JsonResponse
     {
-        $request->authenticate();
+        try {
+            $request->authenticate();
 
-        $request->session()->regenerate();
+            $request->session()->regenerate();
 
-        $redirectTo = session('redirect_auth');
-        if ($redirectTo) {
-            return redirect()->intended(redirect($redirectTo));
+            $redirectTo = session('redirect_auth');
+            if ($redirectTo) {
+                $redirectTo = redirect($redirectTo);
+            }
+
+            return response()->json([
+                'message' => 'Авторизация завершена',
+                'redirect' => $redirectTo ? $redirectTo : route('catalog.specialists', absolute: false),
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Ошибка!',
+                'errors' => $e->validator->getMessageBag(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка!',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return redirect()->intended(route('catalog.specialists', absolute: false));
     }
 
     /**

@@ -36,8 +36,8 @@
                 <div class="tristeps-cols--item login-col">
                     <h3 class="title">Вход в систему</h3>
                     <p>Зарегистрируйтесь в&nbsp;системе.<br>Выберите и&nbsp;подключите подходящий&nbsp;тариф.</p>
-                    <button class="btn btn-trans btn-light btn-white" onclick="window.open('{{ route('login') }}', '_self', false);">Вход</button>
-                    <button class="btn btn-trans btn-light" type="button" onclick="window.open('{{ route('register') }}', '_self', false);">Регистрация</button>
+                    <button class="btn btn-trans btn-light btn-white" data-bs-toggle="modal" data-bs-target="#rd-registr">Вход</button>
+                    <button class="btn btn-trans btn-light" type="button" data-bs-toggle="modal" data-bs-target="#rd-account">Регистрация</button>
                 </div>
                 <div class="tristeps-cols--item drive-col">
                     <div class="drive-col--item">
@@ -51,7 +51,7 @@
                     <div class="drive-col--item">
                         <h3 class="title">Бесплатный доступ</h3>
                         <p>Вы получаете полный доступ ко всем ключевым функциям на ограниченное время</p>
-                        <button class="btn btn-color btn-accent" type="button" onclick="window.open('{{ route('register') }}', '_self', false);">Тест–Драйв</button>
+                        <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-drive">Тест–Драйв</button>
                     </div>
                 </div>
             </div>

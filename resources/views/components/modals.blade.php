@@ -6,9 +6,11 @@
                 <button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="{{ route('login') }}">
+                <form method="POST" action="{{ route('login') }}" id="rd-registr-form">
                     @csrf
                     <div class="registration-form">
+                        <div id="rd-registr-form-message" class="mt-3"></div>
+
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
                         <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
                         <div class="form-check">
@@ -16,7 +18,7 @@
                             <label class="form-check-label" for="formCheck-1">Запомнить меня</label>
                         </div>
                         <div class="box-btn-line">
-                            <button class="btn btn-color btn-accent" type="submit">Вход</button>
+                            <button class="btn btn-color btn-accent" id="rd-registr-form-btn" type="submit">Вход</button>
                             @if (Route::has('password.request'))
                                 <a href="{{ route('password.request') }}">Забыли пароль?</a>
                             @endif
@@ -42,9 +44,11 @@
                 <button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="{{ route('register') }}">
+                <form method="POST" action="{{ route('register') }}" id="rd-account-form">
                     @csrf
                     <div class="registration-form">
+                        <div id="rd-account-form-message" class="mt-3"></div>
+
                         <input class="form-control" type="text" name="name" placeholder="ФИО" required="required">
                         <input class="form-control input_tel" type="text" name="phone" placeholder="+7 (916) 111-22-33" required="required">
                         <div class="form-check">
@@ -66,7 +70,7 @@
                             <label class="form-check-label" for="formCheck-user_agree"><a href="{{ asset('storage/documents/user-agreement.pdf') }}" target="_blank">{{ __('С пользовательским соглашением ознакомлен') }}</a></label>
                         </div>
                         <div class="box-btn-line">
-                            <button class="btn btn-normal btn-color" type="submit">Зарегистрироваться</button>
+                            <button class="btn btn-normal btn-color" id="rd-account-form-btn" type="submit">Зарегистрироваться</button>
                         </div>
                     </div>
                 </form>
@@ -83,14 +87,16 @@
             </div>
             <div class="modal-body">
                 <p class="mb-4">Тест-драйв доступен для&nbsp;всех новых пользователей при&nbsp;входе в&nbsp;систему. Вы можете попробовать функции поиска, а&nbsp;также иметь доступ к&nbsp;открытию контактов и&nbsp;карточек исполнителей для просмотра функций системы. Пожалуйста, зарегистрируйтесь</p>
-                <form method="POST" action="{{ route('register') }}">
+                <form method="POST" action="{{ route('register') }}" id="rd-drive-form">
                     @csrf
                     <div class="registration-form">
+                        <div id="rd-drive-form-message" class="mt-3"></div>
+
                         <input class="form-control" type="text" name="name" placeholder="ФИО" required="required">
                         <input class="form-control input_tel" type="text" name="phone" placeholder="+7 (916) 111-22-33" required="required">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="from_company" value="1" id="formCheck-2">
-                            <label class="form-check-label" for="formCheck-2">Представляю компанию</label>
+                            <input class="form-check-input" type="checkbox" name="from_company" value="1" id="rd-drive-from_company">
+                            <label class="form-check-label" for="rd-drive-from_company">Представляю компанию</label>
                         </div>
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
                         <select class="form-select" name="user_role_id">
@@ -107,7 +113,7 @@
                             <label class="form-check-label" for="formCheck-user_agree2"><a href="{{ asset('storage/documents/user-agreement.pdf') }}" target="_blank">{{ __('С пользовательским соглашением ознакомлен') }}</a></label>
                         </div>
                         <div class="box-btn-line">
-                            <button class="btn btn-normal btn-color" type="submit">Зарегистрироваться</button>
+                            <button class="btn btn-normal btn-color" id="rd-drive-form-btn" type="submit">Зарегистрироваться</button>
                         </div>
                     </div>
                 </form>
@@ -139,7 +145,10 @@
             </div>
             <div class="modal-body">
                 <form>
-                    <div class="registration-form"><input class="form-control" type="text" placeholder="ФИО" required="required"><input class="form-control" type="text" placeholder="Телефон" required="required"><textarea class="form-control" placeholder="Ваш вопрос"></textarea>
+                    <div class="registration-form">
+                        <input class="form-control" type="text" placeholder="ФИО" required="required">
+                        <input class="form-control" type="text" placeholder="Телефон" required="required">
+                        <textarea class="form-control" placeholder="Ваш вопрос"></textarea>
                         <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Отправить</button></div>
                     </div>
                 </form>
@@ -192,8 +201,6 @@
         </div>
     </div>
 </div>
-
-<!-- Modal -->
 <div class="modal fade" id="moderationAlert" tabindex="-1" aria-labelledby="moderationAlertLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -221,7 +228,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="moderationAlertResult" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -238,7 +244,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="loginAlert" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -255,3 +260,91 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Ошибка!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-normal btn-color" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#rd-drive-form').on('submit', function(e) {
+            e.preventDefault();
+            authRegistrationForm('#rd-drive-form')
+        });
+
+        $('#rd-account-form').on('submit', function(e) {
+            e.preventDefault();
+            authRegistrationForm('#rd-account-form')
+        });
+
+        $('#rd-registr-form').on('submit', function(e) {
+            e.preventDefault();
+            authRegistrationForm('#rd-registr-form')
+        });
+    });
+
+    function authRegistrationForm(form_id) {
+
+        $('#errorModal').modal('hide');
+        $('#errorModal .modal-body .alert').html('');
+
+        $(form_id+'-btn').prop('disabled', true);
+
+        $.ajax({
+            url: $(form_id).attr('action'),
+            type: 'POST',
+            data: $(form_id).serialize(),
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                // Успешная регистрация
+                $(form_id+'-message').html(
+                    '<div class="alert alert-success">' + response.message + '</div>'
+                );
+
+                if (response.redirect) {
+                    window.location.href = response.redirect;
+                }
+            },
+            error: function(xhr) {
+
+                $('#errorModal').modal('show');
+                $('#errorModal .modal-title').html('Ошибка!');
+
+                // Обработка ошибок
+                if (xhr.status === 422) {
+                    // Валидационные ошибки
+                    var errors = xhr.responseJSON.errors;
+                    $.each(errors, function(key, value) {
+                        $('#errorModal .modal-body .alert').append('- '+value[0]+'<br />');
+                    });
+                } else {
+                    // Другие ошибки
+                    var errorMessage = xhr.responseJSON?.message ||
+                        'An error occurred during registration.';
+
+                    $('#errorModal .modal-body .alert').html(errorMessage);
+                }
+
+            },
+            complete: function() {
+                $(form_id+'-btn').prop('disabled', false);
+            }
+        });
+    }
+</script>

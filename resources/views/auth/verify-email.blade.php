@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-global-layout>
 <div class="my-5">
     <div class="p-5 bg-body-tertiary">
         <div class="container py-5">
@@ -27,4 +27,4 @@
         </div>
     </div>
 </div>
-</x-guest-layout>
+</x-global-layout>
