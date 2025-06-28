@@ -9,7 +9,7 @@
                         {{--<a href="#"><img class="social" src="{{ asset('v2/img/icon-whatsapp.svg') }}"></a>--}}
                     </p>
                 </div>
-                <div class="finish-img"><img src="{{ asset('v2/img/plastic-metall.png') }}"></div>
+                <div class="finish-img"><img src="{{ asset('v2/img/plastic-metall.png') }}"></div><a class="abs-link" href="#"></a>
             </div>
         </div>
         <div class="col-12 col-lg-6">
@@ -21,7 +21,7 @@
                         {{--<a href="#"><img class="social" src="{{ asset('v2/img/icon-whatsapp.svg') }}"></a>--}}
                     </p>
                 </div>
-                <div class="finish-img"><img src="{{ asset('v2/img/plastic-base.png') }}"></div>
+                <div class="finish-img"><img src="{{ asset('v2/img/plastic-base.png') }}"></div><a class="abs-link" href="#"></a>
             </div>
         </div>
     </div>

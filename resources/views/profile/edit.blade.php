@@ -15,7 +15,7 @@
                 <div class="col">
                     <div class="div2cols">
                         <div class="box-simple">
-                            <h3 class="box-heading c-accent">{{ __('Личный кабинет') }}</h3>
+                            <h3 class="box-heading c-accent">{{ __('Данные пользователя') }}</h3>
                             <form id="send-verification" method="post" action="{{ route('verification.send') }}">
                                 @csrf
                             </form>

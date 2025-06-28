@@ -50,15 +50,15 @@
                             </figure>
                             <div class="pers-info">
                                 <p>
-                                    <span>
+                                    <span><strong>
                                          @if($author->username)
-                                            <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
+                                           {{ $author->username }}
                                         @elseif($author->user_id)
-                                            <a href="tg://user?id={{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
+                                            {{ $author->user_id }}
                                         @else
                                             <i>Не известно</i>
                                         @endif
-                                    </span>
+                                    </strong></span>
                                     @if($author->first_name)
                                         <span>{{ trim($author->last_name.' '.$author->first_name) }}</span>
                                     @endif

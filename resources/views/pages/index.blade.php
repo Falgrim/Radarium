@@ -45,7 +45,7 @@
                         <p class="line-number"><span>1</span>Выберите специализацию и&nbsp;нужные&nbsp;навыки</p>
                         <p class="line-number"><span>2</span>Смотрите список подходящих специалистов</p>
                         <p class="line-number"><span>3</span>Связывайтесь с теми, кто подходит лучше&nbsp;всего</p>
-                        <button class="btn btn-color btn-grey plastic" type="button" data-bs-target="#rd-public">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
+                        <button class="btn btn-color btn-grey plastic" type="button" style="cursor: default;">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
                     </div>
                     <div class="drive-col--item dc-divider"><span></span></div>
                     <div class="drive-col--item">
@@ -75,7 +75,7 @@
                 </div>
                 <div class="tricols-item depo-info no-active">
                     <h3 class="title">Строители г.&nbsp;Москва</h3>
-                    <p>Специалисты и&nbsp;подрядчики в&nbsp;области проектирования</p><span class="note">в разработке</span>
+                    <p>Строительство</p><span class="note">в разработке</span>
                 </div>
                 <div class="tricols-item depo-plus">
                     <button class="btn" type="button" onclick="window.open('https://t.me/radarium_tech', '_blank')"><span class="plus-circle">+</span></button>

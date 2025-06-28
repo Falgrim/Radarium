@@ -36,7 +36,7 @@
                     </div>
                     <div class="search-action search-item">
                         <div class="row">
-                            <div class="col-lg-12 col-xl-6">
+                            <div class="col-lg-12 col-xl-5">
                                 <select class="form-select" name="speciality_id[]" id="selectElement" multiple>
                                     <option value="">Выберите специализацию</option>
                                     @foreach ($specialitiesList as $speciality)
@@ -59,12 +59,12 @@
                                             </svg></button></li>
                                 </ul>
                             </div>
-                            <div class="col-lg-12 col-xl-6">
+                            <div class="col-lg-12 col-xl-7">
                                 <span class="search-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" hidden="">
                                         <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>
                                     </svg>
-                                    <input class="form-control" type="text" name="key_word" id="key_word" {{ old('key_word', $request->key_word) }} placeholder="Введите запрос и нажмите Enter" title="Введите запрос и нажмите Enter">
+                                    <input class="form-control" type="text" name="key_word" id="key_word" {{ old('key_word', $request->key_word) }} placeholder="Введите слово и нажмите Enter" title="Введите слово и нажмите Enter">
                                 </span>
                                 <ul class="list-group tags" id="buttonsContainer">
                                     @if (isset($request->key_word_tags))

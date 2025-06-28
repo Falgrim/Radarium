@@ -926,17 +926,17 @@ footer .btn-profile:hover, footer .btn-profile:focus {
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  transition: box-shadow .4s ease-in-out;
+  transition: box-shadow .3s ease-in-out;
   flex-grow: 1;
   width: 100%;
 }
 
 .box-tarif--item:hover {
-  box-shadow: 0 0 40px rgba(0, 0, 0, .1);
+  box-shadow: 0 0 40px rgba(0, 0, 0, .3);
 }
 
 .box-tarif--item.box-blue:hover {
-  box-shadow: 0 0 40px rgba(0, 0, 0, .2);
+  box-shadow: 0 0 40px rgba(0, 0, 0, .4);
 }
 
 .box-tarif--item > div {
@@ -1122,6 +1122,7 @@ footer .btn-profile:hover, footer .btn-profile:focus {
   display: flex;
   flex-direction: row;
   gap: 20px;
+  position: relative;
 }
 
 .finish-item .finish-text {
@@ -1577,7 +1578,7 @@ a:has(.social) {
 }
 
 .search-field .search-item.search-info {
-  max-width: 25%;
+  max-width: 22%;
   color: var(--color-light);
 }
 
@@ -2031,6 +2032,12 @@ figure.pers figcaption {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  gap: .5em 1em;
+}
+
+.pers-info p span {
+  max-width: initial;
+  white-space: normal;
 }
 
 .pers-info p:first-of-type {
@@ -2416,7 +2423,7 @@ form input:not(.form-check-input), form .form-select, form textarea {
   height: 52px;
   border-radius: 20px;
   background-color: var(--color-light);
-  padding: 10px 20px;
+  padding: 10px 40px 10px 20px;
   border: none;
 }
 
@@ -2437,6 +2444,14 @@ form input:not(.form-check-input), form .form-select, form textarea {
   display: none;
 }
 
+.ss-main .ss-values {
+  max-width: 100%;
+}
+
+.ss-main .ss-values .ss-value .ss-value-text {
+  white-space: normal;
+}
+
 .form-select {
   padding-right: 30px;
   white-space: nowrap;
@@ -2448,6 +2463,17 @@ form input:not(.form-check-input), form .form-select, form textarea {
   margin-right: 0.5em;
   position: relative;
   top: -.075em;
+}
+
+.abs-link {
+  width: 100%;
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
 }
 
 textarea.form-control::-webkit-input-placeholder {
