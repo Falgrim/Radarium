@@ -38,7 +38,6 @@
                         <div class="row">
                             <div class="col-lg-12 col-xl-5">
                                 <select class="form-select" name="speciality_id[]" id="selectElement" multiple>
-                                    <option value="">Выберите специализацию</option>
                                     @foreach ($specialitiesList as $speciality)
                                         <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
                                     @endforeach
