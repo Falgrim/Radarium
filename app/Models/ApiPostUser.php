@@ -278,6 +278,7 @@ class ApiPostUser extends Model
     {
         $result = [];
         foreach ($skills as $skill) {
+            $skill = trim($skill);
             $result[Str::lower($skill)] = $skill;
         }
 

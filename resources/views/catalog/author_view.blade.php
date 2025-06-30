@@ -51,8 +51,8 @@
                             <div class="pers-info">
                                 <p>
                                     <span><strong>
-                                         @if($author->username)
-                                           {{ $author->username }}
+                                        @if($author->username)
+                                           @{{ $author->username }}
                                         @elseif($author->user_id)
                                             {{ $author->user_id }}
                                         @else
