@@ -28,10 +28,12 @@
                         <span>{{ Auth::user()->name }}&nbsp;</span>
                         <img src="{{ asset('v2/img/icon-client-id.svg') }}">
                     </a>
+                    @if (!Illuminate\Support\Facades\Route::is('catalog.specialists') AND !Illuminate\Support\Facades\Route::is('catalog.specialist.view'))
                     <form method="POST" action="{{ route('logout') }}" class="logout_form">
                         @csrf
                         <button onclick="event.preventDefault(); this.closest('form').submit();" class="btn btn-primary">{{ __('Выйти') }}</button>
                     </form>
+                    @endif
                 </div>
                 @endif
             </div>

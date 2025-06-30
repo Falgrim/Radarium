@@ -51,7 +51,11 @@
                     <div class="drive-col--item">
                         <h3 class="title">Бесплатный доступ</h3>
                         <p>Вы получаете полный доступ ко всем ключевым функциям на ограниченное время</p>
-                        <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-drive">Тест–Драйв</button>
+                        @if(Auth::check())
+                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-drive">Тест–Драйв</button>
+                        @else
+                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-drive">Тест–Драйв</button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -206,7 +210,7 @@
                     <div>
                         <p>Подключайте тариф и пользуетесь им бесплатно в течении 3 дней.  Доступно 3 объявления.</p>
                     </div>
-                    <div><button class="btn btn-color btn-accent b-shadow"  data-bs-toggle="modal" data-bs-target="#rd-drive" type="button"><strong>Бесплатно</strong></button></div>
+                    <div><button class="btn btn-color btn-accent b-shadow" data-bs-toggle="modal" data-bs-target="#rd-drive" type="button"><strong>Бесплатно</strong></button></div>
                 </div>
             </div>
         </div>

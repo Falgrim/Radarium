@@ -10,6 +10,7 @@
                 <div class="col">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ route('catalog.specialists') }}"><span>Проектирование</span></a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('catalog.specialists') }}"><span>Поиск</span></a></li>
                         <li class="breadcrumb-item active"><span>Специалист</span></li>
                     </ol>
                 </div>
