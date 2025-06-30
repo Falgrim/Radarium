@@ -168,8 +168,8 @@
                                     </a>
                                     <div class="collapse" id="collapse-2">
                                         <div class="rd-card-body">
-                                            @if($author->posts->count())
-                                                @foreach ($author->posts as $post)
+                                            @if($author->postsComplete->count())
+                                                @foreach ($author->postsComplete as $post)
                                                     <p class="par2cols">
                                                         <span>{{ $post->post }}</span>
                                                         <span><span>{{ $post->post_date->format("d.m.Y") }}</span></span>
