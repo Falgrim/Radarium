@@ -53,7 +53,7 @@
                             <li class="nav-item" hidden=""><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                         </ul>
-                        <button class="btn btn-profile" type="button" onclick="window.open('{{ route('login') }}', '_self', false);">
+                        <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
                             <img src="{{ asset('v2/img/icon-profile.svg') }}"><span>Войти</span>
                         </button>
                     </div>
@@ -86,7 +86,7 @@
                         <li class="nav-item" hidden=""><a class="nav-link" href="{{ route('index') }}#author">Авторы</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('index') }}#howto">Как работает?</a></li>
                     </ul>
-                    <button class="btn btn-profile" type="button" onclick="window.open('{{ route('login') }}', '_self', false);">
+                    <button class="btn btn-profile" type="button" data-bs-toggle="modal" data-bs-target="#rd-registr">
                         <img src="{{ asset('v2/img/icon-profile.svg') }}"><span>Войти</span>
                     </button>
                 </div>
