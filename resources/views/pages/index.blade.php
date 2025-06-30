@@ -206,7 +206,7 @@
                     <div>
                         <p>Подключайте тариф и пользуетесь им бесплатно в течении 3 дней.  Доступно 3 объявления.</p>
                     </div>
-                    <div><a href="{{ route('register') }}" class="btn btn-color btn-accent b-shadow" type="button"><strong>Бесплатно</strong></a></div>
+                    <div><button class="btn btn-color btn-accent b-shadow"  data-bs-toggle="modal" data-bs-target="#rd-drive" type="button"><strong>Бесплатно</strong></button></div>
                 </div>
             </div>
         </div>
