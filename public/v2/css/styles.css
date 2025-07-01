@@ -48,7 +48,7 @@ body {
 body p {
   line-height: 1.2;
   margin-bottom: .5rem;
-  font-size: 18px;
+  font-size: initial;
   text-wrap: pretty;
 }
 
@@ -375,7 +375,7 @@ footer .btn {
   color: var(--color-light);
 }
 
-.btn-profile {
+.btn-profile, .btn-exit {
   background-color: transparent;
   border: 1px solid currentColor;
 }
@@ -386,7 +386,7 @@ footer .btn {
   }
 }
 
-.btn-profile:hover, .btn-profile:focus {
+.btn-profile:hover, .btn-profile:focus, .btn-exit:hover, .btn-exit:focus {
   color: var(--color-dark);
   border-color: transparent;
 }
@@ -404,6 +404,10 @@ footer .btn-profile:hover, footer .btn-profile:focus {
   border-color: transparent;
   outline: none;
   box-shadow: none;
+}
+
+.btn-close .img-fluid {
+  min-width: 24px;
 }
 
 .btn-link {
@@ -677,7 +681,7 @@ footer .btn-profile:hover, footer .btn-profile:focus {
 }
 
 .tricols-item.icon2line p {
-  font-size: var(--font24);
+  /*font-size: var(--font24);*/
   margin-top: 0;
 }
 
@@ -685,6 +689,7 @@ footer .btn-profile:hover, footer .btn-profile:focus {
   display: block;
   font-size: var(--font36);
   line-height: 1;
+  margin-bottom: .2rem;
 }
 
 @media only screen and (max-width: 1200px) {
@@ -1315,6 +1320,17 @@ ul.icon-list li strong {
   background-color: var(--color-accent-h);
 }
 
+.modal-header.head-empty {
+  background-color: var(--color-grey);
+  color: var(--color-czero);
+  border-bottom: none;
+  height: 60px;
+}
+
+.modal-header.head-empty .btn-close {
+  color: var(--color-czero);
+}
+
 .row figure {
   display: block;
   width: 100%;
@@ -1360,7 +1376,7 @@ a:has(.social) {
 }
 
 .modal-content {
-  max-height: fit-content;
+  max-height: 90vh;
   border-color: transparent;
   border-radius: 20px;
   background-color: transparent;
@@ -1382,6 +1398,23 @@ a:has(.social) {
 .modal-body {
   background-color: var(--color-grey);
   padding: 20px;
+}
+
+.modal-centered .modal-body {
+  text-align: center;
+}
+
+.modal-centered .box-btn-line {
+  justify-content: center;
+}
+
+.modal-centered p {
+  margin-top: -.6em;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 20px;
+  font-size: 20px;
+  max-width: 400px;
 }
 
 .modal-body:last-child {
@@ -1421,6 +1454,10 @@ a:has(.social) {
 .modal-header .btn-close {
   --bs-btn-close-color: #ffffff;
   background: none;
+}
+
+.modal-header.head-empty + .modal-body {
+  padding-top: 0;
 }
 
 .registration-form {
@@ -1565,6 +1602,10 @@ a:has(.social) {
   gap: 20px;
 }
 
+.search-field .form-check-label {
+  font-size: 12px;
+}
+
 .search-field .search-item {
   width: 100%;
 }
@@ -1587,14 +1628,15 @@ a:has(.social) {
 }
 
 .search-field .search-item.search-info h4 {
-  font-size: var(--font28);
+  font-size: 18px;
   font-weight: normal;
 }
 
 .search-field .search-item.search-info h4 span {
-  margin: 0 1rem;
+  margin: 0 0 0 .2rem;
   color: var(--color-accent-h);
   display: inline-block;
+  font-size: 20px;
 }
 
 .search-field .search-item.search-info h4 span:has(span) {
@@ -1602,11 +1644,10 @@ a:has(.social) {
   display: block;
   margin-left: 0;
   margin-top: .5em;
-  font-size: var(--font24);
 }
 
 .search-field .search-item.search-info h4 span span:first-of-type {
-  margin-left: 0;
+  margin-left: .2rem;
 }
 
 .search-field .search-item.search-button {
@@ -1742,7 +1783,7 @@ a:has(.social) {
 }
 
 .tbl-default td p {
-  font-size: 16px;
+  font-size: 14px;
   margin-bottom: .25rem;
 }
 
@@ -2417,6 +2458,14 @@ figure.pers figcaption {
 a {
   color: var(--color-blue);
   text-decoration: none;
+}
+
+.form-select.vanishing {
+  display: none;
+}
+
+.form-check:has(input:checked) + .form-select.vanishing {
+  display: block;
 }
 
 form input:not(.form-check-input), form .form-select, form textarea {

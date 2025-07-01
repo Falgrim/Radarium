@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="{{ asset('v2/fonts/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/slimselect.css') }}?v=1.5">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.10">
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.11">
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 
     <script type="application/javascript" src="{{ asset('js/jquery-3.7.1.min.js') }}"></script>

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ asset('v2/css/Mont.css') }}">
     <link rel="stylesheet" href="{{ asset('v2/css/slimselect.css') }}?v=1.5">
     <link rel="stylesheet" href="{{ asset('v2/css/Navbar-Centered-Links-icons.css') }}">
-    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.10">
+    <link rel="stylesheet" href="{{ asset('v2/css/styles.css') }}?v=1.11">
     <link rel="stylesheet" href="{{ asset('css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/select2-bootstrap-5-theme.min.css') }}">
 
@@ -31,6 +31,7 @@
         <script src="{{ asset('v2/bootstrap/js/bootstrap.min.js') }}"></script>
         <script src="{{ asset('v2/js/slimselect.min.js') }}"></script>
         <script src="{{ asset('v2/js/script.js') }}"></script>
+        <script src="{{ asset('v2/js/star-script.js') }}"></script>
 
         @stack('scripts')
         <script>

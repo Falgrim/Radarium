@@ -24,14 +24,14 @@
             <form class="needs-validation {{ $formErrorClass }}" id="search_form" method="GET" action="{{ route('catalog.specialists') }}" novalidate="">
                 <div class="search-field">
                     <div class="search-info search-item">
-                        <h4>Найдено<span>{{ $authors->total() }}</span></h4>
+                        <h4>Найдено&nbsp;&nbsp;<span>{{ $authors->total() }}</span></h4>
                         <div class="form-check">
                             <input class="form-check-input" name="open_contacts" value="1" type="checkbox" id="formCheck-5" @checked(old('open_contacts', $request->open_contacts))>
                             <label class="form-check-label" for="formCheck-5">Показать только открытые</label>
                         </div>
                         <hr>
                         @if(Auth::check())
-                        <h4>Доступно<span><span>{{ $contactsLimit['days_left'] }} Дня</span>|<span>{{ $contactsLimit['count_contacts_left'] }} Открытия</span></span></h4>
+                        <h4>Доступно<span>Дней:&nbsp;<span>{{ $contactsLimit['days_left'] }}</span>&nbsp;&nbsp;|&nbsp;&nbsp;Открытий:&nbsp;<span>{{ $contactsLimit['count_contacts_left'] }}</span></span></h4>
                         @endif
                     </div>
                     <div class="search-action search-item">

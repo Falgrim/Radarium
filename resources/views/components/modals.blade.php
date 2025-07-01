@@ -55,6 +55,13 @@
                             <input class="form-check-input" type="checkbox" name="from_company" value="1" id="formCheck-2">
                             <label class="form-check-label" for="formCheck-2">Представляю компанию</label>
                         </div>
+
+                        <select class="form-select vanishing">
+                            <option value="12" selected="">Отопление и вентиляция</option>
+                            <option value="13">Вентиляция и отопление</option>
+                            <option value="14">Проектирование домика неизвестного архитектора</option>
+                        </select>
+
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
                         <select class="form-select" name="user_role_id">
                             @foreach ($userRoleList as $userRole)
@@ -98,6 +105,13 @@
                             <input class="form-check-input" type="checkbox" name="from_company" value="1" id="rd-drive-from_company">
                             <label class="form-check-label" for="rd-drive-from_company">Представляю компанию</label>
                         </div>
+
+                        <select class="form-select vanishing">
+                            <option value="12" selected="">Отопление и вентиляция</option>
+                            <option value="13">Вентиляция и отопление</option>
+                            <option value="14">Проектирование домика неизвестного архитектора</option>
+                        </select>
+
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
                         <select class="form-select" name="user_role_id">
                             @foreach ($userRoleList as $userRole)
@@ -272,6 +286,24 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-normal btn-color" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr modal-centered" role="dialog" tabindex="-1" id="rd-tarif-todo">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header head-empty"><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img class="img-fluid" width="24" height="24" src="{{ asset('v2/img/icon-close-dark.svg') }}"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form">
+                        <h4 class="tarif-name">Оформить тариф:&nbsp;<span>1 Месяц</span></h4>
+                        <div>
+                            <p>Подключайте тариф и&nbsp;пользуйтесь&nbsp;им в&nbsp;течение&nbsp;<span>30</span>&nbsp;<span>дней</span></p>
+                        </div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

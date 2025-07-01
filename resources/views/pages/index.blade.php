@@ -82,7 +82,7 @@
                     <p>Строительство</p><span class="note">в разработке</span>
                 </div>
                 <div class="tricols-item depo-plus">
-                    <button class="btn" type="button" onclick="window.open('https://t.me/radarium_tech', '_blank')"><span class="plus-circle">+</span></button>
+                    <a class="btn" role="button" id="open-tg-chat" data-bs-target="#rd-industry" href="https://t.me/radarium_tech" target="_blank" rel="noopener noreferrer"><span class="plus-circle">+</span></a>
                     <p>Нужна другая отрасль</p>
                 </div>
             </div>
@@ -306,7 +306,7 @@
                     <div class="box-simple box-faq">
                         <h2 class="text-center title-50semibold">Остались<br>Вопросы?</h2>
                         <p>Если у вас остались вопросы — не&nbsp;стесняйтесь обращаться. Команда поддержки быстро даст ответ и&nbsp;поможет с любым этапом.</p>
-                        <button class="btn btn-color btn-accent" type="button" onclick="window.open('https://t.me/radarium_tech', '_blank')">Нужна консультация</button>
+                        <a class="btn btn-color btn-accent" role="button" id="open-tg-consult" href="https://t.me/radarium_tech" target="_blank" rel="noopener noreferrer">Нужна консультация</a>
                         <img class="faqman" src="{{ asset('v2/img/faqman.png') }}">
                     </div>
                 </div>
