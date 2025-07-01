@@ -290,6 +290,69 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade modal-registr modal-centered" role="dialog" tabindex="-1" id="rd-testdrive-auth">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header head-empty"><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img class="img-fluid" width="24" height="24" src="{{ asset('v2/img/icon-close-dark.svg') }}"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form">
+                        <h4 class="tarif-name">Тест-Драйв</h4>
+                        <div>
+                            <p>
+                                Тариф тест драйв доступен сразу после регистрации пользователя в системе.
+                                После окончания тарифа ТЕСТ ДРАЙВ подключайте любой другой удобный Вам тариф на главной странице системы Радариум
+                            </p>
+                        </div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr modal-centered" role="dialog" tabindex="-1" id="rd-testdrive-guest">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header head-empty"><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img class="img-fluid" width="24" height="24" src="{{ asset('v2/img/icon-close-dark.svg') }}"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form">
+                        <h4 class="tarif-name">Тест-Драйв</h4>
+                        <div>
+                            <p>
+                                Для подключения тарифа необходимо войти или зарегистрироваться в системе.
+                            </p>
+                        </div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade modal-registr modal-centered" role="dialog" tabindex="-1" id="rd-tariff-guest">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header head-empty"><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img class="img-fluid" width="24" height="24" src="{{ asset('v2/img/icon-close-dark.svg') }}"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form">
+                        <h4 class="tarif-name">Оформить тариф</h4>
+                        <div>
+                            <p>
+                                Для подключения тарифа необходимо войти или зарегистрироваться в системе.
+                            </p>
+                        </div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade modal-registr modal-centered" role="dialog" tabindex="-1" id="rd-tarif-todo">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">

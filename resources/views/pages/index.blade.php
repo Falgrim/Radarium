@@ -52,9 +52,9 @@
                         <h3 class="title">Бесплатный доступ</h3>
                         <p>Вы получаете полный доступ ко всем ключевым функциям на ограниченное время</p>
                         @if(Auth::check())
-                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-drive">Тест–Драйв</button>
+                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-testdrive-auth">Тест–Драйв</button>
                         @else
-                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-drive">Тест–Драйв</button>
+                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-testdrive-guest">Тест–Драйв</button>
                         @endif
                     </div>
                 </div>
@@ -198,7 +198,13 @@
                         <div>
                             <p>{{ $tariff->description }}</p>
                         </div>
-                        <div><a href="{{ route('tariff.buy', ['id' => $tariff->id]) }}" class="btn btn-color @if($tariff->is_hot) btn-accent @else btn-grey big @endif" type="button"><strong>{{ number_format($tariff->price, 0, '.', ' ') }}</strong><i class="fa fa-rouble"></i></a></div>
+                        <div>
+                            @if(Auth::check())
+                                <a href="{{ route('tariff.buy', ['id' => $tariff->id]) }}" class="btn btn-color @if($tariff->is_hot) btn-accent @else btn-grey big @endif" type="button"><strong>{{ number_format($tariff->price, 0, '.', ' ') }}</strong><i class="fa fa-rouble"></i></a>
+                            @else
+                                <button data-bs-toggle="modal" data-bs-target="#rd-tariff-guest" type="button" class="btn btn-color @if($tariff->is_hot) btn-accent @else btn-grey big @endif"><strong>{{ number_format($tariff->price, 0, '.', ' ') }}</strong><i class="fa fa-rouble"></i></button>
+                            @endif
+                        </div>
                     </div>
                 @endforeach
 
@@ -210,7 +216,13 @@
                     <div>
                         <p>Подключайте тариф и пользуетесь им бесплатно в течении 3 дней.  Доступно 3 объявления.</p>
                     </div>
-                    <div><button class="btn btn-color btn-accent b-shadow" data-bs-toggle="modal" data-bs-target="#rd-drive" type="button"><strong>Бесплатно</strong></button></div>
+                    <div>
+                        @if(Auth::check())
+                            <button class="btn btn-color btn-accent b-shadow" data-bs-toggle="modal" data-bs-target="#rd-testdrive-auth" type="button"><strong>Бесплатно</strong></button>
+                        @else
+                            <button class="btn btn-color btn-accent b-shadow" data-bs-toggle="modal" data-bs-target="#rd-testdrive-guest" type="button"><strong>Бесплатно</strong></button>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
