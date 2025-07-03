@@ -52,9 +52,9 @@
                         <h3 class="title">Бесплатный доступ</h3>
                         <p>Вы получаете полный доступ ко всем ключевым функциям на ограниченное время</p>
                         @if(Auth::check())
-                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-testdrive-auth">Тест–Драйв</button>
+                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-testdrive-auth">Тест-Драйв</button>
                         @else
-                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-testdrive-guest">Тест–Драйв</button>
+                            <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#rd-drive">Тест-Драйв</button>
                         @endif
                     </div>
                 </div>
