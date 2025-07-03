@@ -56,11 +56,10 @@
                             <label class="form-check-label" for="formCheck-2">Представляю компанию</label>
                         </div>
 
-                        <select class="form-select vanishing">
-                            <option value="12" selected="">Отопление и вентиляция</option>
-                            <option value="13">Вентиляция и отопление</option>
-                            <option value="14">Проектирование домика неизвестного архитектора</option>
-                        </select>
+                        <div class="vanishing box-flexcol">
+                            <input class="form-control" type="text" name="company_title" placeholder="Название компании">
+                            <input class="form-control" type="text" name="company_inn" placeholder="ИНН">
+                        </div>
 
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
                         <select class="form-select" name="user_role_id">
@@ -102,15 +101,14 @@
                         <input class="form-control" type="text" name="name" placeholder="ФИО" required="required">
                         <input class="form-control input_tel" type="text" name="phone" placeholder="+7 (916) 111-22-33" required="required">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="from_company" value="1" id="rd-drive-from_company">
-                            <label class="form-check-label" for="rd-drive-from_company">Представляю компанию</label>
+                            <input class="form-check-input" type="checkbox" name="from_company" value="1" id="formCheck-3">
+                            <label class="form-check-label" for="formCheck-3">Представляю компанию</label>
                         </div>
 
-                        <select class="form-select vanishing">
-                            <option value="12" selected="">Отопление и вентиляция</option>
-                            <option value="13">Вентиляция и отопление</option>
-                            <option value="14">Проектирование домика неизвестного архитектора</option>
-                        </select>
+                        <div class="vanishing box-flexcol">
+                            <input class="form-control" type="text" name="company_title" placeholder="Название компании">
+                            <input class="form-control" type="text" name="company_inn" placeholder="ИНН">
+                        </div>
 
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
                         <select class="form-select" name="user_role_id">
@@ -179,8 +177,8 @@
             <div class="modal-body">
                 <form>
                     <div class="registration-form">
-                        <input class="form-control" type="text" placeholder="ФИО" required="required">
-                        <input class="form-control" type="text" placeholder="Телефон" required="required">
+                        <input class="form-control" type="text" placeholder="ФИО" required="required" hidden="">
+                        <input class="form-control" type="text" placeholder="Телефон" required="required" hidden="">
                         <textarea class="form-control" placeholder="Ваш отзыв"></textarea>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="formCheck-4">
@@ -305,7 +303,7 @@
                                 После окончания тарифа ТЕСТ ДРАЙВ подключайте любой другой удобный Вам тариф на главной странице системы Радариум
                             </p>
                         </div>
-                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" aria-label="Close" data-bs-dismiss="modal">Вернуться на главную</button></div>
                     </div>
                 </form>
             </div>
@@ -325,7 +323,7 @@
                                 Для подключения тарифа необходимо войти или зарегистрироваться в системе.
                             </p>
                         </div>
-                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" aria-label="Close" data-bs-dismiss="modal">Вернуться на главную</button></div>
                     </div>
                 </form>
             </div>
@@ -345,7 +343,7 @@
                                 Для подключения тарифа необходимо войти или зарегистрироваться в системе.
                             </p>
                         </div>
-                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" aria-label="Close" data-bs-dismiss="modal">Вернуться на главную</button></div>
                     </div>
                 </form>
             </div>
@@ -364,7 +362,7 @@
                         <div>
                             <p>Подключайте тариф и&nbsp;пользуйтесь&nbsp;им в&nbsp;течение&nbsp;<span>30</span>&nbsp;<span>дней</span></p>
                         </div>
-                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="submit">Вернуться на главную</button></div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" aria-label="Close" data-bs-dismiss="modal">Вернуться на главную</button></div>
                     </div>
                 </form>
             </div>
