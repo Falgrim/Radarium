@@ -6,8 +6,10 @@ use App\Enum\ApiDataTypeEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Observers\SpecialistObserver;
 use App\Services\Dictionary;
 use App\Traits\ModelTableName;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
+#[ObservedBy([SpecialistObserver::class])]
 class Specialist extends Model
 {
     use HasFactory;

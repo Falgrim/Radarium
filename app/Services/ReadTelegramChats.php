@@ -199,7 +199,6 @@ class ReadTelegramChats
                             'user_type' => $userData['user_type'],
                             'phone' => $userData['phone'],
                             'last_online_date' => $userData['last_online'],
-                            'last_post_date' => Carbon::createFromTimestamp($message['date'])->toDateTimeString(),
                         ]);
 
                         $this->setInfoMsg('Создан новый пользователь: '.$user->id);
@@ -210,10 +209,6 @@ class ReadTelegramChats
                         $user->user_type = $userData['user_type'];
                         $user->phone = $userData['phone'];
                         $user->last_online_date = $userData['last_online'];
-
-                        if (Carbon::createFromTimestamp($message['date']) > $user->last_post_date) {
-                            $user->last_post_date = Carbon::createFromTimestamp($message['date'])->toDateTimeString();
-                        }
 
                         $user->save();
 

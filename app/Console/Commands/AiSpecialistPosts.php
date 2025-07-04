@@ -83,7 +83,7 @@ class AiSpecialistPosts extends Command
                 $promt = $post->channel->ai_promt;
                 $options = $post->channel->apiAi->options;
 
-                $this->info('Анализ поста: '.$post->id);
+                $this->info('Анализ поста ID: '.$post->id);
                 if ($post->channel->apiAi->status !== ApiAiStatusEnum::Active) {
                     $this->error('ИИ "'.$post->channel->apiAi->title.'" (ID '.$post->channel->apiAi->id.') отключен: '.$post->id);
                     continue;
@@ -91,7 +91,7 @@ class AiSpecialistPosts extends Command
 
                 if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
                     $ApiAIYandex = new ApiAIYandex;
-                    $ApiAIYandex->logging('Анализ поста: '.$post->id);
+                    $ApiAIYandex->logging('Анализ поста ID: '.$post->id);
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
@@ -139,22 +139,20 @@ class AiSpecialistPosts extends Command
                                 $specialist->id,
                                 $specialistSpecialties
                             );
-                        } else {
-
                         }
 
                         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                         $post->save();
 
                         if ($specialist->status === ApiPostAiStatusEnum::InModeration OR $specialist->status === ApiPostAiStatusEnum::Active) {
-                            $this->info('Создан специалист');
+                            $this->info('Создан специалист ID: '.$specialist->id);
 
                             $moderationAlertService->createAlert(
                                 0,
                                 ModerationAlertSystemEnum::System,
                                 ModerationAlertTableNameEnum::Specialist,
                                 $specialist->id,
-                                'Нет специализаций'
+                                ''
                             );
                         } else {
                             $this->info('Данный пост не является типом специалиста');
