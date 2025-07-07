@@ -50,12 +50,15 @@ class SetLastPostDateToUsers extends Command
                 ->where('status', ApiPostAiStatusEnum::Active)
                 ->orderBy('post_date', 'DESC')->first();
 
-            if ($lastPost AND (!$user->last_post_date OR $user->last_post_date < $lastPost->post_date)) {
+            if ($lastPost) {
                 $user->last_post_date = $lastPost->post_date;
-                $user->save();
-
                 $this->info('Обновлен профиль ID: '.$user->id);
+            } else {
+                $user->last_post_date = null;
+                $this->info('Сброшена дата профиля ID: '.$user->id);
             }
+
+            $user->save();
         }
 
         $this->info('Данные обновлены');
