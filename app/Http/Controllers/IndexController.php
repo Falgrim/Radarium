@@ -37,6 +37,10 @@ class IndexController extends Controller
 
         $contactTodaySum = $contactTodaySum->count();
 
+        if ($contactTodaySum < 50) {
+            $contactTodaySum += rand(1,9);
+        }
+
         $tariffs = PaymentTariff::where('status', PaymentTariffStatusEnum::Active)
             ->orderBy('period', 'ASC')
             ->get();
