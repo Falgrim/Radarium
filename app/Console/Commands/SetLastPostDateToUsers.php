@@ -46,11 +46,15 @@ class SetLastPostDateToUsers extends Command
     {
         $users = ApiPostUser::get();
         foreach ($users as $user) {
-            $lastPost = ApiChannelPost::where('api_post_user_id', $user->id)->orderBy('post_date', 'DESC')->first();
+            $lastPost = Specialist::where('api_post_user_id', $user->id)
+                ->where('status', ApiPostAiStatusEnum::Active)
+                ->orderBy('post_date', 'DESC')->first();
 
-            if ($lastPost) {
+            if ($lastPost AND (!$user->last_post_date OR $user->last_post_date < $lastPost->post_date)) {
                 $user->last_post_date = $lastPost->post_date;
                 $user->save();
+
+                $this->info('Обновлен профиль ID: '.$user->id);
             }
         }
 

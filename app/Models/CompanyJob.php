@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\DictionaryEnum;
+use App\Observers\CompanyJobObserver;
 use App\Services\Dictionary;
 use App\Traits\ModelTableName;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
+#[ObservedBy([CompanyJobObserver::class])]
 class CompanyJob extends Model
 {
     use SoftDeletes;

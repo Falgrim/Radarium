@@ -81,7 +81,7 @@ class AiBuilderPosts extends Command
                 $promt = $post->channel->ai_promt;
                 $options = $post->channel->apiAi->options;
 
-                $this->info('Анализ поста: '.$post->id);
+                $this->info('Анализ поста ID: '.$post->id);
                 if ($post->channel->apiAi->status !== ApiAiStatusEnum::Active) {
                     $this->error('ИИ "'.$post->channel->apiAi->title.'" (ID '.$post->channel->apiAi->id.') отключен: '.$post->id);
                     continue;
@@ -89,7 +89,7 @@ class AiBuilderPosts extends Command
 
                 if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
                     $ApiAIYandex = new ApiAIYandex;
-                    $ApiAIYandex->logging('Анализ поста: '.$post->id);
+                    $ApiAIYandex->logging('Анализ поста ID: '.$post->id);
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
@@ -144,14 +144,14 @@ class AiBuilderPosts extends Command
                         $post->save();
 
                         if ($builder->status === ApiPostAiStatusEnum::InModeration OR $builder->status === ApiPostAiStatusEnum::Active) {
-                            $this->info('Создан строитель');
+                            $this->info('Создан строитель ID: '.$builder->id);
 
                             $moderationAlertService->createAlert(
                                 0,
                                 ModerationAlertSystemEnum::System,
                                 ModerationAlertTableNameEnum::Builder,
                                 $builder->id,
-                                'Нет специализаций'
+                                ''
                             );
                         } else {
                             $this->info('Данный пост не является типом строителя');

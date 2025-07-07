@@ -78,7 +78,7 @@ class AiCompanyPosts extends Command
                 $promt = $post->channel->ai_promt;
                 $options = $post->channel->apiAi->options;
 
-                $this->info('Анализ поста: '.$post->id);
+                $this->info('Анализ поста ID: '.$post->id);
                 if ($post->channel->apiAi->status !== ApiAiStatusEnum::Active) {
                     $this->error('ИИ "'.$post->channel->apiAi->title.'" (ID '.$post->channel->apiAi->id.') отключен: '.$post->id);
                     continue;
@@ -86,7 +86,7 @@ class AiCompanyPosts extends Command
 
                 if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
                     $ApiAIYandex = new ApiAIYandex;
-                    $ApiAIYandex->logging('Анализ поста: '.$post->id);
+                    $ApiAIYandex->logging('Анализ поста ID: '.$post->id);
                     $ApiAIYandex->setConfig($options);
                     $ApiAIYandex->setPromt($promt);
                     $ApiAIYandex->setText($post->post);
@@ -140,14 +140,14 @@ class AiCompanyPosts extends Command
                         $post->save();
 
                         if ($companyJob->status === CompanyJobStatusEnum::InModeration OR $companyJob->status === CompanyJobStatusEnum::Active) {
-                            $this->info('Создана вакансия');
+                            $this->info('Создана вакансия ID: '.$companyJob->id);
 
                             $moderationAlertService->createAlert(
                                 0,
                                 ModerationAlertSystemEnum::System,
                                 ModerationAlertTableNameEnum::CompanyJob,
                                 $companyJob->id,
-                                'Нет специализаций'
+                                ''
                             );
 
                         } else {
