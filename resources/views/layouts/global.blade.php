@@ -30,8 +30,8 @@
 
         <script src="{{ asset('v2/bootstrap/js/bootstrap.min.js') }}"></script>
         <script src="{{ asset('v2/js/slimselect.min.js') }}"></script>
-        <script src="{{ asset('v2/js/script.js') }}"></script>
-        <script src="{{ asset('v2/js/star-script.js') }}"></script>
+        <script src="{{ asset('v2/js/script.js') }}?v=1.12"></script>
+        <script src="{{ asset('v2/js/star-script.js') }}?v=1.12"></script>
 
         @stack('scripts')
         <script>

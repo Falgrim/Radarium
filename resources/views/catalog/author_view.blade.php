@@ -29,12 +29,35 @@
                 </div>
                 @endsession
 
+                @session('success')
+                <div class="row">
+                    <div class="alert alert-info">
+                        <ul>
+                            <li>{{ session()->get('success') }}</li>
+                        </ul>
+                    </div>
+                </div>
+                @endsession
+
                 @if ($errors->specialist->any())
                 <div class="row">
                     <div class="alert alert-danger">
                         <ul>
                             @foreach ($errors->specialist->all() as $key => $error)
                                 <li>{{ $key }} - {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+                @endif
+
+                @if ($errors->review->any())
+                <div class="row">
+                    <div class="alert alert-danger">
+                        <h4>Ошибка добавления отзыва</h4>
+                        <ul>
+                            @foreach ($errors->review->all() as $error)
+                                <li>{{ $error }}</li>
                             @endforeach
                         </ul>
                     </div>

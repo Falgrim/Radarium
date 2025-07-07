@@ -100,20 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
     rateBoxStars.forEach(star => {
         star.style.pointerEvents = 'none';
     });
-
-    // Обработка отправки формы в модальном окне
-    const publicForm = document.querySelector('#reviewModal form');
-    if (publicForm) {
-        publicForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Здесь можно добавить код для отправки данных формы
-            // После успешной отправки закрываем модальное окно
-            const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
-            modal.hide();
-        });
-    }
 });
-
-//  Сохраняем данные в rate-box  при перезагрузке страницы
 
 
