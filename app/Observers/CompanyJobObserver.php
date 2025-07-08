@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Enum\ApiPostAiStatusEnum;
+use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
+use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
 use App\Models\Specialist;
@@ -16,7 +18,7 @@ class CompanyJobObserver
      */
     public function created(CompanyJob $companyJob): void
     {
-        if ($companyJob->status == ApiPostAiStatusEnum::Active) {
+        if ($companyJob->status == CompanyJobStatusEnum::Active) {
             $apiPostUser = ApiPostUser::where('id', $companyJob->api_post_user_id)
                 ->where(function ($query) use ($companyJob) {
                     $query->where('last_post_date', '<', $companyJob->post_date)
@@ -25,7 +27,19 @@ class CompanyJobObserver
                 ->first();
 
             if ($apiPostUser) {
+                if ($apiPostUser->send_welcome_msg == ApiPostUserMailingStatusEnum::Waiting) {
+                    $mailingTgNewCompany = Repositories::setting()->findByName('mailing_tg_new_company');
+                    $sendWelcomeMsg = ApiPostUserMailingStatusEnum::Disabled;
+
+                    if ($mailingTgNewCompany?->value) {
+                        $sendWelcomeMsg = ApiPostUserMailingStatusEnum::ToSend;
+                    }
+
+                    $apiPostUser->send_welcome_msg = $sendWelcomeMsg;
+                }
+
                 $apiPostUser->last_post_date = $companyJob->post_date;
+                $apiPostUser->is_company = 1;
                 $apiPostUser->save();
             }
         }

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiDataTypeEnum;
+use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Services\ReadTelegramChats;
@@ -60,6 +61,7 @@ class ApiPostUser extends Model
             'last_post_date' => 'datetime:Y-m-d H:i:s',
             'channel_source' => ApiChannelSourceEnum::class,
             'is_company' => ApiDataTypeEnum::class,
+            'send_welcome_msg' => ApiPostUserMailingStatusEnum::class,
             'external_info' => 'array',
         ];
     }

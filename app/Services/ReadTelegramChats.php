@@ -182,18 +182,10 @@ class ReadTelegramChats
                         ->first();
 
                     if (!$user) {
-                        $mailingTgNewCompany = Repositories::setting()->findByName('mailing_tg_new_company');
-                        $sendWelcomeMsg = ApiPostUserMailingStatusEnum::Disabled;
-
-                        if ($this->apiChannel->is_company AND $mailingTgNewCompany?->value) {
-                            $sendWelcomeMsg = ApiPostUserMailingStatusEnum::ToSend;
-                        }
-
                         $user = ApiPostUser::create([
                             'user_id' => $message['from_id'],
                             'channel_source' => $this->apiChannel->channel_source,
-                            'is_company' => $this->apiChannel->is_company,
-                            'send_welcome_msg' => $sendWelcomeMsg,
+                            'send_welcome_msg' => ApiPostUserMailingStatusEnum::Waiting,
                             'first_name' => $userData['first_name'],
                             'username' => $userData['username'],
                             'user_type' => $userData['user_type'],
@@ -203,7 +195,6 @@ class ReadTelegramChats
 
                         $this->setInfoMsg('Создан новый пользователь: '.$user->id);
                     } else {
-                        $user->is_company = $this->apiChannel->is_company;
                         $user->first_name = $userData['first_name'];
                         $user->username = $userData['username'];
                         $user->user_type = $userData['user_type'];

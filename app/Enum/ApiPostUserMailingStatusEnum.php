@@ -11,6 +11,8 @@ enum ApiPostUserMailingStatusEnum:int {
 
     case Error = 3;
 
+    case Waiting = 4;
+
     public function toString(): ?string
     {
         return match ($this) {
@@ -18,6 +20,7 @@ enum ApiPostUserMailingStatusEnum:int {
             self::Disabled => 'Отключено',
             self::Sended => 'Отправлено',
             self::Error => 'Ошибка',
+            self::Waiting => 'Ожидает проверки ИИ',
         };
     }
 
@@ -33,6 +36,7 @@ enum ApiPostUserMailingStatusEnum:int {
             self::Disabled => 'info',
             self::Sended => 'success',
             self::Error => 'danger',
+            self::Waiting => 'info',
         };
     }
 

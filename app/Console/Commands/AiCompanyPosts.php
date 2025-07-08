@@ -48,7 +48,7 @@ class AiCompanyPosts extends Command
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
             ->where('api_channels.is_company', ApiDataTypeEnum::Company)
-            ->orderBy('api_channel_posts.post_date', 'asc')
+            ->orderBy('api_channel_posts.post_date', 'desc')
             ->take(100)
             ->get();
 
@@ -140,7 +140,7 @@ class AiCompanyPosts extends Command
                         $post->save();
 
                         if ($companyJob->status === CompanyJobStatusEnum::InModeration OR $companyJob->status === CompanyJobStatusEnum::Active) {
-                            $this->info('Создана вакансия ID: '.$companyJob->id);
+                            $this->info('Создана вакансия ID: '.$companyJob->id.' user ID '.$companyJob->api_post_user_id);
 
                             $moderationAlertService->createAlert(
                                 0,
