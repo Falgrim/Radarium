@@ -62,11 +62,11 @@
                         </div>
 
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
-                        <select class="form-select" name="user_role_id">
+                        <!--<select class="form-select" name="user_role_id">
                             @foreach ($userRoleList as $userRole)
                                 <option value="{{ $userRole['id'] }}">{{ $userRole['value'] }}</option>
                             @endforeach
-                        </select>
+                        </select> -->
                         <hr>
                         <h4>Пароль</h4>
                         <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
@@ -111,11 +111,11 @@
                         </div>
 
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
-                        <select class="form-select" name="user_role_id">
+                        <!--<select class="form-select" name="user_role_id">
                             @foreach ($userRoleList as $userRole)
                                 <option value="{{ $userRole['id'] }}">{{ $userRole['value'] }}</option>
                             @endforeach
-                        </select>
+                        </select>-->
                         <hr>
                         <h4>Пароль</h4>
                         <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
@@ -324,7 +324,7 @@
                                 Для подключения тарифа необходимо войти или зарегистрироваться в системе.
                             </p>
                         </div>
-                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" aria-label="Close" data-bs-dismiss="modal">Вернуться на главную</button></div>
+                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" id="rd-testdrive-guest-login-btn">Войти или зарегистрироваться</button></div>
                     </div>
                 </form>
             </div>
@@ -344,7 +344,9 @@
                                 Для подключения тарифа необходимо войти или зарегистрироваться в системе.
                             </p>
                         </div>
-                        <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" aria-label="Close" data-bs-dismiss="modal">Вернуться на главную</button></div>
+                        <div class="box-btn-line">
+                            <button class="btn btn-normal btn-color" type="button" id="rd-tariff-guest-login-btn">Войти или зарегистрироваться</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -388,6 +390,28 @@
             authRegistrationForm('#rd-registr-form')
         });
     });
+
+    // Правка от 08.07 АГ
+          // Обработчик для кнопки "Войти или зарегистрироваться" в модальном окне тарифа для гостей
+        $(document).on('click', '#rd-tariff-guest-login-btn', function() {
+            $('#rd-tariff-guest').modal('hide');
+            setTimeout(function() {
+                $('#rd-registr').modal('show');
+            }, 400);
+        });
+
+        // Обработчик для кнопки "Войти или зарегистрироваться" в модальном окне тест-драйва для гостей
+        $(document).on('click', '#rd-testdrive-guest-login-btn', function() {
+            $('#rd-testdrive-guest').modal('hide');
+            setTimeout(function() {
+                $('#rd-registr').modal('show');
+            }, 400);
+        });
+   
+
+
+
+
 
     function authRegistrationForm(form_id) {
 
