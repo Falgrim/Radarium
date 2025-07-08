@@ -45,7 +45,7 @@
                         <p class="line-number"><span>1</span>Выберите специализацию и&nbsp;нужные&nbsp;навыки</p>
                         <p class="line-number"><span>2</span>Смотрите список подходящих специалистов</p>
                         <p class="line-number"><span>3</span>Связывайтесь с теми, кто подходит лучше&nbsp;всего</p>
-                        <button class="btn btn-color btn-grey plastic" type="button" style="cursor: default;">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
+                        <button class="btn btn-color btn-grey plastic" type="button" disabled style="cursor: default; pointer-events: none; opacity: 0.6;">Оставляйте комментарии и&nbsp;отзывы<img src="{{ asset('v2/img/icon-plastic.png') }}"></button>
                     </div>
                     <div class="drive-col--item dc-divider"><span></span></div>
                     <div class="drive-col--item">
