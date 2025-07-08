@@ -5,6 +5,7 @@
                 <div class="col">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ route('index') }}"><span>Главная</span></a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('catalog.specialists') }}"><span>Поиск</span></a></li>
                         <li class="breadcrumb-item active"><span>Оформление тарифа</span></li>
                     </ol>
                 </div>
