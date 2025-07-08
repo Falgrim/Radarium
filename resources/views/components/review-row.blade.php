@@ -6,10 +6,10 @@
         </p>
         <p class="review-text">{!! $review->text !!}</p>
         @if(Auth::check() AND $review->can_edit AND $review->user_id === Auth::user()->id)
-            <div class="review-from" data-text="{{ $review->text }}"></div>
+            {{--<div class="review-from" data-text="{{ $review->text }}"></div>
             <p>
             [<a href="#" class="review-edit"><small>редактировать</small></a>]
-            </p>
+            </p>--}}
         @endif
     </div>
     <div class="rate-stars">

@@ -78,7 +78,6 @@ class ReviewResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Пользователь ID', 'user_id'),
-            //Text::make('Специалист ID', 'specialist_id'),
             Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5),
             Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class),
@@ -123,12 +122,10 @@ class ReviewResource extends ModelResource
                 Text::make('Имя', 'name'),
                 Email::make('Почта', 'email'),
             ]),
-            /*HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->fields([
-                //Text::make('ID', 'id'),
-                Text::make('О себе', 'about', fn($item) => Str::limit($item->about, 100)),
-                //Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
-                Date::make('Создан', 'created_at')->withTime(),
-            ]),*/
+            HasOne::make('Специалист', 'author', resource: new ApiPostUserResource())->fields([
+                Text::make('ID', 'id'),
+                Text::make('Логин', 'username'),
+            ]),
             Text::make('Отзыв', 'text', fn($item) => Str::limit($item->about, 100)),
             Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5)->stars(),
@@ -146,12 +143,10 @@ class ReviewResource extends ModelResource
                 Text::make('Имя', 'name'),
                 Email::make('Почта', 'email'),
             ]),
-            /*HasOne::make('Специалист', 'specialist', resource: new SpecialistResource())->fields([
+            HasOne::make('Специалист', 'author', resource: new ApiPostUserResource())->fields([
                 Text::make('ID', 'id'),
-                Text::make('О себе', 'about'),
-                Enum::make('Статус', 'status')->attach(SpecialistStatusEnum::class),
-                Date::make('Создан', 'created_at')->withTime(),
-            ]),*/
+                Text::make('Логин', 'username'),
+            ]),
             Text::make('Отзыв', 'text'),
             Text::make('Доп. поле', 'extra_field', function () {
                 $extra = [];

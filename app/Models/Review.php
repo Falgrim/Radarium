@@ -52,9 +52,9 @@ class Review extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function specialist(): BelongsTo
+    public function specialist(): belongsTo
     {
-        return $this->belongsTo(Specialist::class);
+        return $this->belongsTo(Specialist::class, 'specialist_id','id');
     }
 
     public function reviewCustomFields(): HasMany

@@ -55,14 +55,14 @@
                                     <p>Оцените специалиста</p>
                                 </div>
 
-                                <p>Вы можете добавит свое дополнительное поле для отзыва</p>
+                                {{--<p>Вы можете добавит свое дополнительное поле для отзыва</p>
 
                                 <div class="input-group mb-3">
                                     <span class="input-group-text">Название</span>
                                     <input type="text" class="form-control @error('extra_row.*.title', 'review') is-invalid @enderror" placeholder="" name="extra_row[0][title]" value="{{ old('extra_row.0.title', $request->extra_row ? $request->extra_row[0]['title'] : '') }}" aria-label="">
                                     <span class="input-group-text">Значение</span>
                                     <input type="text" class="form-control @error('extra_row.*.value', 'review') is-invalid @enderror" placeholder="" name="extra_row[0][value]" value="{{ old('extra_row.0.value', $request->extra_row ? $request->extra_row[0]['value'] : '') }}" aria-label="">
-                                </div>
+                                </div>--}}
 
                                 <div class="box-btn-line">
                                     <button class="btn btn-normal btn-color" type="submit">Отправить</button>

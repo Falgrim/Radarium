@@ -362,6 +362,20 @@ class CatalogController extends Controller
             $specialist = Specialist::where('id', $validated['specialist_id'])->firstOrFail();
         }
 
+        $check = Review::where('specialist_id', isset($specialist) ? $specialist->id : 0)
+            ->where('api_post_user_id', $author->id)
+            ->where('user_id', Auth::user()->id)
+            ->first();
+
+        try {
+            if ($check) {
+                throw new \Exception('Вы уже ранее оставляли отзыв для данного специалиста. Если его нет, то, возможно, он еще проходит модерацию.');
+            }
+        } catch (\Exception $e) {
+            $validator->errors()->add('review_custome', $e->getMessage());
+            return redirect()->back()->withErrors($validator, 'review')->withInput();
+        }
+
         $review = Review::create([
             'text'      => $validated['text'],
             'can_edit'  => ReviewCanEditEnum::Allow,
