@@ -62,11 +62,11 @@
                         </div>
 
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
-                        <!--<select class="form-select" name="user_role_id">
+                        <select class="form-select" name="user_role_id">
                             @foreach ($userRoleList as $userRole)
                                 <option value="{{ $userRole['id'] }}">{{ $userRole['value'] }}</option>
                             @endforeach
-                        </select> -->
+                        </select>
                         <hr>
                         <h4>Пароль</h4>
                         <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
@@ -111,11 +111,11 @@
                         </div>
 
                         <input class="form-control" type="email" name="email" placeholder="Почта" required="required">
-                        <!--<select class="form-select" name="user_role_id">
+                        <select class="form-select" name="user_role_id">
                             @foreach ($userRoleList as $userRole)
                                 <option value="{{ $userRole['id'] }}">{{ $userRole['value'] }}</option>
                             @endforeach
-                        </select>-->
+                        </select>
                         <hr>
                         <h4>Пароль</h4>
                         <input class="form-control" type="password" name="password" placeholder="Пароль" required="required">
@@ -363,7 +363,7 @@
                     <div class="registration-form">
                         <h4 class="tarif-name">Оформить тариф:&nbsp;<span>1 Месяц</span></h4>
                         <div>
-                            <p>Подключайте тариф и&nbsp;пользуйтесь&nbsp;им в&nbsp;течение&nbsp;<span>30</span>&nbsp;<span>дней</span></p>
+                            <p>Подключайте тариф и&nbsp;пользуйтесь&nbsp;им в&nbsp;течение&nbsp;<span>3</span>&nbsp;<span>дней</span></p>
                         </div>
                         <div class="box-btn-line"><button class="btn btn-normal btn-color" type="button" aria-label="Close" data-bs-dismiss="modal">Вернуться на главную</button></div>
                     </div>
