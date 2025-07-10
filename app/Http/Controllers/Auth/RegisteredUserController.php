@@ -91,7 +91,7 @@ class RegisteredUserController extends Controller
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Ошибка!',
+                'message' => 'Ошибка! '.$e->getMessage(),
                 'error' => $e->getMessage(),
             ], 500);
         }
