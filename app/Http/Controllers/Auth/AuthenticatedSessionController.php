@@ -24,32 +24,45 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): JsonResponse
+    public function store(LoginRequest $request): JsonResponse|RedirectResponse
     {
-        try {
+        if(!$request->ajax()){
             $request->authenticate();
 
             $request->session()->regenerate();
 
             $redirectTo = session('redirect_auth');
             if ($redirectTo) {
-                $redirectTo = redirect($redirectTo);
+                return redirect()->intended(redirect($redirectTo));
             }
 
-            return response()->json([
-                'message' => 'Авторизация завершена',
-                'redirect' => $redirectTo ? $redirectTo : route('catalog.specialists', absolute: false),
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Ошибка!',
-                'errors' => $e->validator->getMessageBag(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Ошибка!',
-                'error' => $e->getMessage(),
-            ], 500);
+            return redirect()->intended(route('catalog.specialists', absolute: false));
+        } else {
+            try {
+                $request->authenticate();
+
+                $request->session()->regenerate();
+
+                $redirectTo = session('redirect_auth');
+                if ($redirectTo) {
+                    $redirectTo = redirect($redirectTo);
+                }
+
+                return response()->json([
+                    'message' => 'Авторизация завершена',
+                    'redirect' => $redirectTo ? $redirectTo : route('catalog.specialists', absolute: false),
+                ]);
+            } catch (ValidationException $e) {
+                return response()->json([
+                    'message' => 'Ошибка!',
+                    'errors' => $e->validator->getMessageBag(),
+                ], 422);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Ошибка!',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
         }
     }
 
