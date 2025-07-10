@@ -220,7 +220,7 @@
                         @if(Auth::check())
                             <button class="btn btn-color btn-accent b-shadow" data-bs-toggle="modal" data-bs-target="#rd-testdrive-auth" type="button"><strong>Бесплатно</strong></button>
                         @else
-                            <button class="btn btn-color btn-accent b-shadow" data-bs-toggle="modal" data-bs-target="#rd-testdrive-guest" type="button"><strong>Бесплатно</strong></button>
+                            <button class="btn btn-color btn-accent b-shadow" data-bs-toggle="modal" data-bs-target="#rd-drive" type="button"><strong>Бесплатно</strong></button>
                         @endif
                     </div>
                 </div>
