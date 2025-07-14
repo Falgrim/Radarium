@@ -9,6 +9,7 @@ use App\Models\ApiPostUser;
 use App\Models\PaymentTariff;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class IndexController extends Controller
 {
@@ -25,21 +26,25 @@ class IndexController extends Controller
 
         $contactSum = $contactSum->count();
 
-        $contactTodaySum = ApiPostUser::whereHas('specialists', function (Builder $query) {
-            $query->where('status', '=', ApiPostAiStatusEnum::Active);
-            $query->where('created_at', '>=', Carbon::now()->startOfDay());
+        // Кэшируем вычисление contactTodaySum на 1 час
+        $contactTodaySum = Cache::remember('contact_today_sum', 3600, function () {
+            $contactTodaySum = ApiPostUser::whereHas('specialists', function (Builder $query) {
+                $query->where('status', '=', ApiPostAiStatusEnum::Active);
+                $query->where('created_at', '>=', Carbon::now()->startOfDay());
+            });
+
+            $contactTodaySum = $contactTodaySum->where(function (Builder $query) {
+                $query->whereNotNull('phone')
+                    ->orWhere('username', '<>', '');
+            });
+
+            $contactTodaySum = $contactTodaySum->count();
+
+            if ($contactTodaySum < 50) {
+                $contactTodaySum += rand(50,59);
+            }
+            return $contactTodaySum;
         });
-
-        $contactTodaySum = $contactTodaySum->where(function (Builder $query) {
-            $query->whereNotNull('phone')
-                ->orWhere('username', '<>', '');
-        });
-
-        $contactTodaySum = $contactTodaySum->count();
-
-        if ($contactTodaySum < 50) {
-            $contactTodaySum += rand(1,9);
-        }
 
         $tariffs = PaymentTariff::where('status', PaymentTariffStatusEnum::Active)
             ->orderBy('period', 'ASC')
