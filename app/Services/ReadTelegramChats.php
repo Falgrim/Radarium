@@ -16,6 +16,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+use danog\MadelineProto\Logger;
+use danog\MadelineProto\Settings\Logger as LoggerSettings;
+
+
 class ReadTelegramChats
 {
     private ApiChannel $apiChannel;
@@ -49,6 +53,15 @@ class ReadTelegramChats
     {
         $this->unsetMessages();
         $this->apiChannel = $apiChannel;
+        
+               // --- Лимитируем размер лог-файла MadelineProto ---
+        $logPath = storage_path('logs/MadelineProto.log');
+        $maxLogSize = 10 * 1024 * 1024; // 10 МБ
+        if (file_exists($logPath) && filesize($logPath) > $maxLogSize) {
+            file_put_contents($logPath, ''); // очищаем файл
+        }
+        // --- END ---
+
 
         if (!count($this->apiChannel->options) OR !isset($this->apiChannel->options['api_id']) OR !isset($this->apiChannel->options['api_hash'])) {
             $this->setWarnMsg('Канал ID'.$this->apiChannel->id.': нет api_id и/или api_hash');
@@ -63,7 +76,17 @@ class ReadTelegramChats
                 ->setLangCode('RU')
         );
 
-        $settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
+        //$settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
+               // --- Детальное логирование ---
+        $loggerSettings = new LoggerSettings();
+        $loggerSettings->setType(Logger::FILE_LOGGER);
+        $loggerSettings->setLevel(Logger::ULTRA_VERBOSE);
+        $loggerSettings->setExtra($logPath);
+        $settings->setLogger($loggerSettings);
+        // --- END ---
+        
+        
+        
 
         if (config('database.redis.default.password')) {
             $settings->setDb(

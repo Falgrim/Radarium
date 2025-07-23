@@ -42,6 +42,15 @@
             <div class="pagination-box">
                 <h5 hidden="">Показать&nbsp;еще 20&nbsp;соискателей</h5>
                 <nav class="bg-transparent border-0 shadow-none">
+                     <style>
+                        .pagination-box .pagination {
+                            font-size: 0.875rem;
+                        }
+                        .pagination-box .page-link {
+                            font-size: 0.875rem;
+                            padding: 0.375rem 0.75rem;
+                        }
+                    </style>
                     {{ $authors->links() }}
                 </nav>
             </div>

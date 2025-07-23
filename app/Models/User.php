@@ -103,9 +103,18 @@ class User extends Authenticatable implements MustVerifyEmail
             ->first();
 
         if (!is_null($contacts) AND !is_null($contacts->count_contacts_left)) {
-            $daysDiff = ceil($contacts->date_end->diffInDays(Carbon::now())); // Разница будет в минусе
-            $daysDiff = $daysDiff < 0 ? abs($daysDiff) : 0;
+            /**$daysDiff = ceil($contacts->date_end->diffInDays(Carbon::now())); // Разница будет в минусе
+            *$daysDiff = $daysDiff < 0 ? abs($daysDiff) : 0;
+            */
+            /* правка для правильного вычисления оставшихся дней тарифа АГ */
+             
+            $today = Carbon::today();
+            $end = $contacts->date_end->copy()->startOfDay();
 
+            $daysDiff = $end >= $today ? $today->diffInDays($end) : 0;
+
+            
+            
             return [
                 'count_contacts_left' => $contacts->count_contacts_left,
                 'count_contacts' => $contacts->count_contacts,

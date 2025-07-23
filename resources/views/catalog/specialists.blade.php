@@ -45,6 +45,7 @@
             </table>
 
             {{ $specialists->links() }}
+         
         </div>
     </div>
 </x-global-layout>

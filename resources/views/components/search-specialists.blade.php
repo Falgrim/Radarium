@@ -1,6 +1,7 @@
 @php
     $formErrorClass = "";
     $contactsLimit = Auth::check() ? Auth::user()->getLeftContacts() : [];
+    
 @endphp
 
 @if ($errors->any())
@@ -92,6 +93,52 @@
     </div>
 </div>
 
+<!-- Ниже вставка кастомной пагинации 
+
+@if(isset($authors) && method_exists($authors, 'currentPage') && method_exists($authors, 'lastPage') && method_exists($authors, 'url'))
+    @php
+        $currentPage = $authors->currentPage();
+        $lastPage = $authors->lastPage();
+    @endphp
+    @if ($lastPage > 1)
+        <nav aria-label="Пагинация">
+            <ul class="pagination justify-content-center">
+                {{-- Стрелка назад --}}
+                <li class="page-item {{ $currentPage == 1 ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ $currentPage == 1 ? '#' : $authors->url($currentPage - 1) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {{-- Первые 5 страниц --}}
+                @for ($i = 1; $i <= min(5, $lastPage); $i++)
+                    <li class="page-item {{ $currentPage == $i ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $authors->url($i) }}">{{ $i }}</a>
+                    </li>
+                @endfor
+                {{-- Троеточие, если страниц больше 7 --}}
+                @if ($lastPage > 7)
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                @endif
+                {{-- Последние 2 страницы --}}
+                @if ($lastPage > 5)
+                    <li class="page-item {{ $currentPage == $lastPage-1 ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $authors->url($lastPage-1) }}">{{ $lastPage-1 }}</a>
+                    </li>
+                    <li class="page-item {{ $currentPage == $lastPage ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $authors->url($lastPage) }}">{{ $lastPage }}</a>
+                    </li>
+                @endif
+                {{-- Стрелка вперёд --}}
+                <li class="page-item {{ $currentPage == $lastPage ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ $currentPage == $lastPage ? '#' : $authors->url($currentPage + 1) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    @endif
+@endif -->
+
 @pushOnce('scripts')
     <script type="module">
         $(document).ready(function() {
@@ -146,3 +193,5 @@
         }
     </script>
 @endPushOnce
+
+

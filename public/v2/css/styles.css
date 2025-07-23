@@ -2494,7 +2494,7 @@ form input:not(.form-check-input), form .form-select, form textarea {
 }
 
 .ss-content .ss-search {
-  display: none;
+  /*display: none;*/
 }
 
 .ss-main .ss-values {
