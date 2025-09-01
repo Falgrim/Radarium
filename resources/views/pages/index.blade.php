@@ -226,27 +226,88 @@
                 </div>
             </div>
         </div>
-        <div class="container" hidden="">
-            <div id="authors" class="section-heading">
-                <h2 id="author">Авторы</h2>
+        
+        <div class="container">
+            <div class="section-heading">
+                <h2 id="creator">Создатель Radarium</h2>
             </div>
             <div class="row section-mb">
-                <div class="col-12 col-lg-5">
-                    <figure class="figure h-100"><img class="figure-img" src="{{ asset('v2/img/author1.jpg') }}"></figure>
+                <div class="col-12 col-lg-4 d-flex flex-column align-items-start">
+                    <div class="h-100 box-simple w-100">
+                        <div class="mb-4" style="margin-top: 20px;">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0 me-3">
+                                    <img src="v2/img/author1.jpg" class="rounded" width="80" height="160" alt="Николаева А.С.">
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h4 class="txt-28semibold mb-4">Генеральный директор Бимпро</h4>
+                                    <p class="mb-4" style="font-size: 16px;">Николаева А.С., кандидат архитектуры, член экспертного совета при УМС СПбГАСУ, зам. председателя комитета по цифровизации градостроительной деятельности НОТИМ.</p>
+                                    <blockquote class="border-start border-3 ps-3 text-muted fst-italic mb-3">
+                                        "Найти сотрудника или подрядчика в области проектирования тяжело, долго и дорого. С Радариумом мы экономим до 30% от годового оборота. Рекомендую."
+                                    </blockquote>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 w-100" style="padding-left: 20px; padding-right: 20px;">
+                        <h4 class="txt-28semibold mb-3">Бимпро</h4>
+                        <p class="mb-0" style="font-size: 16px; color: #000;">ведущий ТИМ-интегратор и проектировщик жилья в РФ (более 1 млн м²). Консультант Минстрой РФ по вопросам практического применения Технологий Информационного Моделирования (TIM/BIM) в проектировании и строительстве.</p>
+                    </div>
                 </div>
-                <div class="col-12 col-lg-7">
-                    <div class="h-100 box-simple">
-                        <h3 class="txt-28semibold">Немного о наших успехах</h3>
-                        <p>Идея разработки сервиса принадлежит ООО “БИМПРО”, действующему&nbsp;лидеру и интегратору в области ТИМ (технологий информационного моделирования) и&nbsp;проектирования.</p>
+                <div class="col-12 col-lg-8 d-flex align-items-start">
+                    <div class="h-100 box-simple w-100">
+                            <div class="mb-4" style="margin-top: 20px;">
+                                <h4 class="txt-28semibold mb-3">Достижения</h4>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Член ТК 505 при Минстрое РФ.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Член правления НОТИМ.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Член комитета по цифровизации градостроительной деятельности.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Член комитета по цифровизации управления строительством.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Член комитета по образованию и аттестации ТИМ.</li>
+                                </ul>
+                            </div>
+                        <!--<p>Идея разработки сервиса принадлежит ООО “БИМПРО”, действующему&nbsp;лидеру и интегратору в области ТИМ (технологий информационного моделирования) и&nbsp;проектирования.</p>
                         <p>ООО “БИМПРО” является консультантом МИНСТРОЙ РФ и НОТИМ по&nbsp;<br>вопросам аналитики в&nbsp;области информационного моделирования</p>
-                        <p>“Мы знаем, как это тяжело, найти специалиста (исполнителя или&nbsp;<br>подрядчика), будь то архитектор, дизайнер или инженер. Огромные затраты&nbsp;в адрес кадровых агентств омрачали нашу жизнь и не давали нужного&nbsp;результата.</p>
-                        <p>Поиск специалистов по открытым каналам, в телеграмм, ВК и других&nbsp;<br>отнимал много времени, отсутствие систематизации мешало работать с&nbsp;найденными контактами.</p>
-                        <p>После долгих мучений мы решили создать собственный проект, который&nbsp;заменил бы нам тендерный отдел или кадровое агентство, и так родился&nbsp;RADARIUM, наш незаменимый помощник.</p>
-                        <p>&nbsp;</p>
+                        <p>“Мы знаем, как это тяжело, найти специалиста (исполнителя или&nbsp;<br>подрядчика), будь то архитектор, дизайнер или инженер. Огромные затраты&nbsp;в адрес кадровых агентств омрачали нашу жизнь и не давали нужного&nbsp;результата.</p>-->
+                            <div class="mb-4">
+                                <h4 class="txt-28semibold mb-3">Награды</h4>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Благодарности министра строительства РФ Файзулина И.Э. - 2023 г, 2025 г.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Благодарности заместителя министра строительства РФ Михайлика К.А. - 2023 г, 2024 г.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Благодарность председателя Общественного совета при Минстрое РФ Степашина С.В. - 2022 г.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>Благодарность Президента НОТИМ Викторова М.Ю. - 2023 г.</li>
+                                    <li class="mb-2"><span class="me-2" style="color: #000; font-size: 8px;">●</span>26 призовых мест на всероссийских конкурсах среди проектировщиков.</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4 class="txt-28semibold mb-3">Заказчики</h4>
+                                <p class="mb-4" style="font-size: 16px;">Мосинжпроект, Газпром, Газпромнефть, СЭТЛ Групп.</p>
+                            </div>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="row mt-5 mb-5">
+            <div class="col-12">
+                <div class="text-center mb-5 pt-4">
+                    <h4 class="txt-28semibold">Сертификаты и награды</h4>
+                </div>
+                <div class="d-flex flex-wrap justify-content-center gap-3">
+                    <img src="v2/img/CERTS/Благодарственное-письмо-МИНСТРОЙ-2024.jpg" class="img-fluid" style="max-width: 200px; height: auto;" alt="Благодарственное письмо Минстрой 2024">
+                    <img src="v2/img/CERTS/Благодарственное-письмо-МИНСТРОЙ-2023.jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="Благодарственное письмо Минстрой 2023">
+                    <img src="v2/img/CERTS/Благодарность-Общественный-совет-при-Минстрой.jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="Благодарность Общественный совет при Минстрой">
+                    <img src="v2/img/CERTS/Благодарность-Минстрой-Смородин-Д.Н.jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="Благодарность Минстрой Смородин Д.Н.">
+                    <img src="v2/img/CERTS/Благодарность-Нотим-31.10..jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="Благодарность НОТИМ">
+                    <img src="v2/img/CERTS/Благодарность-1трест.jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="Благодарность 1трест">
+                    <img src="v2/img/CERTS/Рекомендательное-письмо-Сэтл-Групп.jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="Рекомендательное письмо Сэтл Групп">
+                    <img src="v2/img/CERTS/БИМПРО-олимпиада-(НОТИМ).jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="БИМПРО олимпиада НОТИМ">
+                    <img src="v2/img/CERTS/ТИМ-5-Благодарность.jpg" class="img-fluid" style="max-width: 120px; height: auto;" alt="ТИМ-5 Благодарность">
+                </div>
+            </div>
+        </div>
+        
         <div class="container">
             <div id="faq2" class="section-heading">
                 <h2>Ответы на Вопросы</h2>

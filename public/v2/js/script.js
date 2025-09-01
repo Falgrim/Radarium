@@ -26,7 +26,10 @@ new SlimSelect({
     //select: '#selectElement'
     select: document.querySelector('#selectElement'),
     settings: {
-        placeholderText: 'Выберите специализацию'
+        placeholderText: 'Выберите специализацию',
+        searchPlaceholder: 'Поиск',
+        searchText: 'Ничего не найдено',
+
     }
 });
 
