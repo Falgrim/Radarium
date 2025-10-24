@@ -1,25 +1,79 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Документация по использованию ПО Radarium</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 40px;
-            background-color: white;
-            color: #333;
-        }
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            color: #333;
-        }
-    </style>
-</head>
-<body>
-    <h1>Документация по использованию ПО Radarium</h1>
-</body>
-</html>
+<x-landing-layout>
+    <main>
+        <div class="container">
+            <div class="herobox">
+                <div>
+                    <h1>ФУНКЦИОНАЛЬНЫЕ ВОЗМОЖНОСТИ И ОПИСАНИЕ<br>ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ «Radarium»</h1>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+            <div class="section-heading">
+                <h2>Описание</h2>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="box-simple">
+                        <p><strong>Radarium</strong> - это программный сервис (SaaS) для автоматизированного поиска и подбора специалистов с использованием технологий искусственного интеллекта.</p>
+                        
+                        <p><strong>Основное назначение:</strong> Поиск, анализ и подбор специалистов для выполнения проектных работ путем автоматического анализа данных из открытых Telegram-каналов.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="section-heading">
+                <h2>Перечень бизнес-функций</h2>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="box-simple">
+                        <ul>
+                            <li>Автоматический сбор информации о специалистах из мессенджера</li>
+                            <li>Интеллектуальный анализ и классификация данных о специалистах</li>
+                            <li>Поиск и фильтрация специалистов по заданным критериям</li>
+                            <li>Управление базой данных специалистов и вакансий</li>
+                            <li>Оценка релевантности кандидатов с использованием ИИ</li>
+                            <li>Возможность поиска и каталогизации специалистов</li>
+                            <li>Осуществлена система тарифов и монетизации</li>
+                            <li>Осуществлена система отзывов и рейтингов</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="section-heading">
+                <h2>Стоимость ПО "Radarium"</h2>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="box-simple">
+                        <p><strong>Стоимость по запросу</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="section-heading">
+                <h2>Документация ПО "Radarium"</h2>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="box-simple">
+                        <ul>
+                            <li><a href="{{ asset('v2/docs/RADARIUM_жизненный цикл.pdf') }}" target="_blank">Жизненный цикл ПО "Radarium"</a></li>
+                            <li><a href="{{ asset('v2/docs/Руководство пользователя.PDF') }}" target="_blank">Инструкция пользователя ПО "Radarium"</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <x-footer-finish />
+    </main>
+</x-landing-layout>
