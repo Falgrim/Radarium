@@ -59,4 +59,9 @@ class IndexController extends Controller
             'userRoleList' => $userRoleList,
         ]);
     }
+    
+    public function tech()
+    {
+        return view('pages.tech');
+    }
 }

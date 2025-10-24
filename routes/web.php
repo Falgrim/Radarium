@@ -10,6 +10,7 @@ use App\Http\Controllers\TariffController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
+Route::get('/tech', [IndexController::class, 'tech'])->name('tech');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/specialists', [CatalogController::class, 'authorsAsSpecialists'])->name('catalog.specialists');

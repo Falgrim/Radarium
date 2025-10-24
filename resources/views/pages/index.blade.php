@@ -123,6 +123,16 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Кнопка видео урока -->
+        <div class="container">
+            <div class="d-flex justify-content-center mb-5">
+                <button class="btn btn-color btn-accent" type="button" data-bs-toggle="modal" data-bs-target="#videoModal" style="min-width: 300px; font-size: 20px; padding: 15px 30px;">
+                    <i class="fas fa-play me-2"></i>Видеодемонстрация
+                </button>
+            </div>
+        </div>
+        
         <div class="container">
             <div class="section-heading">
                 <h2 id="why">Почему Radarium уникален?</h2>

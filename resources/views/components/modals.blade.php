@@ -373,6 +373,30 @@
     </div>
 </div>
 
+<!-- Модальное окно для видео урока -->
+<div class="modal fade modal-registr" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="videoModalLabel">Видеодемонстраиця</h4>
+                <button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img src="{{ asset('v2/img/icon-close-white.svg') }}"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="ratio ratio-16x9">
+                    <video id="tutorialVideo" controls preload="metadata">
+                        <source src="{{ asset('v2/video/tutorial 2025-07-23 124053.mp4') }}" type="video/mp4">
+                        Ваш браузер не поддерживает воспроизведение видео.
+                    </video>
+                </div>
+            </div>
+            <div class="modal-footer" style="background-image: var(--bg-linear01); border-radius: 0 0 20px 20px; min-height: 20px;">
+                <!-- Пустой футер для правильного закругления углов -->
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
     $(document).ready(function() {
         $('#rd-drive-form').on('submit', function(e) {
@@ -465,4 +489,12 @@
             }
         });
     }
+    
+     // Остановка видео при закрытии модального окна
+    document.getElementById('videoModal').addEventListener('hidden.bs.modal', function () {
+        const video = document.getElementById('tutorialVideo');
+        video.pause();
+        video.currentTime = 0;
+    });
+    
 </script>
