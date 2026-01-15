@@ -52,7 +52,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="box-simple">
-                        <p><strong>Стоимость по запросу</strong></p>
+                        <p><strong>Стоимость по запросу. Телефон +79811278770</strong></p>
                     </div>
                 </div>
             </div>
@@ -67,7 +67,10 @@
                     <div class="box-simple">
                         <ul>
                             <li><a href="{{ asset('v2/docs/RADARIUM_жизненный цикл.pdf') }}" target="_blank">Жизненный цикл ПО "Radarium"</a></li>
-                            <li><a href="{{ asset('v2/docs/Руководство пользователя.PDF') }}" target="_blank">Инструкция пользователя ПО "Radarium"</a></li>
+                            <li><a href="{{ asset('v2/docs/Руководство пользователя.pdf') }}" target="_blank">Инструкция пользователя ПО "Radarium"</a></li>
+                            <li><a href="{{ asset('v2/docs/Radarium_Пользовательское_соглашение.pdf') }}" target="_blank">Пользовательское соглашение</a></li/>
+                            <li><a href="{{ asset('v2/docs/Инструкция по установке для клиента.pdf') }}" target="_blank">Инструкция по установке ПО "Radarium"</a></li>
+                        </ul>
                         </ul>
                     </div>
                 </div>
