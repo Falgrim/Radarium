@@ -2462,16 +2462,16 @@
         },
         {
             "name": "danog/madelineproto",
-            "version": "8.5.3",
+            "version": "8.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/danog/MadelineProto.git",
-                "reference": "f3ab2bfab29e11395223a20789fd09ee07487c2b"
+                "reference": "abc3a54bf46babbaa9d55b1ae023c14947db1cdd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/danog/MadelineProto/zipball/f3ab2bfab29e11395223a20789fd09ee07487c2b",
-                "reference": "f3ab2bfab29e11395223a20789fd09ee07487c2b",
+                "url": "https://api.github.com/repos/danog/MadelineProto/zipball/abc3a54bf46babbaa9d55b1ae023c14947db1cdd",
+                "reference": "abc3a54bf46babbaa9d55b1ae023c14947db1cdd",
                 "shasum": ""
             },
             "require": {
@@ -2579,7 +2579,7 @@
             ],
             "support": {
                 "issues": "https://github.com/danog/MadelineProto/issues",
-                "source": "https://github.com/danog/MadelineProto/tree/8.5.3"
+                "source": "https://github.com/danog/MadelineProto/tree/8.6.0"
             },
             "funding": [
                 {
@@ -2587,7 +2587,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-07-29T11:12:27+00:00"
+            "time": "2025-09-27T11:57:12+00:00"
         },
         {
             "name": "danog/primemodule",

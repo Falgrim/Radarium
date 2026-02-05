@@ -18,6 +18,7 @@ class ApiChannel extends Model
 
     protected $fillable = [
         'title',
+        /*'region',*/
         'link',
         'description',
         'ai_promt',

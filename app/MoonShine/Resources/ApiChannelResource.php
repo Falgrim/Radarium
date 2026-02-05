@@ -136,6 +136,8 @@ class ApiChannelResource extends ModelResource
     {
         $fields = [];
         $fields[] = Text::make('Название', 'title');
+        /*$fields[] = Text::make('Регион', 'region')
+            ->nullable();*/
         $fields[] = Text::make('Ссылка', 'link')->hint('Укажите ссылку в формате: https://');
         $fields[] = Text::make('Описание', 'description');
 
