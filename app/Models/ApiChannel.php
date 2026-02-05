@@ -30,6 +30,7 @@ class ApiChannel extends Model
         'is_company',
         'last_date_check',
         'post_from_date',
+        'region',
         'created_at',
         'updated_at',
     ];
@@ -59,6 +60,7 @@ class ApiChannel extends Model
             'is_company' => ApiDataTypeEnum::class,
         ];
     }
+
 
     public function apiAi(): BelongsTo
     {

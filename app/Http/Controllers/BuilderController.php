@@ -86,11 +86,21 @@ class BuilderController extends Controller
                 'string',
                 Rule::in(['asc', 'desc']),
             ],
+            'region' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::in(array_merge([''], array_keys(config('regions', [])))),
+            ],
         ]);
 
         $authors = ApiPostUser::whereHas('builders', function (Builder $query) use ($validated) {
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
+            }
+
+            if (!empty($validated['region'])) {
+                $query->where('region', $validated['region']);
             }
 
             if (!empty($validated['key_word_tags'])) {
@@ -145,6 +155,7 @@ class BuilderController extends Controller
             'request' => $request,
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
+            'regionsList' => config('regions', []),
             'tariffAccess' => $this->tariffService->checkOpenContact(),
             'userOpenLog' => $userOpenLog,
         ]);

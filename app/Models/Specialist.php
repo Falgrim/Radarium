@@ -47,6 +47,7 @@ class Specialist extends Model
         'ai_reason',
         'contact_info',
         'post_date',
+        'region',
         'created_at',
         'updated_at',
     ];

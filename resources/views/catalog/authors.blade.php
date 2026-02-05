@@ -11,7 +11,7 @@
             </div>
         </div>
 
-        <x-search-specialists :$authors :$specialitiesList :$request :$errors />
+        <x-search-specialists :$authors :$specialitiesList :$regionsList :$request :$errors />
 
         <div class="container">
             <div class="table-box">

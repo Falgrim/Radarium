@@ -127,6 +127,10 @@ class AiBuilderPosts extends Command
 
                         $result['json']['status'] = ApiPostAiStatusEnum::Active;
 
+                        if (!empty($post->channel->region)) {
+                            $result['json']['region'] = $post->channel->region;
+                        }
+
                         $builder = Builder::create($result['json']);
 
                         $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);

@@ -39,6 +39,17 @@
                                 </select>
                                 <x-input-validate :messages="$errors->get('speciality_id')" />
                             </div>
+
+                            <div class="col-md-6">
+                                <x-input-label for="region" class="form-label" :value="__('Регион')" />
+                                <select class="form-select" name="region" id="region">
+                                    <option value="">— любой —</option>
+                                    @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
+                                        <option value="{{ $regionKey }}" {{ old('region', $request->region) == $regionKey ? 'selected' : '' }}>{{ $regionLabel }}</option>
+                                    @endforeach
+                                </select>
+                                <x-input-validate :messages="$errors->get('region')" />
+                            </div>
                         </div>
 
                         <button class="w-10 btn btn-primary mt-3" type="submit" name="search">Поиск</button>

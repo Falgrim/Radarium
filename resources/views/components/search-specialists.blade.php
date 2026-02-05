@@ -43,6 +43,13 @@
                                         <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
                                     @endforeach
                                 </select>
+                                <label class="form-label mt-2" for="region">Регион</label>
+                                <select class="form-select" name="region" id="region">
+                                    <option value="">— любой —</option>
+                                    @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
+                                        <option value="{{ $regionKey }}" {{ old('region', $request->region) == $regionKey ? 'selected' : '' }}>{{ $regionLabel }}</option>
+                                    @endforeach
+                                </select>
                                 <div id="local"></div>
                                 <ul class="list-group tags" style="display: none;">
                                     <li class="list-group-item"><span>Спец 1</span><button class="btn btn-link" type="button" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-64 0 512 512" width="1em" height="1em" fill="currentColor">

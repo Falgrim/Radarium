@@ -17,6 +17,7 @@ use Illuminate\Validation\Rule;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Json;
+use MoonShine\Fields\Select;
 use MoonShine\Fields\Preview;
 use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Switcher;
@@ -100,6 +101,7 @@ class ApiChannelResource extends ModelResource
             'channel_source' => Rule::enum(ApiChannelSourceEnum::class),
             'status' => Rule::enum(ApiChannelStatusEnum::class),
             'is_company' => Rule::enum(ApiDataTypeEnum::class),
+            'region' => ['nullable', 'string', 'max:100', Rule::in(array_merge([''], array_keys(config('regions', []))))],
         ];
     }
 
@@ -112,6 +114,7 @@ class ApiChannelResource extends ModelResource
             BelongsTo::make('Сервис', 'apiAi'),
             //Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
             Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class),
+            Text::make('Регион', 'region'),
             Date::make('Дата начала', 'post_from_date')->format('d.m.Y'),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
         ];
@@ -127,6 +130,7 @@ class ApiChannelResource extends ModelResource
             Text::make('Промт для ИИ', 'ai_promt'),
             Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
             Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class),
+            Text::make('Регион', 'region'),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
             Text::make('Опции для обработки', 'options', fn($item) => $item->options ? json_encode($item->options) : ''),
         ];
@@ -151,6 +155,12 @@ class ApiChannelResource extends ModelResource
         $fields[] = Date::make('Дата начала', 'post_from_date')
             ->hint('Укажите с какой даты публикации сообщений должен быть просканирован при первом запуске источник');
 
+        $regionOptions = ['' => '— не указан'] + config('regions', []);
+        $fields[] = Select::make('Регион', 'region')
+            ->options($regionOptions)
+            ->nullable()
+            ->hint('Необязательно. Город-миллионник РФ. Будет проставлен всем сообщениям из этого источника (в записи строителей или специалистов в зависимости от типа выборки).');
+
         $fields[] = Textarea::make('Промт для ИИ', 'ai_promt')
             ->hint('Не меняйте промт без предварительного тестирования в самом ИИ, так как даже при небольших изменениях может поменяться результат и формат ответа')
             ->customAttributes(['rows' => '15']);
@@ -168,4 +178,5 @@ class ApiChannelResource extends ModelResource
 
         return $fields;
     }
+
 }

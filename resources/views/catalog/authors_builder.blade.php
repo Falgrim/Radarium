@@ -4,7 +4,7 @@
         <h2>Строительство</h2>
     </div>
 
-    <x-search-builders :$specialitiesList :$request :$errors />
+    <x-search-builders :$specialitiesList :$regionsList :$request :$errors />
 
     @if ($errors->any())
 
