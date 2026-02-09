@@ -32,13 +32,11 @@
                         <thead>
                         <tr>
                             <th class="def-cell-01">&nbsp;</th>
-                            <th class="def-cell-02">Рейтинг</th>
-                            <th class="def-cell-03">Открытые данные</th>
-                            <th class="def-cell-04">Специализация</th>
-                            <th class="def-cell-05">Профильные навыки</th>
-                            <th class="def-cell-06">Последнее сообщение</th>
-                            <th>&nbsp;</th>
-                            <th>&nbsp;</th>
+                            <th class="def-cell-02">Открытые данные</th>
+                            <th class="def-cell-03">Специализация</th>
+                            <th class="def-cell-04">Профильные навыки</th>
+                            <th class="def-cell-05">Последнее сообщение</th>
+                            <th class="def-cell-06">Последний комментарий</th>
                         </tr>
                         </thead>
                         <tbody>
