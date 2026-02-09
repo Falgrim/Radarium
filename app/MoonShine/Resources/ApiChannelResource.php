@@ -92,6 +92,12 @@ class ApiChannelResource extends ModelResource
      */
     public function rules(Model $item): array
     {
+        $regionRules = ['nullable', 'string', 'max:100'];
+        $regionKeys = array_keys(config('regions', []));
+        if (count($regionKeys) > 0) {
+            $regionRules[] = Rule::in(array_merge([''], $regionKeys));
+        }
+
         return [
             'title' => ['required', 'string', 'min:3'],
             'link' => ['required', 'url:http,https'],
@@ -101,7 +107,7 @@ class ApiChannelResource extends ModelResource
             'channel_source' => Rule::enum(ApiChannelSourceEnum::class),
             'status' => Rule::enum(ApiChannelStatusEnum::class),
             'is_company' => Rule::enum(ApiDataTypeEnum::class),
-            'region' => ['nullable', 'string', 'max:100', Rule::in(array_merge([''], array_keys(config('regions', []))))],
+            'region' => $regionRules,
         ];
     }
 
