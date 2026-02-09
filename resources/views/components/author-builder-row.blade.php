@@ -2,11 +2,7 @@
     $lastPost = $author->lastPost();
     $checkOpenContact = isset($userOpenLog[$author->id]);
     $builderData = $author->builderData();
-
-    $builderSpecialties = [];
-    foreach ($author->builders()->where('status', \App\Enum\ApiPostAiStatusEnum::Active)->get() as $builder) {
-        $builderSpecialties = array_merge($builderSpecialties, $builder->specialtiesWithShortName(15));
-    }
+    $builderSpecialties = $author->builderSpecialtiesWithShortName(15);
 @endphp
 
 <tr id="author-id-{{ $author->id }}">

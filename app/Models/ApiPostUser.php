@@ -118,6 +118,42 @@ class ApiPostUser extends Model
         return $result;
     }
 
+    /**
+     * Специализации строителей для данного пользователя (по активным builders).
+     * Формат как у specialtiesWithShortName для совместимости с profileSkillsFront.
+     */
+    public function builderSpecialtiesWithShortName(int $substr = 0): array
+    {
+        $builderIds = $this->builders()->where('status', ApiPostAiStatusEnum::Active)->pluck('id');
+        if ($builderIds->isEmpty()) {
+            return [];
+        }
+
+        $result = [];
+        $items = BuilderSpeciality::whereIn('builder_id', $builderIds)
+            ->with('dictionarySpeciality')
+            ->get();
+
+        foreach ($items as $bs) {
+            $d = $bs->dictionarySpeciality;
+            if (!$d || (int) $d->api_data_type_id !== ApiDataTypeEnum::Builder->value) {
+                continue;
+            }
+            $name = $d->short_name && $d->short_name != $d->title
+                ? $d->short_name . ' - ' . $d->title
+                : ($d->short_name ?: $d->title);
+            if ($substr) {
+                $name = Str::limit($name, $substr);
+            }
+            $result[$name] = [
+                'name' => $name,
+                'key_words' => $d->key_words,
+            ];
+        }
+
+        return $result;
+    }
+
     public function companies(): HasMany
     {
         return $this->hasMany(CompanyJob::class, 'api_post_user_id', 'id');
