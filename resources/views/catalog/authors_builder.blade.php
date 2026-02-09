@@ -1,66 +1,73 @@
 <x-global-layout>
-
-    <div class="container my-5">
-        <h2>Строительство</h2>
-    </div>
-
-    <x-search-builders :$specialitiesList :$regionsList :$request :$errors />
-
-    @if ($errors->any())
-
-        <div class="alert alert-danger">
-            <ul>
-                @foreach ($errors->all() as $key => $error)
-                    <li>{{ $key }} - {{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div class="container my-5">
-        <div class="row justify-content-between border py-2">
-            <div class="col-4">
-                Результат выборки:
-            </div>
-            <div class="col-4 text-end">
-                Найдено: {{ $authors->total() }}
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('index') }}"><span>Главная</span></a></li>
+                        <li class="breadcrumb-item active"><span>Строительство</span></li>
+                    </ol>
+                </div>
             </div>
         </div>
 
-        <div class="row table-responsive py-5">
-            <table class="table table-striped table-sm result_table">
-                <thead>
-                <tr>
-                    <th scope="col"></th>
-                    <th scope="col">
-                        Рейтинг
-                        {{--<a href="{{ route('catalog.builders', array_merge(request()->query(), [
-                    'sort' => 'specialist_reviews_avg_rating',
-                    'direction' => request('direction') === 'asc' ? 'desc' : 'asc'
-                ])) }}">Рейтинг</a>--}}
-                    </th>
-                    <th scope="col">Открытые данные</th>
-                    <th scope="col">Специализация</th>
-                    <th scope="col">Профильные навыки</th>
-                    <th scope="col">
-                        Последнее сообщение
-                        {{--<a href="{{ route('catalog.builders', array_merge(request()->query(), [
-                    'sort' => 'last_post_date',
-                    'direction' => request('direction') === 'asc' ? 'desc' : 'asc'
-                ])) }}">Последнее сообщение</a>--}}
-                    </th>
-                    <th scope="col">Последний комментарий</th>
-                    <th scope="col"></th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach ($authors as $author)
-                    <x-author-builder-row :$author :$tariffAccess :$userOpenLog />
-                @endforeach
-                </tbody>
-            </table>
+        <x-search-builders :$authors :$specialitiesList :$regionsList :$request :$errors />
 
-            {{ $authors->links() }}
+        @if ($errors->any())
+            <div class="container">
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        @endif
+
+        <div class="container">
+            <div class="table-box">
+                <div class="table-responsive text-start">
+                    <table class="table table-borderless tbl-default">
+                        <thead>
+                        <tr>
+                            <th class="def-cell-01">&nbsp;</th>
+                            <th class="def-cell-02">Рейтинг</th>
+                            <th class="def-cell-03">Открытые данные</th>
+                            <th class="def-cell-04">Специализация</th>
+                            <th class="def-cell-05">Профильные навыки</th>
+                            <th class="def-cell-06">Последнее сообщение</th>
+                            <th>&nbsp;</th>
+                            <th>&nbsp;</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($authors as $author)
+                            <x-author-builder-row :$author :$tariffAccess :$userOpenLog />
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
+        <div class="container">
+            <div class="pagination-box">
+                <h5 hidden="">Показать&nbsp;еще 20&nbsp;соискателей</h5>
+                <nav class="bg-transparent border-0 shadow-none">
+                    <style>
+                        .pagination-box .pagination {
+                            font-size: 0.875rem;
+                        }
+                        .pagination-box .page-link {
+                            font-size: 0.875rem;
+                            padding: 0.375rem 0.75rem;
+                        }
+                    </style>
+                    {{ $authors->links() }}
+                </nav>
+            </div>
+        </div>
+
+        <x-footer-finish />
+    </main>
 </x-global-layout>
