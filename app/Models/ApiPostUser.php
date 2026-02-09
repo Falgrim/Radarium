@@ -275,7 +275,9 @@ class ApiPostUser extends Model
     {
         $postIds = $this->builders()
             ->where('status', ApiPostAiStatusEnum::Active)
-            ->pluck('api_channel_post_id');
+            ->pluck('api_channel_post_id')
+            ->filter(fn ($id) => $id !== null && (int) $id > 0)
+            ->values();
 
         if ($postIds->isEmpty()) {
             return null;
