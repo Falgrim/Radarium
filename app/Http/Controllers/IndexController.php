@@ -26,6 +26,15 @@ class IndexController extends Controller
 
         $contactSum = $contactSum->count();
 
+        $builderContactSum = ApiPostUser::whereHas('builders', function (Builder $query) {
+            $query->where('status', '=', ApiPostAiStatusEnum::Active);
+        })
+            ->where(function (Builder $query) {
+                $query->whereNotNull('phone')
+                    ->orWhere('username', '<>', '');
+            })
+            ->count();
+
         // Кэшируем вычисление contactTodaySum на 1 час
         $contactTodaySum = Cache::remember('contact_today_sum', 3600, function () {
             $contactTodaySum = ApiPostUser::whereHas('specialists', function (Builder $query) {
@@ -46,6 +55,22 @@ class IndexController extends Controller
             return $contactTodaySum;
         });
 
+        $builderContactTodaySum = Cache::remember('builder_contact_today_sum', 3600, function () {
+            $sum = ApiPostUser::whereHas('builders', function (Builder $query) {
+                $query->where('status', '=', ApiPostAiStatusEnum::Active);
+                $query->where('created_at', '>=', Carbon::now()->startOfDay());
+            })
+                ->where(function (Builder $query) {
+                    $query->whereNotNull('phone')
+                        ->orWhere('username', '<>', '');
+                })
+                ->count();
+            if ($sum < 50) {
+                $sum += rand(50, 59);
+            }
+            return $sum;
+        });
+
         $tariffs = PaymentTariff::where('status', PaymentTariffStatusEnum::Active)
             ->orderBy('period', 'ASC')
             ->get();
@@ -55,6 +80,8 @@ class IndexController extends Controller
         return view('pages.index', [
             'contactSum' => $contactSum,
             'contactTodaySum' => $contactTodaySum,
+            'builderContactSum' => $builderContactSum,
+            'builderContactTodaySum' => $builderContactTodaySum,
             'tariffs' => $tariffs,
             'userRoleList' => $userRoleList,
         ]);

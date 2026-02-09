@@ -77,10 +77,18 @@
                         </div>
                     </div>
                 </div>
-                <div class="tricols-item depo-info no-active">
-                    <h3 class="title">Строители г.&nbsp;Москва</h3>
-                    <p>Строительство</p><span class="note">в разработке</span>
-                </div>
+                <a href="{{ route('catalog.builders') }}" class="tricols-item depo-info" style="text-decoration: none; color: inherit; display: block;">
+                    <h3 class="title">Строители РФ</h3>
+                    <p>Специалисты и&nbsp;подрядчики в&nbsp;области строительства</p>
+                    <div class="varcols var50">
+                        <div class="varcols-item">
+                            <p class="specinfo accent"><span>{{ $builderContactSum }}</span>Общее количество специалистов</p>
+                        </div>
+                        <div class="varcols-item">
+                            <p class="specinfo"><span>{{ $builderContactTodaySum }}</span>Новых объявлений добавлено за сутки</p>
+                        </div>
+                    </div>
+                </a>
                 <div class="tricols-item depo-plus">
                     <a class="btn" role="button" id="open-tg-chat" data-bs-target="#rd-industry" href="https://t.me/radarium_tech" target="_blank" rel="noopener noreferrer"><span class="plus-circle">+</span></a>
                     <p>Нужна другая отрасль</p>
