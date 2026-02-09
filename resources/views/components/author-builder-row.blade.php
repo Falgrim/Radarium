@@ -1,5 +1,5 @@
 @php
-    $lastPost = $author->lastPost();
+    $lastPost = $author->lastBuilderPost();
     $checkOpenContact = isset($userOpenLog[$author->id]);
     $builderData = $author->builderData();
     $builderSpecialties = $author->builderSpecialtiesWithShortName(15);

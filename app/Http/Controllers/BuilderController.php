@@ -118,9 +118,11 @@ class BuilderController extends Controller
                     $query->whereIn('dictionary_speciality_id', $validated['speciality_id']);
                 });
             }
-        })->whereHas('postsComplete', function (Builder $query) use ($validated) {
+
             if (!empty($validated['key_word'])) {
-                $query->where('post', 'like', '%'.$validated['key_word'].'%');
+                $query->whereHas('post', function (Builder $query) use ($validated) {
+                    $query->where('post', 'like', '%'.$validated['key_word'].'%');
+                });
             }
         });
 

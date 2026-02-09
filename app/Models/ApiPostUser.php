@@ -267,6 +267,26 @@ class ApiPostUser extends Model
         return $data;
     }
 
+    /**
+     * Последнее сообщение среди постов, по которым созданы записи строителей (builders).
+     * Используется на странице поиска строителей.
+     */
+    public function lastBuilderPost(): ?ApiChannelPost
+    {
+        $postIds = $this->builders()
+            ->where('status', ApiPostAiStatusEnum::Active)
+            ->pluck('api_channel_post_id');
+
+        if ($postIds->isEmpty()) {
+            return null;
+        }
+
+        return ApiChannelPost::whereIn('id', $postIds)
+            ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
+            ->orderByDesc('post_date')
+            ->first();
+    }
+
     public function lastPostAnyStatus(): ?ApiChannelPost
     {
         $data = ApiChannelPost::where('api_post_user_id', $this->id)
