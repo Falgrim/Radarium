@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>&Tcy;&iecy;&khcy;&ncy;&icy;&chcy;&iecy;&scy;&kcy;&ocy;&iecy; &zcy;&acy;&dcy;&acy;&ncy;&icy;&iecy;&colon; &Zcy;&acy;&mcy;&iecy;&ncy;&acy; Yandex&period;GPT &ncy;&acy; &lcy;&ocy;&kcy;&acy;&lcy;&softcy;&ncy;&ucy;&yucy; &mcy;&ocy;&dcy;&iecy;&lcy;&softcy; e5-base-multilingual</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="техническое-задание-замена-yandexgpt-на-локальную-модель-e5-base-multilingual">Техническое задание: Замена Yandex.GPT на локальную модель e5-base-multilingual</h1>
+<h2 id="1-общее-описание-задачи">1. Общее описание задачи</h2>
+<p><strong>Цель:</strong> Заменить использование Yandex.GPT на локальную модель <code>intfloat/e5-base-multilingual</code> для проверки сообщений из Telegram каналов на соответствие критериям, указанным в промпте Yandex.GPT.</p>
+<p><strong>Текущая ситуация:</strong></p>
+<ul>
+<li>Проект использует Yandex.GPT для анализа постов из Telegram каналов</li>
+<li>Анализ выполняется в командах: <code>AiSpecialistPosts</code>, <code>AiCompanyPosts</code>, <code>AiBuilderPosts</code></li>
+<li>Используется сервис <code>ApiAIYandex</code> для работы с Yandex.GPT API</li>
+</ul>
+<p><strong>Требуемый результат:</strong></p>
+<ul>
+<li>Добавить поддержку локальной модели e5-base-multilingual как альтернативного источника API</li>
+<li>Сохранить возможность использования Yandex.GPT (параллельная работа)</li>
+<li>Обеспечить проверку сообщений на соответствие критериям из промпта</li>
+</ul>
+<hr>
+<h2 id="2-архитектурные-особенности">2. Архитектурные особенности</h2>
+<h3 id="21-особенности-модели-e5-base-multilingual">2.1. Особенности модели e5-base-multilingual</h3>
+<p><strong>Важно:</strong> Модель e5-base-multilingual - это embedding модель, которая:</p>
+<ul>
+<li>Не генерирует текст напрямую</li>
+<li>Создает векторные представления (embeddings) текста</li>
+<li>Используется для семантического сравнения текстов</li>
+</ul>
+<p><strong>Подход к реализации:</strong></p>
+<ol>
+<li>Использовать e5 для проверки соответствия критериям через семантическое сравнение embeddings</li>
+<li>Для извлечения структурированных данных потребуется дополнительный локальный LLM (например, через Ollama)</li>
+</ol>
+<h3 id="22-требования-к-локальному-api-серверу">2.2. Требования к локальному API серверу</h3>
+<p>Локальный API сервер должен предоставлять следующие endpoints:</p>
+<h4 id="post-embed">POST /embed</h4>
+<p>Получение embeddings для текста.</p>
+<p><strong>Запрос:</strong></p>
+<pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;text&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Текст для получения embeddings&quot;</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<p><strong>Ответ:</strong></p>
+<pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;embedding&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-number">0.123</span><span class="hljs-punctuation">,</span> <span class="hljs-number">-0.456</span><span class="hljs-punctuation">,</span> ...<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;dimension&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">768</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<h4 id="post-complete">POST /complete</h4>
+<p>Извлечение структурированных данных из текста на основе промпта.</p>
+<p><strong>Запрос:</strong></p>
+<pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;prompt&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Промпт с критериями проверки&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;text&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Текст сообщения для анализа&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;max_tokens&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1200</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;temperature&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.3</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<p><strong>Ответ:</strong></p>
+<pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;result&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;JSON строка с извлеченными данными&quot;</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+<hr>
+<h2 id="3-пошаговое-описание-изменений">3. Пошаговое описание изменений</h2>
+<h3 id="шаг-1-добавление-нового-источника-api-в-enum">Шаг 1: Добавление нового источника API в enum</h3>
+<p><strong>Файл:</strong> <code>app/Enum/ApiAiSourceEnum.php</code></p>
+<p><strong>Действия:</strong></p>
+<ol>
+<li>Добавить новый case в enum:</li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">case</span> E5Local = <span class="hljs-string">&#x27;e5local&#x27;</span>;
+</code></pre>
+<ol start="2">
+<li>Обновить метод <code>toString()</code>:</li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">toString</span>(<span class="hljs-params"></span>): ?<span class="hljs-title">string</span>
+</span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">match</span> (<span class="hljs-variable language_">$this</span>) {
+        <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">YandexGTP4</span>    =&gt; <span class="hljs-string">&#x27;Яндекс GPT 4&#x27;</span>,
+        <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">E5Local</span>      =&gt; <span class="hljs-string">&#x27;E5 Base Multilingual (локально)&#x27;</span>,
+    };
+}
+</code></pre>
+<ol start="3">
+<li>Обновить метод <code>getColor()</code>:</li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getColor</span>(<span class="hljs-params"></span>): ?<span class="hljs-title">string</span>
+</span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">match</span> (<span class="hljs-variable language_">$this</span>) {
+        <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">YandexGTP4</span>    =&gt; <span class="hljs-string">&#x27;success&#x27;</span>,
+        <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">E5Local</span>      =&gt; <span class="hljs-string">&#x27;info&#x27;</span>,
+    };
+}
+</code></pre>
+<p><strong>Полный код после изменений:</strong></p>
+<pre><code class="language-php"><span class="hljs-class"><span class="hljs-keyword">enum</span> <span class="hljs-title">ApiAiSourceEnum</span>:<span class="hljs-title">string</span> </span>{
+    <span class="hljs-keyword">case</span> YandexGTP4 = <span class="hljs-string">&#x27;yandexgtp4&#x27;</span>;
+    <span class="hljs-keyword">case</span> E5Local = <span class="hljs-string">&#x27;e5local&#x27;</span>;
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">toString</span>(<span class="hljs-params"></span>): ?<span class="hljs-title">string</span>
+    </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">match</span> (<span class="hljs-variable language_">$this</span>) {
+            <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">YandexGTP4</span>    =&gt; <span class="hljs-string">&#x27;Яндекс GPT 4&#x27;</span>,
+            <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">E5Local</span>      =&gt; <span class="hljs-string">&#x27;E5 Base Multilingual (локально)&#x27;</span>,
+        };
+    }
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">convertToString</span>(<span class="hljs-params"></span>): <span class="hljs-title">string</span>
+    </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">$this</span>-&gt;value;
+    }
+
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getColor</span>(<span class="hljs-params"></span>): ?<span class="hljs-title">string</span>
+    </span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">match</span> (<span class="hljs-variable language_">$this</span>) {
+            <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">YandexGTP4</span>    =&gt; <span class="hljs-string">&#x27;success&#x27;</span>,
+            <span class="hljs-built_in">self</span>::<span class="hljs-variable constant_">E5Local</span>      =&gt; <span class="hljs-string">&#x27;info&#x27;</span>,
+        };
+    }
+}
+</code></pre>
+<hr>
+<h3 id="шаг-2-создание-сервиса-для-работы-с-локальной-моделью">Шаг 2: Создание сервиса для работы с локальной моделью</h3>
+<p><strong>Файл:</strong> <code>app/Services/ApiAIE5.php</code> (новый файл)</p>
+<p><strong>Структура сервиса:</strong></p>
+<ol>
+<li><strong>Класс и свойства:</strong></li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">namespace</span> <span class="hljs-title class_">App</span>\<span class="hljs-title class_">Services</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">App</span>\<span class="hljs-title">Enum</span>\<span class="hljs-title">ApiDataTypeEnum</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">danog</span>\<span class="hljs-title">MadelineProto</span>\<span class="hljs-title">Exception</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Illuminate</span>\<span class="hljs-title">Support</span>\<span class="hljs-title">Facades</span>\<span class="hljs-title">Http</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Illuminate</span>\<span class="hljs-title">Support</span>\<span class="hljs-title">Facades</span>\<span class="hljs-title">Log</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ApiAIE5</span>
+</span>{
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">string</span> <span class="hljs-variable">$apiUrl</span>;
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">string</span> <span class="hljs-variable">$promt</span>;
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">string</span> <span class="hljs-variable">$text</span>;
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">bool</span> <span class="hljs-variable">$aiDebug</span> = <span class="hljs-literal">false</span>;
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">bool</span> <span class="hljs-variable">$aiLogging</span> = <span class="hljs-literal">false</span>;
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">float</span> <span class="hljs-variable">$similarityThreshold</span> = <span class="hljs-number">0.7</span>;
+}
+</code></pre>
+<ol start="2">
+<li>
+<p><strong>Метод <code>getKeyRows()</code></strong> - скопировать из <code>ApiAIYandex.php</code> (без изменений)</p>
+</li>
+<li>
+<p><strong>Метод <code>setConfig()</code>:</strong></p>
+</li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setConfig</span>(<span class="hljs-params"><span class="hljs-keyword">array</span> <span class="hljs-variable">$config</span></span>)
+</span>{
+    <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$config</span>[<span class="hljs-string">&#x27;api_url&#x27;</span>])) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Exception</span>(<span class="hljs-string">&#x27;Не указан api_url параметр (URL локального API сервера с моделью)&#x27;</span>);
+    }
+
+    <span class="hljs-variable language_">$this</span>-&gt;apiUrl = <span class="hljs-title function_ invoke__">rtrim</span>(<span class="hljs-variable">$config</span>[<span class="hljs-string">&#x27;api_url&#x27;</span>], <span class="hljs-string">&#x27;/&#x27;</span>);
+    
+    <span class="hljs-comment">// Опциональный параметр для настройки порога similarity</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$config</span>[<span class="hljs-string">&#x27;similarity_threshold&#x27;</span>])) {
+        <span class="hljs-variable language_">$this</span>-&gt;similarityThreshold = (<span class="hljs-keyword">float</span>)<span class="hljs-variable">$config</span>[<span class="hljs-string">&#x27;similarity_threshold&#x27;</span>];
+    }
+}
+</code></pre>
+<ol start="4">
+<li><strong>Метод <code>setPromt()</code>:</strong></li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setPromt</span>(<span class="hljs-params"><span class="hljs-keyword">string</span> <span class="hljs-variable">$promt</span></span>)
+</span>{
+    <span class="hljs-variable language_">$this</span>-&gt;promt = <span class="hljs-variable">$promt</span>;
+}
+</code></pre>
+<ol start="5">
+<li><strong>Метод <code>setText()</code>:</strong></li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setText</span>(<span class="hljs-params"><span class="hljs-keyword">string</span> <span class="hljs-variable">$text</span></span>)
+</span>{
+    <span class="hljs-variable language_">$this</span>-&gt;text = <span class="hljs-variable">$text</span>;
+}
+</code></pre>
+<ol start="6">
+<li><strong>Метод <code>getEmbeddings()</code>:</strong></li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getEmbeddings</span>(<span class="hljs-params"><span class="hljs-keyword">string</span> <span class="hljs-variable">$text</span></span>): <span class="hljs-title">array</span>
+</span>{
+    <span class="hljs-variable">$response</span> = <span class="hljs-title class_">Http</span>::<span class="hljs-title function_ invoke__">timeout</span>(<span class="hljs-number">30</span>)-&gt;<span class="hljs-title function_ invoke__">post</span>(<span class="hljs-variable">$this</span>-&gt;apiUrl . <span class="hljs-string">&#x27;/embed&#x27;</span>, [
+        <span class="hljs-string">&#x27;text&#x27;</span> =&gt; <span class="hljs-variable">$text</span>,
+    ]);
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable">$response</span>-&gt;<span class="hljs-title function_ invoke__">status</span>() !== <span class="hljs-number">200</span>) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">\Exception</span>(<span class="hljs-string">&#x27;Не удалось получить embeddings: &#x27;</span> . <span class="hljs-variable">$response</span>-&gt;<span class="hljs-title function_ invoke__">body</span>());
+    }
+
+    <span class="hljs-variable">$data</span> = <span class="hljs-variable">$response</span>-&gt;<span class="hljs-title function_ invoke__">json</span>();
+    <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$data</span>[<span class="hljs-string">&#x27;embedding&#x27;</span>])) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">\Exception</span>(<span class="hljs-string">&#x27;В ответе отсутствует параметр embedding: &#x27;</span> . <span class="hljs-title function_ invoke__">json_encode</span>(<span class="hljs-variable">$data</span>));
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-variable">$data</span>[<span class="hljs-string">&#x27;embedding&#x27;</span>];
+}
+</code></pre>
+<ol start="7">
+<li><strong>Метод <code>checkCriteria()</code>:</strong></li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">checkCriteria</span>(<span class="hljs-params"></span>): <span class="hljs-title">array</span>
+</span>{
+    <span class="hljs-comment">// Получаем embeddings для сообщения</span>
+    <span class="hljs-variable">$messageEmbedding</span> = <span class="hljs-variable language_">$this</span>-&gt;<span class="hljs-title function_ invoke__">getEmbeddings</span>(<span class="hljs-variable">$this</span>-&gt;text);
+    
+    <span class="hljs-comment">// Получаем embeddings для критериев из промпта</span>
+    <span class="hljs-variable">$criteriaEmbedding</span> = <span class="hljs-variable language_">$this</span>-&gt;<span class="hljs-title function_ invoke__">getEmbeddings</span>(<span class="hljs-variable">$this</span>-&gt;promt);
+    
+    <span class="hljs-comment">// Вычисляем косинусное сходство</span>
+    <span class="hljs-variable">$similarity</span> = <span class="hljs-variable language_">$this</span>-&gt;<span class="hljs-title function_ invoke__">cosineSimilarity</span>(<span class="hljs-variable">$messageEmbedding</span>, <span class="hljs-variable">$criteriaEmbedding</span>);
+    
+    <span class="hljs-keyword">return</span> [
+        <span class="hljs-string">&#x27;similarity&#x27;</span> =&gt; <span class="hljs-variable">$similarity</span>,
+        <span class="hljs-string">&#x27;matches&#x27;</span> =&gt; <span class="hljs-variable">$similarity</span> &gt; <span class="hljs-variable language_">$this</span>-&gt;similarityThreshold,
+    ];
+}
+</code></pre>
+<ol start="8">
+<li><strong>Метод <code>cosineSimilarity()</code>:</strong></li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">cosineSimilarity</span>(<span class="hljs-params"><span class="hljs-keyword">array</span> <span class="hljs-variable">$a</span>, <span class="hljs-keyword">array</span> <span class="hljs-variable">$b</span></span>): <span class="hljs-title">float</span>
+</span>{
+    <span class="hljs-keyword">if</span> (<span class="hljs-title function_ invoke__">count</span>(<span class="hljs-variable">$a</span>) !== <span class="hljs-title function_ invoke__">count</span>(<span class="hljs-variable">$b</span>)) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">\Exception</span>(<span class="hljs-string">&#x27;Векторы должны иметь одинаковую размерность&#x27;</span>);
+    }
+
+    <span class="hljs-variable">$dotProduct</span> = <span class="hljs-number">0</span>;
+    <span class="hljs-variable">$normA</span> = <span class="hljs-number">0</span>;
+    <span class="hljs-variable">$normB</span> = <span class="hljs-number">0</span>;
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-variable">$i</span> = <span class="hljs-number">0</span>; <span class="hljs-variable">$i</span> &lt; <span class="hljs-title function_ invoke__">count</span>(<span class="hljs-variable">$a</span>); <span class="hljs-variable">$i</span>++) {
+        <span class="hljs-variable">$dotProduct</span> += <span class="hljs-variable">$a</span>[<span class="hljs-variable">$i</span>] * <span class="hljs-variable">$b</span>[<span class="hljs-variable">$i</span>];
+        <span class="hljs-variable">$normA</span> += <span class="hljs-variable">$a</span>[<span class="hljs-variable">$i</span>] * <span class="hljs-variable">$a</span>[<span class="hljs-variable">$i</span>];
+        <span class="hljs-variable">$normB</span> += <span class="hljs-variable">$b</span>[<span class="hljs-variable">$i</span>] * <span class="hljs-variable">$b</span>[<span class="hljs-variable">$i</span>];
+    }
+
+    <span class="hljs-variable">$normA</span> = <span class="hljs-title function_ invoke__">sqrt</span>(<span class="hljs-variable">$normA</span>);
+    <span class="hljs-variable">$normB</span> = <span class="hljs-title function_ invoke__">sqrt</span>(<span class="hljs-variable">$normB</span>);
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable">$normA</span> == <span class="hljs-number">0</span> || <span class="hljs-variable">$normB</span> == <span class="hljs-number">0</span>) {
+        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-variable">$dotProduct</span> / (<span class="hljs-variable">$normA</span> * <span class="hljs-variable">$normB</span>);
+}
+</code></pre>
+<ol start="9">
+<li><strong>Метод <code>extractStructuredData()</code>:</strong></li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">extractStructuredData</span>(<span class="hljs-params"></span>): <span class="hljs-title">string</span>
+</span>{
+    <span class="hljs-comment">// Используем локальный LLM API для извлечения структурированных данных</span>
+    <span class="hljs-variable">$response</span> = <span class="hljs-title class_">Http</span>::<span class="hljs-title function_ invoke__">timeout</span>(<span class="hljs-number">60</span>)-&gt;<span class="hljs-title function_ invoke__">post</span>(<span class="hljs-variable">$this</span>-&gt;apiUrl . <span class="hljs-string">&#x27;/complete&#x27;</span>, [
+        <span class="hljs-string">&#x27;prompt&#x27;</span> =&gt; <span class="hljs-variable">$this</span>-&gt;promt,
+        <span class="hljs-string">&#x27;text&#x27;</span> =&gt; <span class="hljs-variable">$this</span>-&gt;text,
+        <span class="hljs-string">&#x27;max_tokens&#x27;</span> =&gt; <span class="hljs-number">1200</span>,
+        <span class="hljs-string">&#x27;temperature&#x27;</span> =&gt; <span class="hljs-number">0.3</span>,
+    ]);
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-variable">$response</span>-&gt;<span class="hljs-title function_ invoke__">status</span>() !== <span class="hljs-number">200</span>) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">\Exception</span>(<span class="hljs-string">&#x27;Не удалось извлечь данные: &#x27;</span> . <span class="hljs-variable">$response</span>-&gt;<span class="hljs-title function_ invoke__">body</span>());
+    }
+
+    <span class="hljs-variable">$data</span> = <span class="hljs-variable">$response</span>-&gt;<span class="hljs-title function_ invoke__">json</span>();
+    <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$data</span>[<span class="hljs-string">&#x27;result&#x27;</span>])) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">\Exception</span>(<span class="hljs-string">&#x27;В ответе отсутствует параметр result: &#x27;</span> . <span class="hljs-title function_ invoke__">json_encode</span>(<span class="hljs-variable">$data</span>));
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-variable">$data</span>[<span class="hljs-string">&#x27;result&#x27;</span>];
+}
+</code></pre>
+<ol start="10">
+<li>
+<p><strong>Метод <code>getResult()</code></strong> - скопировать логику из <code>ApiAIYandex.php</code>, но с вызовом <code>checkCriteria()</code> и <code>extractStructuredData()</code></p>
+</li>
+<li>
+<p><strong>Метод <code>logging()</code></strong> - скопировать из <code>ApiAIYandex.php</code></p>
+</li>
+</ol>
+<p><strong>Полный код файла:</strong> См. приложение А</p>
+<hr>
+<h3 id="шаг-3-обновление-команды-aispecialistposts">Шаг 3: Обновление команды AiSpecialistPosts</h3>
+<p><strong>Файл:</strong> <code>app/Console/Commands/AiSpecialistPosts.php</code></p>
+<p><strong>Действия:</strong></p>
+<ol>
+<li>Добавить use для нового сервиса:</li>
+</ol>
+<pre><code class="language-php"><span class="hljs-keyword">use</span> <span class="hljs-title">App</span>\<span class="hljs-title">Services</span>\<span class="hljs-title">ApiAIE5</span>;
+</code></pre>
+<ol start="2">
+<li>В методе <code>handle()</code>, в блоке обработки постов, после проверки <code>YandexGTP4</code> добавить:</li>
+</ol>
+<pre><code class="language-php">} <span class="hljs-keyword">elseif</span> (<span class="hljs-variable">$post</span>-&gt;channel-&gt;apiAi-&gt;api_source === <span class="hljs-title class_">ApiAiSourceEnum</span>::<span class="hljs-variable constant_">E5Local</span>) {
+    <span class="hljs-variable">$ApiAIE5</span> = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ApiAIE5</span>;
+    <span class="hljs-variable">$ApiAIE5</span>-&gt;<span class="hljs-title function_ invoke__">logging</span>(<span class="hljs-string">&#x27;Анализ поста ID: &#x27;</span>.<span class="hljs-variable">$post</span>-&gt;id);
+    <span class="hljs-variable">$ApiAIE5</span>-&gt;<span class="hljs-title function_ invoke__">setConfig</span>(<span class="hljs-variable">$options</span>);
+    <span class="hljs-variable">$ApiAIE5</span>-&gt;<span class="hljs-title function_ invoke__">setPromt</span>(<span class="hljs-variable">$promt</span>);
+    <span class="hljs-variable">$ApiAIE5</span>-&gt;<span class="hljs-title function_ invoke__">setText</span>(<span class="hljs-variable">$post</span>-&gt;post);
+    <span class="hljs-variable">$result</span> = <span class="hljs-variable">$ApiAIE5</span>-&gt;<span class="hljs-title function_ invoke__">getResult</span>(<span class="hljs-title class_">ApiDataTypeEnum</span>::<span class="hljs-variable constant_">Specialist</span>);
+</code></pre>
+<ol start="3">
+<li>Обновить обработку ошибок в блоках <code>catch</code>:</li>
+</ol>
+<pre><code class="language-php">} <span class="hljs-keyword">catch</span> (\<span class="hljs-built_in">TypeError</span> <span class="hljs-variable">$e</span>) {
+    <span class="hljs-variable language_">$this</span>-&gt;<span class="hljs-title function_ invoke__">error</span>(<span class="hljs-variable">$e</span>-&gt;<span class="hljs-title function_ invoke__">getMessage</span>());
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$ApiAIYandex</span>)) {
+        <span class="hljs-variable">$ApiAIYandex</span>-&gt;<span class="hljs-title function_ invoke__">logging</span>(<span class="hljs-variable">$e</span>-&gt;<span class="hljs-title function_ invoke__">getMessage</span>(), <span class="hljs-literal">true</span>);
+    } <span class="hljs-keyword">elseif</span> (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$ApiAIE5</span>)) {
+        <span class="hljs-variable">$ApiAIE5</span>-&gt;<span class="hljs-title function_ invoke__">logging</span>(<span class="hljs-variable">$e</span>-&gt;<span class="hljs-title function_ invoke__">getMessage</span>(), <span class="hljs-literal">true</span>);
+    }
+    <span class="hljs-comment">// ... остальной код</span>
+} <span class="hljs-keyword">catch</span> (\<span class="hljs-built_in">Exception</span> <span class="hljs-variable">$e</span>) {
+    <span class="hljs-variable language_">$this</span>-&gt;<span class="hljs-title function_ invoke__">error</span>(<span class="hljs-variable">$e</span>-&gt;<span class="hljs-title function_ invoke__">getMessage</span>());
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$ApiAIYandex</span>)) {
+        <span class="hljs-variable">$ApiAIYandex</span>-&gt;<span class="hljs-title function_ invoke__">logging</span>(<span class="hljs-variable">$e</span>-&gt;<span class="hljs-title function_ invoke__">getMessage</span>(), <span class="hljs-literal">true</span>);
+    } <span class="hljs-keyword">elseif</span> (<span class="hljs-keyword">isset</span>(<span class="hljs-variable">$ApiAIE5</span>)) {
+        <span class="hljs-variable">$ApiAIE5</span>-&gt;<span class="hljs-title function_ invoke__">logging</span>(<span class="hljs-variable">$e</span>-&gt;<span class="hljs-title function_ invoke__">getMessage</span>(), <span class="hljs-literal">true</span>);
+    }
+    <span class="hljs-comment">// ... остальной код</span>
+}
+</code></pre>
+<hr>
+<h3 id="шаг-4-обновление-команды-aicompanyposts">Шаг 4: Обновление команды AiCompanyPosts</h3>
+<p><strong>Файл:</strong> <code>app/Console/Commands/AiCompanyPosts.php</code></p>
+<p><strong>Действия:</strong> Аналогично шагу 3, но использовать <code>ApiDataTypeEnum::Company</code></p>
+<hr>
+<h3 id="шаг-5-обновление-команды-aibuilderposts">Шаг 5: Обновление команды AiBuilderPosts</h3>
+<p><strong>Файл:</strong> <code>app/Console/Commands/AiBuilderPosts.php</code></p>
+<p><strong>Действия:</strong> Аналогично шагу 3, но использовать <code>ApiDataTypeEnum::Builder</code></p>
+<hr>
+<h3 id="шаг-6-обновление-ресурса-moonshine">Шаг 6: Обновление ресурса MoonShine</h3>
+<p><strong>Файл:</strong> <code>app/MoonShine/Resources/ApiAiResource.php</code></p>
+<p><strong>Действия:</strong></p>
+<p>В методе <code>formFields()</code>, обновить подсказку для поля <code>options</code>:</p>
+<pre><code class="language-php"><span class="hljs-variable">$fields</span>[] = <span class="hljs-title class_">Json</span>::<span class="hljs-title function_ invoke__">make</span>(<span class="hljs-string">&#x27;Опции для запуска&#x27;</span>, <span class="hljs-string">&#x27;options&#x27;</span>)
+    -&gt;<span class="hljs-title function_ invoke__">hint</span>(<span class="hljs-string">&#x27;Технические параметры для доп. настройки&lt;br /&gt;Для &#x27;</span>.<span class="hljs-title class_">ApiAiSourceEnum</span>::<span class="hljs-variable constant_">YandexGTP4</span>-&gt;<span class="hljs-title function_ invoke__">toString</span>().<span class="hljs-string">&#x27; обязательны параметры: API_KEY_TOKEN и Folder_id (подробнее: https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2)&lt;br /&gt;Для &#x27;</span>.<span class="hljs-title class_">ApiAiSourceEnum</span>::<span class="hljs-variable constant_">E5Local</span>-&gt;<span class="hljs-title function_ invoke__">toString</span>().<span class="hljs-string">&#x27; обязателен параметр: api_url (URL локального API сервера с моделью, например: http://localhost:8000)&#x27;</span>)
+    -&gt;<span class="hljs-title function_ invoke__">keyValue</span>();
+</code></pre>
+<hr>
+<h2 id="4-настройка-локального-api-сервера">4. Настройка локального API сервера</h2>
+<h3 id="41-установка-зависимостей-python">4.1. Установка зависимостей Python</h3>
+<pre><code class="language-bash">pip install torch transformers flask flask-cors sentencepiece
+</code></pre>
+<h3 id="42-пример-сервера-api">4.2. Пример сервера API</h3>
+<p>Создать файл <code>e5_api_server.py</code>:</p>
+<pre><code class="language-python"><span class="hljs-keyword">from</span> flask <span class="hljs-keyword">import</span> Flask, request, jsonify
+<span class="hljs-keyword">from</span> flask_cors <span class="hljs-keyword">import</span> CORS
+<span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoTokenizer, AutoModel
+<span class="hljs-keyword">import</span> torch
+
+app = Flask(__name__)
+CORS(app)
+
+<span class="hljs-comment"># Загрузка модели e5-base-multilingual</span>
+<span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Загрузка модели e5-base-multilingual...&quot;</span>)
+tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&#x27;intfloat/e5-base-multilingual-v2&#x27;</span>)
+model = AutoModel.from_pretrained(<span class="hljs-string">&#x27;intfloat/e5-base-multilingual-v2&#x27;</span>)
+model.<span class="hljs-built_in">eval</span>()
+<span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Модель загружена успешно!&quot;</span>)
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">get_embeddings</span>(<span class="hljs-params">text</span>):
+    <span class="hljs-string">&quot;&quot;&quot;Получение embeddings для текста&quot;&quot;&quot;</span>
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> text.startswith(<span class="hljs-string">&quot;query: &quot;</span>) <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> text.startswith(<span class="hljs-string">&quot;passage: &quot;</span>):
+        text = <span class="hljs-string">f&quot;query: <span class="hljs-subst">{text}</span>&quot;</span>
+    
+    inputs = tokenizer(text, return_tensors=<span class="hljs-string">&quot;pt&quot;</span>, padding=<span class="hljs-literal">True</span>, truncation=<span class="hljs-literal">True</span>, max_length=<span class="hljs-number">512</span>)
+    
+    <span class="hljs-keyword">with</span> torch.no_grad():
+        outputs = model(**inputs)
+        embeddings = outputs.last_hidden_state.mean(dim=<span class="hljs-number">1</span>).squeeze()
+    
+    <span class="hljs-keyword">return</span> embeddings.tolist()
+
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&#x27;/embed&#x27;</span>, methods=[<span class="hljs-string">&#x27;POST&#x27;</span>]</span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">embed</span>():
+    <span class="hljs-keyword">try</span>:
+        data = request.get_json()
+        text = data.get(<span class="hljs-string">&#x27;text&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>)
+        
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> text:
+            <span class="hljs-keyword">return</span> jsonify({<span class="hljs-string">&#x27;error&#x27;</span>: <span class="hljs-string">&#x27;Текст не указан&#x27;</span>}), <span class="hljs-number">400</span>
+        
+        embedding = get_embeddings(text)
+        
+        <span class="hljs-keyword">return</span> jsonify({
+            <span class="hljs-string">&#x27;embedding&#x27;</span>: embedding,
+            <span class="hljs-string">&#x27;dimension&#x27;</span>: <span class="hljs-built_in">len</span>(embedding)
+        })
+    <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:
+        <span class="hljs-keyword">return</span> jsonify({<span class="hljs-string">&#x27;error&#x27;</span>: <span class="hljs-built_in">str</span>(e)}), <span class="hljs-number">500</span>
+
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&#x27;/complete&#x27;</span>, methods=[<span class="hljs-string">&#x27;POST&#x27;</span>]</span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">complete</span>():
+    <span class="hljs-string">&quot;&quot;&quot;
+    Извлечение структурированных данных из текста на основе промпта
+    Требует локальный LLM (например, через Ollama)
+    &quot;&quot;&quot;</span>
+    <span class="hljs-keyword">try</span>:
+        data = request.get_json()
+        prompt = data.get(<span class="hljs-string">&#x27;prompt&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>)
+        text = data.get(<span class="hljs-string">&#x27;text&#x27;</span>, <span class="hljs-string">&#x27;&#x27;</span>)
+        max_tokens = data.get(<span class="hljs-string">&#x27;max_tokens&#x27;</span>, <span class="hljs-number">1200</span>)
+        temperature = data.get(<span class="hljs-string">&#x27;temperature&#x27;</span>, <span class="hljs-number">0.3</span>)
+        
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> prompt <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> text:
+            <span class="hljs-keyword">return</span> jsonify({<span class="hljs-string">&#x27;error&#x27;</span>: <span class="hljs-string">&#x27;Промпт и текст обязательны&#x27;</span>}), <span class="hljs-number">400</span>
+        
+        <span class="hljs-comment"># <span class="hljs-doctag">TODO:</span> Интеграция с локальным LLM (Ollama, transformers и т.д.)</span>
+        <span class="hljs-comment"># Пример для Ollama:</span>
+        <span class="hljs-comment"># import requests</span>
+        <span class="hljs-comment"># response = requests.post(&#x27;http://localhost:11434/api/generate&#x27;, json={</span>
+        <span class="hljs-comment">#     &#x27;model&#x27;: &#x27;llama2&#x27;,</span>
+        <span class="hljs-comment">#     &#x27;prompt&#x27;: f&quot;{prompt}\n\nТекст для анализа:\n{text}\n\nИзвлеки структурированные данные в формате JSON:&quot;,</span>
+        <span class="hljs-comment">#     &#x27;stream&#x27;: False</span>
+        <span class="hljs-comment"># })</span>
+        <span class="hljs-comment"># result = response.json()[&#x27;response&#x27;]</span>
+        
+        <span class="hljs-comment"># Временная заглушка</span>
+        result = <span class="hljs-string">&#x27;{&quot;type&quot;: &quot;резюме&quot;, &quot;reason&quot;: &quot;Сообщение соответствует критериям&quot;}&#x27;</span>
+        
+        <span class="hljs-keyword">return</span> jsonify({
+            <span class="hljs-string">&#x27;result&#x27;</span>: result.strip()
+        })
+    <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:
+        <span class="hljs-keyword">return</span> jsonify({<span class="hljs-string">&#x27;error&#x27;</span>: <span class="hljs-built_in">str</span>(e)}), <span class="hljs-number">500</span>
+
+<span class="hljs-meta">@app.route(<span class="hljs-params"><span class="hljs-string">&#x27;/health&#x27;</span>, methods=[<span class="hljs-string">&#x27;GET&#x27;</span>]</span>)</span>
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">health</span>():
+    <span class="hljs-keyword">return</span> jsonify({
+        <span class="hljs-string">&#x27;status&#x27;</span>: <span class="hljs-string">&#x27;ok&#x27;</span>,
+        <span class="hljs-string">&#x27;model&#x27;</span>: <span class="hljs-string">&#x27;intfloat/e5-base-multilingual-v2&#x27;</span>
+    })
+
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&#x27;__main__&#x27;</span>:
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Запуск API сервера на http://localhost:8000&quot;</span>)
+    app.run(host=<span class="hljs-string">&#x27;0.0.0.0&#x27;</span>, port=<span class="hljs-number">8000</span>, debug=<span class="hljs-literal">True</span>)
+</code></pre>
+<h3 id="43-запуск-сервера">4.3. Запуск сервера</h3>
+<pre><code class="language-bash">python e5_api_server.py
+</code></pre>
+<hr>
+<h2 id="5-настройка-в-админ-панели">5. Настройка в админ-панели</h2>
+<h3 id="51-создание-нового-сервиса-ии">5.1. Создание нового сервиса ИИ</h3>
+<ol>
+<li>Перейти в раздел &quot;Сервисы ИИ&quot; в админ-панели MoonShine</li>
+<li>Создать новый сервис или отредактировать существующий</li>
+<li>Заполнить поля:
+<ul>
+<li><strong>Название:</strong> E5 Local Model</li>
+<li><strong>Описание:</strong> Локальная модель e5-base-multilingual для анализа постов</li>
+<li><strong>API сервис:</strong> Выбрать &quot;E5 Base Multilingual (локально)&quot;</li>
+<li><strong>Статус:</strong> Active</li>
+<li><strong>Опции для запуска:</strong><pre><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;api_url&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;http://localhost:8000&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;similarity_threshold&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.7</span>
+<span class="hljs-punctuation">}</span>
+</code></pre>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="52-настройка-канала">5.2. Настройка канала</h3>
+<ol>
+<li>Перейти в раздел каналов</li>
+<li>Выбрать канал для редактирования</li>
+<li>В поле &quot;API ИИ&quot; выбрать созданный сервис E5 Local Model</li>
+<li>Сохранить изменения</li>
+</ol>
+<hr>
+<h2 id="6-тестирование">6. Тестирование</h2>
+<h3 id="61-проверка-работы-api-сервера">6.1. Проверка работы API сервера</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Проверка health endpoint</span>
+curl http://localhost:8000/health
+
+<span class="hljs-comment"># Проверка embed endpoint</span>
+curl -X POST http://localhost:8000/embed \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;text&quot;: &quot;Тестовый текст&quot;}&#x27;</span>
+</code></pre>
+<h3 id="62-запуск-команд-анализа">6.2. Запуск команд анализа</h3>
+<pre><code class="language-bash"><span class="hljs-comment"># Анализ постов специалистов</span>
+php artisan app:ai_parse:specialist
+
+<span class="hljs-comment"># Анализ постов компаний</span>
+php artisan app:ai_parse:company
+
+<span class="hljs-comment"># Анализ постов строителей</span>
+php artisan app:ai_parse:builder
+</code></pre>
+<h3 id="63-проверка-логов">6.3. Проверка логов</h3>
+<p>Логи работы с локальной моделью сохраняются в канал <code>ai_debug</code> (если включено логирование в конфиге <code>services.ai.logging</code>).</p>
+<hr>
+<h2 id="7-важные-замечания">7. Важные замечания</h2>
+<h3 id="71-порог-similarity">7.1. Порог similarity</h3>
+<ul>
+<li>По умолчанию установлен порог 0.7</li>
+<li>Значения близкие к 1.0 означают высокое сходство</li>
+<li>Значения близкие к 0.0 означают низкое сходство</li>
+<li>Рекомендуемый диапазон: 0.6 - 0.8</li>
+<li>Можно настроить через параметр <code>similarity_threshold</code> в опциях сервиса</li>
+</ul>
+<h3 id="72-извлечение-структурированных-данных">7.2. Извлечение структурированных данных</h3>
+<p>Для полной замены функциональности Yandex.GPT требуется:</p>
+<ul>
+<li>Локальный LLM для извлечения структурированных данных</li>
+<li>Варианты: Ollama, transformers с LLM моделями, другие серверы инференса</li>
+</ul>
+<h3 id="73-производительность">7.3. Производительность</h3>
+<ul>
+<li>Модель e5-base-multilingual требует значительных ресурсов</li>
+<li>Рекомендуется использовать GPU для ускорения</li>
+<li>Можно использовать кэширование embeddings для повторяющихся текстов</li>
+</ul>
+<hr>
+<h2 id="8-приложения">8. Приложения</h2>
+<h3 id="приложение-а-полный-код-сервиса-apiaie5">Приложение А: Полный код сервиса ApiAIE5</h3>
+<p>[Здесь должен быть полный код файла <code>app/Services/ApiAIE5.php</code> - см. раздел 3, шаг 2 для детального описания всех методов]</p>
+<h3 id="приложение-б-пример-конфигурации">Приложение Б: Пример конфигурации</h3>
+<p><strong>Файл:</strong> <code>config/services.php</code> (если требуется)</p>
+<pre><code class="language-php"><span class="hljs-string">&#x27;ai&#x27;</span> =&gt; [
+    <span class="hljs-string">&#x27;debug&#x27;</span> =&gt; <span class="hljs-title function_ invoke__">env</span>(<span class="hljs-string">&#x27;AI_DEBUG&#x27;</span>, <span class="hljs-literal">false</span>),
+    <span class="hljs-string">&#x27;logging&#x27;</span> =&gt; <span class="hljs-title function_ invoke__">env</span>(<span class="hljs-string">&#x27;AI_LOGGING&#x27;</span>, <span class="hljs-literal">false</span>),
+],
+</code></pre>
+<hr>
+<h2 id="9-чек-лист-внедрения">9. Чек-лист внедрения</h2>
+<ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Добавлен новый case <code>E5Local</code> в <code>ApiAiSourceEnum</code></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Создан сервис <code>ApiAIE5</code> со всеми необходимыми методами</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Обновлена команда <code>AiSpecialistPosts</code></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Обновлена команда <code>AiCompanyPosts</code></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Обновлена команда <code>AiBuilderPosts</code></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Обновлен ресурс <code>ApiAiResource</code> в MoonShine</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Развернут локальный API сервер с моделью e5-base-multilingual</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Настроен сервис ИИ в админ-панели</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Проведено тестирование всех команд анализа</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Проверена работа логирования</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"type="checkbox"> Настроен порог similarity (при необходимости)</li>
+</ul>
+<hr>
+<h2 id="10-дополнительные-ресурсы">10. Дополнительные ресурсы</h2>
+<ul>
+<li>Документация модели: <a href="https://huggingface.co/intfloat/e5-base-multilingual-v2">https://huggingface.co/intfloat/e5-base-multilingual-v2</a></li>
+<li>Документация transformers: <a href="https://huggingface.co/docs/transformers">https://huggingface.co/docs/transformers</a></li>
+<li>Ollama для локальных LLM: <a href="https://ollama.ai/">https://ollama.ai/</a></li>
+</ul>
+<hr>
+<p><strong>Дата создания документа:</strong> 2025-01-28<br>
+<strong>Версия:</strong> 1.0<br>
+<strong>Статус:</strong> Готово к реализации</p>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            
+        </body>
+        </html>

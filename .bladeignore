@@ -1,0 +1,4 @@
+# Игнорировать файлы с проблемными путями для расширения Laravel
+resources/views/components/modals.blade.php
+resources/views/pages/tech.blade.php
+
