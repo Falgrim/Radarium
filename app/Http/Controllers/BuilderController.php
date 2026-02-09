@@ -95,6 +95,7 @@ class BuilderController extends Controller
         ]);
 
         $authors = ApiPostUser::whereHas('builders', function (Builder $query) use ($validated) {
+            $query->whereNotNull('api_channel_post_id')->where('api_channel_post_id', '>', 0);
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
@@ -124,7 +125,8 @@ class BuilderController extends Controller
                     $query->where('post', 'like', '%'.$validated['key_word'].'%');
                 });
             }
-        });
+        })
+            ->whereDoesntHave('specialists');
 
         if (!empty($validated['open_contacts']) AND Auth::check()) {
             $authors = $authors->whereIn('id', function($query){

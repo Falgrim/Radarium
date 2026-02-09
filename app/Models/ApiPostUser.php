@@ -284,7 +284,6 @@ class ApiPostUser extends Model
         }
 
         return ApiChannelPost::whereIn('id', $postIds)
-            ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
             ->orderByDesc('post_date')
             ->first();
     }
