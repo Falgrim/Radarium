@@ -36,19 +36,21 @@
                     </div>
                     <div class="search-action search-item">
                         <div class="row">
-                            <div class="col-lg-12 col-xl-5">
+                            <div class="col-lg-12 col-xl-5 search-builders-filters-col">
                                 <select class="form-select" name="speciality_id[]" id="selectElementBuilders" multiple>
                                     @foreach ($specialitiesList as $speciality)
                                         <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
                                     @endforeach
                                 </select>
-                                <label class="form-label mt-2" for="region">Регион</label>
-                                <select class="form-select" name="region" id="region">
-                                    <option value="">— любой —</option>
-                                    @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
-                                        <option value="{{ $regionKey }}" {{ old('region', $request->region) == $regionKey ? 'selected' : '' }}>{{ $regionLabel }}</option>
-                                    @endforeach
-                                </select>
+                                <div class="region-block">
+                                    <label class="form-label search-builders-region-label" for="region">Регион</label>
+                                    <select class="form-select" name="region" id="region">
+                                        <option value="">— любой —</option>
+                                        @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
+                                            <option value="{{ $regionKey }}" {{ old('region', $request->region) == $regionKey ? 'selected' : '' }}>{{ $regionLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                             <div class="col-lg-12 col-xl-7">
                                 <span class="search-icon">
