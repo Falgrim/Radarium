@@ -1631,21 +1631,9 @@ a:has(.social) {
   padding-top: 4px;
 }
 
-/* Строка поиска строителей: колонка фильтров и блок региона внизу */
-.search-field:has(.search-builders-filters-col) .search-item.search-action .row {
-  align-items: flex-end;
-}
-.search-field .search-builders-filters-col {
-  display: flex;
-  flex-direction: column;
-}
-.search-field .search-builders-filters-col .region-block {
-  margin-top: auto;
-  padding-top: 0.5rem;
-}
-.search-field .search-builders-region-label {
+/* Подпись «Регион» в блоке поиска — белый шрифт */
+.search-field .search-action .form-label {
   color: #fff;
-  margin-bottom: 0.25rem;
 }
 
 .search-field .search-item.search-info h4 {
@@ -2530,12 +2518,6 @@ form input:not(.form-check-input), form .form-select, form textarea {
   padding-right: 30px;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-/* Поле выбора специализации (Select2) в форме поиска — закругления как у form .form-select (переопределяем тему .select2--small) */
-.search-field .select2-container--bootstrap-5 .select2-selection,
-.search-field .select2-container--bootstrap-5 .select2--small.select2-selection {
-  border-radius: 20px !important;
 }
 
 .img-status {

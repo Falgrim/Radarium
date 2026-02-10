@@ -36,21 +36,19 @@
                     </div>
                     <div class="search-action search-item">
                         <div class="row">
-                            <div class="col-lg-12 col-xl-5 search-builders-filters-col">
+                            <div class="col-lg-12 col-xl-5">
                                 <select class="form-select" name="speciality_id[]" id="selectElementBuilders" multiple>
                                     @foreach ($specialitiesList as $speciality)
                                         <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
                                     @endforeach
                                 </select>
-                                <div class="region-block">
-                                    <label class="form-label search-builders-region-label" for="region">Регион</label>
-                                    <select class="form-select" name="region" id="region">
-                                        <option value="">— любой —</option>
-                                        @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
-                                            <option value="{{ $regionKey }}" {{ old('region', $request->region) == $regionKey ? 'selected' : '' }}>{{ $regionLabel }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                <label class="form-label mt-2" for="region">Регион</label>
+                                <select class="form-select" name="region" id="region">
+                                    <option value="">— любой —</option>
+                                    @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
+                                        <option value="{{ $regionKey }}" {{ old('region', $request->region) == $regionKey ? 'selected' : '' }}>{{ $regionLabel }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-lg-12 col-xl-7">
                                 <span class="search-icon">
@@ -89,16 +87,6 @@
 @pushOnce('scripts')
     <script type="module">
         $(document).ready(function() {
-            $('#selectElementBuilders').select2({
-                theme: "bootstrap-5",
-                selectionCssClass: 'select2--small',
-                dropdownCssClass: "select2--small",
-                placeholder: 'Выберите...',
-                allowClear: true,
-                language: 'ru',
-                closeOnSelect: false
-            });
-
             $('#key_word').on('keypress', function(e) {
                 if (e.which === 13) {
                     e.preventDefault();
