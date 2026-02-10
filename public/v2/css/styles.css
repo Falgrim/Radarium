@@ -1632,8 +1632,8 @@ a:has(.social) {
 }
 
 /* Подпись «Регион» в блоке поиска — белый шрифт */
-.search-field .search-action .form-label {
-  color: #fff;
+.search-field .search-field-region-label {
+  color: #fff !important;
 }
 
 .search-field .search-item.search-info h4 {

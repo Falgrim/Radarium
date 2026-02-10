@@ -22,16 +22,18 @@ for (let star of rateStars) {
     });
 }
 
-new SlimSelect({
-    //select: '#selectElement'
-    select: document.querySelector('#selectElement'),
-    settings: {
-        placeholderText: 'Выберите специализацию',
-        searchPlaceholder: 'Поиск',
-        searchText: 'Ничего не найдено',
-
-    }
-});
+var slimSelectSettings = {
+    placeholderText: 'Выберите специализацию',
+    searchPlaceholder: 'Поиск',
+    searchText: 'Ничего не найдено'
+};
+var selectSpecialization = document.querySelector('#selectElement') || document.querySelector('#selectElementBuilders');
+if (selectSpecialization) {
+    new SlimSelect({
+        select: selectSpecialization,
+        settings: slimSelectSettings
+    });
+}
 
 $(document).ready(function () {
     $('.input_tel').mask('+7 (000) 000-00-00');

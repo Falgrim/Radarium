@@ -43,7 +43,7 @@
                                         <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
                                     @endforeach
                                 </select>
-                                <label class="form-label mt-2" for="region">Регион</label>
+                                <label class="form-label mt-2 search-field-region-label" for="region">Регион</label>
                                 <select class="form-select" name="region" id="region">
                                     <option value="">— любой —</option>
                                     @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
