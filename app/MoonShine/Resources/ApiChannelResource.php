@@ -9,11 +9,14 @@ use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Enum\ApiDataTypeEnum;
+use App\Models\ApiAi;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannel;
 
 use Illuminate\Validation\Rule;
+use MoonShine\ActionButtons\ActionButton;
+use MoonShine\Components\FormBuilder;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Json;
@@ -25,11 +28,14 @@ use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
 use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
+use MoonShine\Http\Responses\MoonShineJsonResponse;
+use MoonShine\MoonShineRequest;
 use MoonShine\Resources\ModelResource;
 use MoonShine\Decorations\Block;
 use MoonShine\Fields\ID;
 use MoonShine\Fields\Field;
 use MoonShine\Components\MoonShineComponent;
+use MoonShine\Enums\ToastType;
 
 /**
  * @extends ModelResource<ApiChannel>
@@ -70,6 +76,60 @@ class ApiChannelResource extends ModelResource
     public function getActiveActions(): array
     {
         return ['create', 'view', 'update', 'delete'];
+    }
+
+    /**
+     * Кнопки на странице индекса (массовое переключение сервиса ИИ).
+     *
+     * @return list<ActionButton>
+     */
+    public function actions(): array
+    {
+        $apiAiOptions = ApiAi::query()->pluck('title', 'id')->toArray();
+        if (empty($apiAiOptions)) {
+            return [];
+        }
+
+        return [
+            ActionButton::make('Сменить сервис ИИ для всех', '#')
+                ->icon('heroicons.cpu-chip')
+                ->secondary()
+                ->inOffCanvas(
+                    fn () => 'Массовое переключение сервиса ИИ',
+                    fn () => FormBuilder::make()
+                        ->name('mass-ai-service-form')
+                        ->fields([
+                            Select::make('Сервис ИИ', 'api_ai_id')
+                                ->options($apiAiOptions)
+                                ->required()
+                                ->hint('Выбранный сервис будет назначен всем источникам сообщений'),
+                        ])
+                        ->asyncMethod('massUpdateAiService')
+                        ->submit('Применить для всех источников'),
+                    isLeft: false
+                ),
+        ];
+    }
+
+    /**
+     * Массовое обновление сервиса ИИ для всех источников.
+     */
+    public function massUpdateAiService(MoonShineRequest $request): MoonShineJsonResponse
+    {
+        $apiAiId = $request->integer('api_ai_id');
+        if (!$apiAiId || !ApiAi::query()->where('id', $apiAiId)->exists()) {
+            return MoonShineJsonResponse::make()
+                ->toast('Выберите корректный сервис ИИ', ToastType::ERROR);
+        }
+
+        $updated = ApiChannel::query()->update(['api_ai_id' => $apiAiId]);
+
+        return MoonShineJsonResponse::make()
+            ->toast(
+                "Сервис ИИ обновлён для всех источников ({$updated} шт.)",
+                ToastType::SUCCESS
+            )
+            ->redirect(to_page(resource: self::class));
     }
 
     /**
