@@ -3,38 +3,24 @@
 namespace App\Services;
 
 use App\Enum\ApiDataTypeEnum;
-use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-// https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2
-// https://yandex.cloud/ru/docs/iam/operations/api-key/create#console_1
-
-/*
- * 1) Создать сервисный аккаунт
- * 2) Создать для него API ключ с правами ai.languageModels.user
- * 3) Задать параметры API в конфиге канала API_KEY_TOKEN
- * 4) Создать папку или выбрать из ссылки на страницу Yandex Foundation Models
- * 5) Указать название папки Folder_id
- */
-
-class ApiAIYandex
+class ApiAIOllama
 {
-    protected string $apiToken;
+    protected string $host;
 
-    protected string $folderId;
+    protected string $model;
 
     protected string $promt;
 
     protected string $text;
 
-    protected string $url = 'https://llm.api.cloud.yandex.net/foundationModels/v1/completion';
-
     protected bool $aiDebug = false;
 
     protected bool $aiLogging = false;
 
-    protected string $logPrefix = '[YandexGPT]';
+    protected string $logPrefix = '[Ollama/Qwen]';
 
     public function __construct()
     {
@@ -102,16 +88,11 @@ class ApiAIYandex
 
     public function setConfig(array $config)
     {
-        if (!isset($config['API_KEY_TOKEN'])) {
-            throw new Exception('Не указан API_KEY_TOKEN параметр');
-        }
+        $this->host = $config['host']
+            ?? config('services.ollama.host', 'http://79.175.45.41:11434');
 
-        if (!isset($config['Folder_id'])) {
-            throw new Exception('Не указан Folder_id параметр');
-        }
-
-        $this->apiToken = $config['API_KEY_TOKEN'];
-        $this->folderId = $config['Folder_id'];
+        $this->model = $config['model']
+            ?? config('services.ollama.model', 'qwen2.5:7b-instruct-q4_K_M');
     }
 
     public function setPromt(string $promt)
@@ -124,35 +105,28 @@ class ApiAIYandex
         $this->text = $text;
     }
 
-    protected function getHeaders(): array
+    protected function getUrl(): string
     {
-        return [
-            'Content-Type' => 'application/json',
-            'Authorization' => 'Api-Key '.$this->apiToken,
-        ];
+        return rtrim($this->host, '/') . '/v1/chat/completions';
     }
 
     protected function generateJson(): array
     {
-        $json = [
-            'modelUri' => 'gpt://'.$this->folderId.'/yandexgpt/rc',
-            'completionOptions' => [
-                'stream' => false,
-                'temperature' => 0.3,
-                'maxTokens' => 1200,
-            ],
+        return [
+            'model' => $this->model,
             'messages' => [
                 [
                     'role' => 'system',
-                    'text' => $this->promt,
+                    'content' => $this->promt,
                 ],
                 [
                     'role' => 'user',
-                    'text' => $this->text,
-                ]
+                    'content' => $this->text,
+                ],
             ],
+            'temperature' => 0.3,
+            'stream' => false,
         ];
-        return $json;
     }
 
     public function getResult(ApiDataTypeEnum $isCompany): array
@@ -169,7 +143,7 @@ class ApiAIYandex
             }
 
             if ($row['type'] == 'price') {
-                $modelRows[$row['id']] = (int)$modelRows[$row['id']]*100; // Сумма в копейках
+                $modelRows[$row['id']] = (int)$modelRows[$row['id']]*100;
             } elseif ($row['type'] == 'integer') {
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']];
             } elseif ($row['type'] == 'array') {
@@ -194,48 +168,51 @@ class ApiAIYandex
             }
         }
 
-        return ['origin' => $result['alternatives'][0]['message']['text'], 'json' => $modelRows];
+        return ['origin' => $result['choices'][0]['message']['content'], 'json' => $modelRows];
     }
 
     protected function parseResponse(array $data): array
     {
-        if (!isset($data['alternatives'])) {
-            throw new \Exception('В ответе отсутствует параметр alternatives');
+        if (!isset($data['choices'])) {
+            throw new \Exception($this->logPrefix . ' В ответе отсутствует параметр choices');
         }
 
-        if (!isset($data['alternatives'][0]['message'])) {
-            throw new \Exception('В ответе отсутствует параметр alternatives.0.message');
+        if (!isset($data['choices'][0]['message']['content'])) {
+            throw new \Exception($this->logPrefix . ' В ответе отсутствует параметр choices.0.message.content');
         }
 
-        $jsonText = $data['alternatives'][0]['message']['text'];
+        $jsonText = $data['choices'][0]['message']['content'];
         if (!$jsonText) {
-            throw new \Exception('Пустой ответ: '.json_encode($data));
+            throw new \Exception($this->logPrefix . ' Пустой ответ: ' . json_encode($data));
         }
 
+        $jsonText = str_replace('```json', '', $jsonText);
         $jsonText = str_replace('```', '', $jsonText);
 
         return json_decode(trim($jsonText), true);
     }
 
-    protected function sendRequest()
+    protected function sendRequest(): array
     {
-        $headers = $this->getHeaders();
+        $url = $this->getUrl();
         $json = $this->generateJson();
 
         $this->logging($this->text);
-        $response = Http::withHeaders($headers)->post($this->url, $json);
+        $response = Http::timeout(120)->post($url, $json);
 
         if ($response->status() !== 200) {
-            throw new \Exception('Не удалось отправить запрос: '.$response->body());
+            throw new \Exception($this->logPrefix . ' Не удалось отправить запрос: ' . $response->body());
         }
 
-        if (!$response->json()['result']) {
-            throw new \Exception('Не удалось получить ответ: '.$response->body());
+        $body = $response->json();
+
+        if (!isset($body['choices'])) {
+            throw new \Exception($this->logPrefix . ' Не удалось получить ответ: ' . $response->body());
         }
 
-        $this->logging($response->json()['result']);
+        $this->logging($body);
 
-        return $response->json()['result'];
+        return $body;
     }
 
     public function logging(mixed $text, bool $isError = false)
@@ -251,14 +228,5 @@ class ApiAIYandex
         } else {
             Log::channel('ai_debug')->info($message);
         }
-    }
-
-    public function getFolderList()
-    {
-        $headers = $this->getHeaders();
-        $url = 'https://resource-manager.api.cloud.yandex.net/resource-manager/v1/folders';
-        $response = Http::withHeaders($headers)->get($url);
-
-        //dd($response->body());
     }
 }

@@ -40,6 +40,11 @@ return [
         'debug' => env('AI_DEBUG', false),
     ],
 
+    'ollama' => [
+        'host' => env('OLLAMA_HOST', 'http://79.175.45.41:11434'),
+        'model' => env('OLLAMA_MODEL', 'qwen2.5:7b-instruct-q4_K_M'),
+    ],
+
     'tubus' => [
         'token' => env('TUBUS_TOKEN', null),
     ],

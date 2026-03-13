@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
@@ -146,6 +147,18 @@ class ApiChannelPostResource extends ModelResource
             Date::make('Дата публикации', 'post_date')->withTime()->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),
+            Text::make('Провайдер ИИ', 'ai_provider_used', function ($item) {
+                if (!$item->ai_provider_used) {
+                    return '';
+                }
+                $enum = ApiAiSourceEnum::tryFrom($item->ai_provider_used);
+                if (!$enum) {
+                    return $item->ai_provider_used;
+                }
+                $color = $enum->getColor();
+                $label = $enum->toString();
+                return "<span class=\"badge badge-{$color}\">{$label}</span>";
+            })->sortable(),
         ];
     }
 
@@ -204,6 +217,13 @@ class ApiChannelPostResource extends ModelResource
             Date::make('Дата публикации', 'post_date')->withTime(),
             Date::make('Создан', 'created_at')->withTime(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class),
+            Text::make('Провайдер ИИ', 'ai_provider_used', function ($item) {
+                if (!$item->ai_provider_used) {
+                    return '—';
+                }
+                $enum = ApiAiSourceEnum::tryFrom($item->ai_provider_used);
+                return $enum ? $enum->toString() : $item->ai_provider_used;
+            }),
             Text::make('Ответ ИИ', 'ai_result'),
             Date::make('Запрос к ИИ', 'ai_date')->withTime(),
         ];

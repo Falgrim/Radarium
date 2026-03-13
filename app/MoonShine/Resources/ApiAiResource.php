@@ -125,7 +125,13 @@ class ApiAiResource extends ModelResource
         $fields[] = Enum::make('API сервис', 'api_source')->attach(ApiAiSourceEnum::class);
         $fields[] = Enum::make('Статус', 'status')->attach(ApiAiStatusEnum::class);
         $fields[] = Json::make('Опции для запуска', 'options')
-            ->hint('Технические параметры для доп. настройки<br />Для '.ApiAiSourceEnum::YandexGTP4->toString().' обязательны параметры: Bearer и Folder_id (подробнее: https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2)')
+            ->hint(
+                'Технические параметры для доп. настройки<br />'
+                .'Для '.ApiAiSourceEnum::YandexGTP4->toString().': обязательны параметры API_KEY_TOKEN и Folder_id '
+                .'(подробнее: https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2)<br />'
+                .'Для '.ApiAiSourceEnum::OllamaQwen->toString().': параметры host (адрес сервера, по умолчанию из .env) '
+                .'и model (название модели, по умолчанию qwen2.5:7b)'
+            )
             ->keyValue();
 
         return $fields;

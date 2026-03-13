@@ -16,6 +16,7 @@ use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
+use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
@@ -84,86 +85,93 @@ class AiCompanyPosts extends Command
                     continue;
                 }
 
-                if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
-                    $ApiAIYandex = new ApiAIYandex;
-                    $ApiAIYandex->logging('Анализ поста ID: '.$post->id);
-                    $ApiAIYandex->setConfig($options);
-                    $ApiAIYandex->setPromt($promt);
-                    $ApiAIYandex->setText($post->post);
-                    $result = $ApiAIYandex->getResult(ApiDataTypeEnum::Company);
+                $apiSource = $post->channel->apiAi->api_source;
 
-                    if (count($result['json'])) {
-                        // Удаляем старое резюме, на случай повторного прогона поста
-                        CompanyJob::where('api_channel_post_id', $post->id)->delete();
-
-                        $post->ai_result = $result['origin'];
-                        $post->ai_date = now();
-
-                        $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
-
-                        if (
-                            $result['json']['ai_type'] != 'вакансия' AND
-                            $result['json']['ai_type'] != 'поиск того кто окажет услугу' AND
-                            $result['json']['ai_type'] != 'поиск подрядчика'
-                        ) {
-                            $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
-                            $post->save();
-
-                            //$this->info($post->post);
-                            $this->warn('Тип сообщения: '.$result['json']['ai_type']);
-                            continue;
-                        }
-
-                        $result['json']['post_date'] = $post->post_date;
-                        $result['json']['api_post_user_id'] = $post->apiPostUser->id;
-                        $result['json']['api_channel_post_id'] = $post->id;
-
-                        if (!$result['json']['contact_info']) {
-                            $result['json']['contact_info'] = '';
-                        }
-
-                        $result['json']['status'] = CompanyJobStatusEnum::Active;
-
-                        $companyJob = CompanyJob::create($result['json']);
-
-                        $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
-                        if (count($specialistSpecialties)) {
-                            $dictionary->updateRelations(
-                                DictionaryEnum::Speciality,
-                                'companyJob',
-                                $companyJob->id,
-                                $specialistSpecialties
-                            );
-                        }
-
-                        $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
-                        $post->save();
-
-                        if ($companyJob->status === CompanyJobStatusEnum::InModeration OR $companyJob->status === CompanyJobStatusEnum::Active) {
-                            $this->info('Создана вакансия ID: '.$companyJob->id.' user ID '.$companyJob->api_post_user_id);
-
-                            $moderationAlertService->createAlert(
-                                0,
-                                ModerationAlertSystemEnum::System,
-                                ModerationAlertTableNameEnum::CompanyJob,
-                                $companyJob->id,
-                                ''
-                            );
-
-                        } else {
-                            $this->info('Данный пост не является типом вакансии');
-                        }
-                    } else {
-                        $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
-                        $post->save();
-                        $this->warn('По вакансии не найдены данные');
-                    }
+                if ($apiSource === ApiAiSourceEnum::YandexGTP4) {
+                    $aiService = new ApiAIYandex;
+                } elseif ($apiSource === ApiAiSourceEnum::OllamaQwen) {
+                    $aiService = new ApiAIOllama;
                 } else {
                     $this->warn('Неизвестный источник');
+                    continue;
+                }
+
+                $aiService->logging('Анализ поста ID: '.$post->id);
+                $aiService->setConfig($options);
+                $aiService->setPromt($promt);
+                $aiService->setText($post->post);
+                $result = $aiService->getResult(ApiDataTypeEnum::Company);
+
+                $post->ai_provider_used = $apiSource->value;
+
+                if (count($result['json'])) {
+                    CompanyJob::where('api_channel_post_id', $post->id)->delete();
+
+                    $post->ai_result = $result['origin'];
+                    $post->ai_date = now();
+
+                    $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
+
+                    if (
+                        $result['json']['ai_type'] != 'вакансия' AND
+                        $result['json']['ai_type'] != 'поиск того кто окажет услугу' AND
+                        $result['json']['ai_type'] != 'поиск подрядчика'
+                    ) {
+                        $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+                        $post->save();
+
+                        $this->warn('Тип сообщения: '.$result['json']['ai_type']);
+                        continue;
+                    }
+
+                    $result['json']['post_date'] = $post->post_date;
+                    $result['json']['api_post_user_id'] = $post->apiPostUser->id;
+                    $result['json']['api_channel_post_id'] = $post->id;
+
+                    if (!$result['json']['contact_info']) {
+                        $result['json']['contact_info'] = '';
+                    }
+
+                    $result['json']['status'] = CompanyJobStatusEnum::Active;
+
+                    $companyJob = CompanyJob::create($result['json']);
+
+                    $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
+                    if (count($specialistSpecialties)) {
+                        $dictionary->updateRelations(
+                            DictionaryEnum::Speciality,
+                            'companyJob',
+                            $companyJob->id,
+                            $specialistSpecialties
+                        );
+                    }
+
+                    $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
+                    $post->save();
+
+                    if ($companyJob->status === CompanyJobStatusEnum::InModeration OR $companyJob->status === CompanyJobStatusEnum::Active) {
+                        $this->info('Создана вакансия ID: '.$companyJob->id.' user ID '.$companyJob->api_post_user_id);
+
+                        $moderationAlertService->createAlert(
+                            0,
+                            ModerationAlertSystemEnum::System,
+                            ModerationAlertTableNameEnum::CompanyJob,
+                            $companyJob->id,
+                            ''
+                        );
+                    } else {
+                        $this->info('Данный пост не является типом вакансии');
+                    }
+                } else {
+                    $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
+                    $post->save();
+                    $this->warn('По вакансии не найдены данные');
                 }
             } catch (\TypeError $e) {
                 $this->error($e->getMessage());
-                $ApiAIYandex->logging($e->getMessage(), true);
+                if (isset($aiService)) {
+                    $aiService->logging($e->getMessage(), true);
+                }
 
                 $post->ai_result = $e->getMessage();
                 $post->ai_date = now();
@@ -171,7 +179,9 @@ class AiCompanyPosts extends Command
                 $post->save();
             } catch (\Exception $e) {
                 $this->error($e->getMessage());
-                $ApiAIYandex->logging($e->getMessage(), true);
+                if (isset($aiService)) {
+                    $aiService->logging($e->getMessage(), true);
+                }
 
                 $post->ai_result = $e->getMessage();
                 $post->ai_date = now();

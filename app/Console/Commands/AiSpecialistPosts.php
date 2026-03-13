@@ -19,6 +19,7 @@ use App\Models\ApiPostUser;
 use App\Models\ModerationAlert;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
+use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
@@ -89,89 +90,97 @@ class AiSpecialistPosts extends Command
                     continue;
                 }
 
-                if ($post->channel->apiAi->api_source === ApiAiSourceEnum::YandexGTP4) {
-                    $ApiAIYandex = new ApiAIYandex;
-                    $ApiAIYandex->logging('Анализ поста ID: '.$post->id);
-                    $ApiAIYandex->setConfig($options);
-                    $ApiAIYandex->setPromt($promt);
-                    $ApiAIYandex->setText($post->post);
-                    $result = $ApiAIYandex->getResult(ApiDataTypeEnum::Specialist);
+                $apiSource = $post->channel->apiAi->api_source;
 
-                    if (count($result['json'])) {
-                        // Удаляем старое резюме, на случай повторного прогона поста
-                        Specialist::where('api_channel_post_id', $post->id)->delete();
-
-                        $post->ai_result = $result['origin'];
-                        $post->ai_date = now();
-
-                        $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
-
-                        if (
-                            $result['json']['ai_type'] != 'резюме' AND
-                            $result['json']['ai_type'] != 'предоставление услуги' AND
-                            $result['json']['ai_type'] != 'предложение услуг'
-                        ) {
-                            $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
-                            $post->save();
-
-                            //$this->info($post->post);
-                            $this->warn('Тип сообщения: '.$result['json']['ai_type']);
-                            continue;
-                        }
-
-                        $result['json']['post_date'] = $post->post_date;
-                        $result['json']['api_post_user_id'] = $post->apiPostUser->id;
-                        $result['json']['api_channel_post_id'] = $post->id;
-
-                        if (!$result['json']['contact_info']) {
-                            $result['json']['contact_info'] = '';
-                        }
-
-                        $result['json']['status'] = ApiPostAiStatusEnum::Active;
-
-                        if (!empty($post->channel->region)) {
-                            $result['json']['region'] = $post->channel->region;
-                        }
-
-                        $specialist = Specialist::create($result['json']);
-
-                        $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
-                        if (count($specialistSpecialties)) {
-                            $dictionary->updateRelations(
-                                DictionaryEnum::Speciality,
-                                'specialist',
-                                $specialist->id,
-                                $specialistSpecialties
-                            );
-                        }
-
-                        $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
-                        $post->save();
-
-                        if ($specialist->status === ApiPostAiStatusEnum::InModeration OR $specialist->status === ApiPostAiStatusEnum::Active) {
-                            $this->info('Создан специалист ID: '.$specialist->id);
-
-                            $moderationAlertService->createAlert(
-                                0,
-                                ModerationAlertSystemEnum::System,
-                                ModerationAlertTableNameEnum::Specialist,
-                                $specialist->id,
-                                ''
-                            );
-                        } else {
-                            $this->info('Данный пост не является типом специалиста');
-                        }
-                    } else {
-                        $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
-                        $post->save();
-                        $this->warn('По специалисту не найдены данные');
-                    }
+                if ($apiSource === ApiAiSourceEnum::YandexGTP4) {
+                    $aiService = new ApiAIYandex;
+                } elseif ($apiSource === ApiAiSourceEnum::OllamaQwen) {
+                    $aiService = new ApiAIOllama;
                 } else {
                     $this->warn('Неизвестный источник');
+                    continue;
+                }
+
+                $aiService->logging('Анализ поста ID: '.$post->id);
+                $aiService->setConfig($options);
+                $aiService->setPromt($promt);
+                $aiService->setText($post->post);
+                $result = $aiService->getResult(ApiDataTypeEnum::Specialist);
+
+                $post->ai_provider_used = $apiSource->value;
+
+                if (count($result['json'])) {
+                    Specialist::where('api_channel_post_id', $post->id)->delete();
+
+                    $post->ai_result = $result['origin'];
+                    $post->ai_date = now();
+
+                    $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
+
+                    if (
+                        $result['json']['ai_type'] != 'резюме' AND
+                        $result['json']['ai_type'] != 'предоставление услуги' AND
+                        $result['json']['ai_type'] != 'предложение услуг'
+                    ) {
+                        $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+                        $post->save();
+
+                        $this->warn('Тип сообщения: '.$result['json']['ai_type']);
+                        continue;
+                    }
+
+                    $result['json']['post_date'] = $post->post_date;
+                    $result['json']['api_post_user_id'] = $post->apiPostUser->id;
+                    $result['json']['api_channel_post_id'] = $post->id;
+
+                    if (!$result['json']['contact_info']) {
+                        $result['json']['contact_info'] = '';
+                    }
+
+                    $result['json']['status'] = ApiPostAiStatusEnum::Active;
+
+                    if (!empty($post->channel->region)) {
+                        $result['json']['region'] = $post->channel->region;
+                    }
+
+                    $specialist = Specialist::create($result['json']);
+
+                    $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
+                    if (count($specialistSpecialties)) {
+                        $dictionary->updateRelations(
+                            DictionaryEnum::Speciality,
+                            'specialist',
+                            $specialist->id,
+                            $specialistSpecialties
+                        );
+                    }
+
+                    $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
+                    $post->save();
+
+                    if ($specialist->status === ApiPostAiStatusEnum::InModeration OR $specialist->status === ApiPostAiStatusEnum::Active) {
+                        $this->info('Создан специалист ID: '.$specialist->id);
+
+                        $moderationAlertService->createAlert(
+                            0,
+                            ModerationAlertSystemEnum::System,
+                            ModerationAlertTableNameEnum::Specialist,
+                            $specialist->id,
+                            ''
+                        );
+                    } else {
+                        $this->info('Данный пост не является типом специалиста');
+                    }
+                } else {
+                    $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
+                    $post->save();
+                    $this->warn('По специалисту не найдены данные');
                 }
             } catch (\TypeError $e) {
                 $this->error($e->getMessage());
-                $ApiAIYandex->logging($e->getMessage(), true);
+                if (isset($aiService)) {
+                    $aiService->logging($e->getMessage(), true);
+                }
 
                 $post->ai_result = $e->getMessage();
                 $post->ai_date = now();
@@ -179,7 +188,9 @@ class AiSpecialistPosts extends Command
                 $post->save();
             } catch (\Exception $e) {
                 $this->error($e->getMessage());
-                $ApiAIYandex->logging($e->getMessage(), true);
+                if (isset($aiService)) {
+                    $aiService->logging($e->getMessage(), true);
+                }
 
                 $post->ai_result = $e->getMessage();
                 $post->ai_date = now();

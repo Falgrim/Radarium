@@ -25,6 +25,7 @@ class ApiChannelPost extends Model
         'ai_parse_status',
         'ai_result',
         'ai_date',
+        'ai_provider_used',
         'api_post_user_id',
         'created_at',
         'updated_at',
