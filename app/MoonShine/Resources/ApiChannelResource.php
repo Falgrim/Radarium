@@ -177,12 +177,12 @@ class ApiChannelResource extends ModelResource
             Text::make('Название', 'title'),
             Text::make('Ссылка', 'link'),
             //Text::make('Описание', 'description'),
-            BelongsTo::make('Сервис', 'apiAi'),
+            BelongsTo::make('Сервис', 'apiAi')->setColumn('api_ai_id')->sortable(),
             //Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-            Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class),
-            Text::make('Регион', 'region'),
-            Date::make('Дата начала', 'post_from_date')->format('d.m.Y'),
-            Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
+            Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class)->sortable(),
+            Text::make('Регион', 'region')->sortable(),
+            Date::make('Дата начала', 'post_from_date')->format('d.m.Y')->sortable(),
+            Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class)->sortable(),
         ];
     }
 
