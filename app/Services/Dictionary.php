@@ -75,6 +75,46 @@ class Dictionary
         return $rowData->id;
     }
 
+    /**
+     * Сопоставить массив строк от AI с записями справочника специальностей.
+     * Для каждого элемента $aiList ищет совпадение в $dictionaryList по:
+     *   1. title (mb_strtolower + str_contains)
+     *   2. short_name
+     *   3. элементам key_words
+     * Строки короче 4 символов пропускаются (защита от ложных матчей).
+     * Возвращает массив matched IDs без дублей.
+     */
+    public function matchFromAiList(array $aiList, Collection $dictionaryList): array
+    {
+        $matchIds = [];
+
+        foreach ($aiList as $aiValue) {
+            $aiLower = mb_strtolower(trim($aiValue));
+
+            if (mb_strlen($aiLower) < 4) {
+                continue;
+            }
+
+            foreach ($dictionaryList as $item) {
+                $matched =
+                    str_contains(mb_strtolower($item->title ?? ''), $aiLower) ||
+                    str_contains(mb_strtolower($item->short_name ?? ''), $aiLower) ||
+                    (is_array($item->key_words) && collect($item->key_words)->contains(
+                        fn($kw) =>
+                            str_contains(mb_strtolower($kw), $aiLower) ||
+                            str_contains($aiLower, mb_strtolower($kw))
+                    ));
+
+                if ($matched) {
+                    $matchIds[] = $item->id;
+                    break;
+                }
+            }
+        }
+
+        return array_unique($matchIds);
+    }
+
     public function updateRelations(DictionaryEnum $dictionary, string $model, int $rowId, array $dictionaryIds): void
     {
         $rowIdName = '';

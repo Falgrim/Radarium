@@ -6,6 +6,7 @@ use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
+use App\Enum\BuilderTypeEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
@@ -20,6 +21,7 @@ use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
+use App\Services\BuilderNormalizer;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
 use Illuminate\Console\Command;
@@ -109,57 +111,93 @@ class AiBuilderPosts extends Command
 
                 if (count($result['json'])) {
                     Builder::where('api_channel_post_id', $post->id)->delete();
+                    // ИЗВЕСТНЫЙ РИСК: delete+create теряет ручные правки при повторной обработке.
+                    // Stage 2: перейти на updateOrCreate().
 
                     $post->ai_result = $result['origin'];
-                    $post->ai_date = now();
+                    $post->ai_date   = now();
 
-                    $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
+                    $rawType      = Str::lower($result['json']['ai_type'] ?? '');
+                    $builderType  = BuilderNormalizer::normalizeType($rawType);
 
-                    if (
-                        $result['json']['ai_type'] != 'резюме' AND
-                        $result['json']['ai_type'] != 'предоставление услуги' AND
-                        $result['json']['ai_type'] != 'предложение услуг'
-                    ) {
+                    if ($builderType !== BuilderTypeEnum::Service) {
                         $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
                         $post->save();
-
-                        $this->warn('Тип сообщения: '.$result['json']['ai_type']);
+                        $this->warn('Тип сообщения: ' . $rawType . ' → DontMatch');
                         continue;
                     }
 
-                    $result['json']['post_date'] = $post->post_date;
-                    $result['json']['api_post_user_id'] = $post->apiPostUser->id;
+                    $performerSource = !empty($result['json']['performer_type'])
+                        ? $result['json']['performer_type']
+                        : ($result['json']['performer_type_raw'] ?? '');
+                    $result['json']['performer_type'] = BuilderNormalizer::normalizePerformerType($performerSource);
+
+                    $result['json']['legal_form'] = BuilderNormalizer::normalizeLegalForm(
+                        $result['json']['legal_form'] ?? null
+                    );
+
+                    if (!empty($result['json']['object_types']) && is_array($result['json']['object_types'])) {
+                        $result['json']['object_types'] = BuilderNormalizer::normalizeObjectTypes(
+                            $result['json']['object_types']
+                        );
+                    }
+
+                    if (!empty($result['json']['equipment_skills_json']) && is_array($result['json']['equipment_skills_json'])) {
+                        $result['json']['equipment_skills_json'] = BuilderNormalizer::cleanEquipmentSkills(
+                            $result['json']['equipment_skills_json']
+                        );
+                    }
+
+                    $aiSpecialities   = is_array($result['json']['service_types'] ?? null)
+                        ? $result['json']['service_types'] : [];
+                    $textSpecialities = $dictionary->checkMatchByList($post->post, $specialityList);
+                    $aiMatched        = !empty($aiSpecialities)
+                        ? $dictionary->matchFromAiList($aiSpecialities, $specialityList) : [];
+                    $mergedSpecialities = array_unique(array_merge($aiMatched, $textSpecialities));
+                    $result['json']['service_types'] = array_values($mergedSpecialities);
+
+                    $result['json']['region'] =
+                        !empty($result['json']['location_region'])
+                            ? $result['json']['location_region']
+                            : ($post->channel->region ?? null);
+
+                    $result['json']['post_date']           = $post->post_date;
+                    $result['json']['api_post_user_id']    = $post->apiPostUser->id;
                     $result['json']['api_channel_post_id'] = $post->id;
+                    $result['json']['status']              = ApiPostAiStatusEnum::Active;
 
                     if (!$result['json']['contact_info']) {
                         $result['json']['contact_info'] = '';
                     }
 
-                    $result['json']['status'] = ApiPostAiStatusEnum::Active;
-
-                    if (!empty($post->channel->region)) {
-                        $result['json']['region'] = $post->channel->region;
-                    }
-
                     $builder = Builder::create($result['json']);
 
-                    $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
-
-                    if (count($specialistSpecialties)) {
+                    if (count($mergedSpecialities)) {
                         $dictionary->updateRelations(
                             DictionaryEnum::Speciality,
                             'builder',
                             $builder->id,
-                            $specialistSpecialties
+                            array_values($mergedSpecialities)
                         );
                     }
+
+                    Log::channel('ai_debug')->info('[Builder] post_id=' . $post->id, [
+                        'raw_type'           => $rawType,
+                        'normalized_type'    => $builderType->value,
+                        'specialities_total' => count($mergedSpecialities),
+                        'ai_matched'         => count($aiMatched),
+                        'text_matched'       => count($textSpecialities),
+                        'object_types'       => $result['json']['object_types'] ?? [],
+                        'performer_type'     => $result['json']['performer_type'] ?? null,
+                        'legal_form'         => $result['json']['legal_form'] ?? null,
+                        'location_city'      => $result['json']['location_city'] ?? null,
+                    ]);
 
                     $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                     $post->save();
 
-                    if ($builder->status === ApiPostAiStatusEnum::InModeration OR $builder->status === ApiPostAiStatusEnum::Active) {
-                        $this->info('Создан строитель ID: '.$builder->id);
-
+                    if ($builder->status === ApiPostAiStatusEnum::InModeration || $builder->status === ApiPostAiStatusEnum::Active) {
+                        $this->info('Создан строитель ID: ' . $builder->id);
                         $moderationAlertService->createAlert(
                             0,
                             ModerationAlertSystemEnum::System,
@@ -167,8 +205,6 @@ class AiBuilderPosts extends Command
                             $builder->id,
                             ''
                         );
-                    } else {
-                        $this->info('Данный пост не является типом строителя');
                     }
                 } else {
                     $post->ai_parse_status = ApiChannelPostStatusEnum::Error;

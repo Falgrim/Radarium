@@ -48,6 +48,16 @@ class Builder extends Model
         'contact_info',
         'post_date',
         'region',
+        'service_type_raw',
+        'service_types',
+        'object_types',
+        'performer_type_raw',
+        'performer_type',
+        'equipment_skills_json',
+        'legal_form',
+        'location_city',
+        'location_region',
+        'price_comment',
         'created_at',
         'updated_at',
     ];
@@ -70,6 +80,9 @@ class Builder extends Model
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'post_date' =>'datetime:Y-m-d H:i:s',
             'status' => ApiPostAiStatusEnum::class,
+            'service_types' => 'array',
+            'object_types' => 'array',
+            'equipment_skills_json' => 'array',
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enum\ApiDataTypeEnum;
+use App\Services\BuilderNormalizer;
 use danog\MadelineProto\Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -96,6 +97,16 @@ class ApiAIYandex
                 'spec_requirements' => ['id' => 'spec_requirements', 'type' => 'string'],
                 'link_resume'       => ['id' => 'link_resume', 'type' => 'string'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
+                'service_type'      => ['id' => 'service_type_raw', 'type' => 'string'],
+                'specialities'      => ['id' => 'service_types', 'type' => 'array'],
+                'object_types'      => ['id' => 'object_types', 'type' => 'array'],
+                'performer_raw'     => ['id' => 'performer_type_raw', 'type' => 'string'],
+                'performer_type'    => ['id' => 'performer_type', 'type' => 'string'],
+                'equipment_skills'  => ['id' => 'equipment_skills_json', 'type' => 'array'],
+                'legal_form'        => ['id' => 'legal_form', 'type' => 'string'],
+                'location_city'     => ['id' => 'location_city', 'type' => 'string'],
+                'location_region'   => ['id' => 'location_region', 'type' => 'string'],
+                'price_comment'     => ['id' => 'price_comment', 'type' => 'string'],
             ];
         }
     }
@@ -169,7 +180,7 @@ class ApiAIYandex
             }
 
             if ($row['type'] == 'price') {
-                $modelRows[$row['id']] = (int)$modelRows[$row['id']]*100; // Сумма в копейках
+                $modelRows[$row['id']] = BuilderNormalizer::cleanPrice((string)$modelRows[$row['id']]);
             } elseif ($row['type'] == 'integer') {
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']];
             } elseif ($row['type'] == 'array') {

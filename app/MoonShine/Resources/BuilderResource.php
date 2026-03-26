@@ -189,6 +189,16 @@ class BuilderResource extends ModelResource
             Text::make('Спец. требования', 'spec_requirements'),
             Text::make('Ссылка на резюме', 'link_resume'),
             Text::make('Контакты из сообщения', 'contact_info'),
+            Text::make('Вид услуги (дословно)', 'service_type_raw'),
+            Textarea::make('Специальности (AI JSON)', 'service_types', fn($item) => json_encode($item->service_types, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)),
+            Textarea::make('Типы объектов', 'object_types', fn($item) => json_encode($item->object_types, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)),
+            Text::make('Исполнитель (дословно)', 'performer_type_raw'),
+            Text::make('Тип исполнителя', 'performer_type'),
+            Textarea::make('Оборудование и навыки', 'equipment_skills_json', fn($item) => json_encode($item->equipment_skills_json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)),
+            Text::make('Юридическая форма', 'legal_form'),
+            Text::make('Город', 'location_city'),
+            Text::make('Регион', 'location_region'),
+            Textarea::make('Комментарий к цене', 'price_comment'),
             Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class),
             Date::make('Создан', 'created_at')->withTime(),
 
@@ -250,6 +260,16 @@ class BuilderResource extends ModelResource
         $fields[] = Textarea::make('Спец. требования', 'spec_requirements')->customAttributes(['rows' => '5']);
         $fields[] = Text::make('Ссылка на резюме', 'link_resume');
         $fields[] = Textarea::make('Контакты из сообщения', 'contact_info');
+        $fields[] = Text::make('Вид услуги (дословно)', 'service_type_raw');
+        $fields[] = Textarea::make('Специальности (AI JSON)', 'service_types')->customAttributes(['rows' => '3']);
+        $fields[] = Textarea::make('Типы объектов', 'object_types')->customAttributes(['rows' => '3']);
+        $fields[] = Text::make('Исполнитель (дословно)', 'performer_type_raw');
+        $fields[] = Text::make('Тип исполнителя', 'performer_type');
+        $fields[] = Textarea::make('Оборудование и навыки', 'equipment_skills_json')->customAttributes(['rows' => '3']);
+        $fields[] = Text::make('Юридическая форма', 'legal_form');
+        $fields[] = Text::make('Город', 'location_city');
+        $fields[] = Text::make('Регион', 'location_region');
+        $fields[] = Textarea::make('Комментарий к цене', 'price_comment')->customAttributes(['rows' => '3']);
         $fields[] = Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class);
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
 
