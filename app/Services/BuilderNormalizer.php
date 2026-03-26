@@ -56,7 +56,7 @@ class BuilderNormalizer
 
         if (
             str_contains($lower, 'один') || str_contains($lower, 'сам ') ||
-            str_contains($lower, 'индивидуально') || str_contains($lower, 'самостоятельно')
+            str_contains($lower, 'индивидуал') || str_contains($lower, 'самостоятельно')
         ) {
             return 'индивидуал';
         }
