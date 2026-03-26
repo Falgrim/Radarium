@@ -105,9 +105,8 @@ class AiSpecialistPosts extends Command
                 $aiService->setConfig($options);
                 $aiService->setPromt($promt);
                 $aiService->setText($post->post);
-                $result = $aiService->getResult(ApiDataTypeEnum::Specialist);
-
                 $post->ai_provider_used = $apiSource->value;
+                $result = $aiService->getResult(ApiDataTypeEnum::Specialist);
 
                 if (count($result['json'])) {
                     Specialist::where('api_channel_post_id', $post->id)->delete();

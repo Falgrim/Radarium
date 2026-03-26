@@ -105,9 +105,8 @@ class AiBuilderPosts extends Command
                 $aiService->setConfig($options);
                 $aiService->setPromt($promt);
                 $aiService->setText($post->post);
-                $result = $aiService->getResult(ApiDataTypeEnum::Builder);
-
                 $post->ai_provider_used = $apiSource->value;
+                $result = $aiService->getResult(ApiDataTypeEnum::Builder);
 
                 if (count($result['json'])) {
                     Builder::where('api_channel_post_id', $post->id)->delete();
@@ -118,6 +117,7 @@ class AiBuilderPosts extends Command
                     $post->ai_date   = now();
 
                     $rawType      = Str::lower($result['json']['ai_type'] ?? '');
+                    $result['json']['ai_type'] = $rawType;
                     $builderType  = BuilderNormalizer::normalizeType($rawType);
 
                     if ($builderType !== BuilderTypeEnum::Service) {
@@ -154,7 +154,6 @@ class AiBuilderPosts extends Command
                     $aiMatched        = !empty($aiSpecialities)
                         ? $dictionary->matchFromAiList($aiSpecialities, $specialityList) : [];
                     $mergedSpecialities = array_unique(array_merge($aiMatched, $textSpecialities));
-                    $result['json']['service_types'] = array_values($mergedSpecialities);
 
                     $result['json']['region'] =
                         !empty($result['json']['location_region'])

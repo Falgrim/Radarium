@@ -100,9 +100,8 @@ class AiCompanyPosts extends Command
                 $aiService->setConfig($options);
                 $aiService->setPromt($promt);
                 $aiService->setText($post->post);
-                $result = $aiService->getResult(ApiDataTypeEnum::Company);
-
                 $post->ai_provider_used = $apiSource->value;
+                $result = $aiService->getResult(ApiDataTypeEnum::Company);
 
                 if (count($result['json'])) {
                     CompanyJob::where('api_channel_post_id', $post->id)->delete();

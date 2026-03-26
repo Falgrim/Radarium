@@ -21,13 +21,23 @@ class SyncChannelRegionToPosts extends Command
         $updatedSpecialists = 0;
 
         foreach ($channels as $channel) {
+            if (empty($channel->region)) {
+                continue;
+            }
+
             $postIds = ApiChannelPost::where('api_channel_id', $channel->id)->pluck('id');
             if ($postIds->isEmpty()) {
                 continue;
             }
 
-            $b = Builder::whereIn('api_channel_post_id', $postIds)->update(['region' => $channel->region]);
-            $s = Specialist::whereIn('api_channel_post_id', $postIds)->update(['region' => $channel->region]);
+            $b = Builder::whereIn('api_channel_post_id', $postIds)
+                ->whereNull('region')
+                ->update(['region' => $channel->region]);
+
+            $s = Specialist::whereIn('api_channel_post_id', $postIds)
+                ->whereNull('region')
+                ->update(['region' => $channel->region]);
+
             $updatedBuilders += $b;
             $updatedSpecialists += $s;
         }

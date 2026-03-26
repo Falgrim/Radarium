@@ -29,6 +29,9 @@ class IndexController extends Controller
         $builderContactSum = ApiPostUser::whereHas('builders', function (Builder $query) {
             $query->where('status', '=', ApiPostAiStatusEnum::Active);
         })
+            ->whereDoesntHave('specialists', function (Builder $query) {
+                $query->where('status', ApiPostAiStatusEnum::Active);
+            })
             ->where(function (Builder $query) {
                 $query->whereNotNull('phone')
                     ->orWhere('username', '<>', '');
@@ -60,6 +63,9 @@ class IndexController extends Controller
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
                 $query->where('created_at', '>=', Carbon::now()->startOfDay());
             })
+                ->whereDoesntHave('specialists', function (Builder $query) {
+                    $query->where('status', ApiPostAiStatusEnum::Active);
+                })
                 ->where(function (Builder $query) {
                     $query->whereNotNull('phone')
                         ->orWhere('username', '<>', '');

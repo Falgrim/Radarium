@@ -44,6 +44,14 @@ class BuilderController extends Controller
     {
         $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Builder, false);
 
+        $dbRegions = \App\Models\Builder::whereNotNull('region')
+            ->where('region', '!=', '')
+            ->where('status', ApiPostAiStatusEnum::Active)
+            ->distinct()
+            ->orderBy('region')
+            ->pluck('region', 'region')
+            ->toArray();
+
         $validated = $request->validate([
             'key_word' => [
                 'sometimes',
@@ -90,7 +98,6 @@ class BuilderController extends Controller
                 'nullable',
                 'string',
                 'max:100',
-                Rule::in(array_merge([''], array_keys(config('regions', [])))),
             ],
         ]);
 
@@ -101,7 +108,11 @@ class BuilderController extends Controller
             }
 
             if (!empty($validated['region'])) {
-                $query->where('region', $validated['region']);
+                if ($validated['region'] === 'none') {
+                    $query->whereNull('region');
+                } else {
+                    $query->where('region', $validated['region']);
+                }
             }
 
             if (!empty($validated['key_word_tags'])) {
@@ -161,7 +172,7 @@ class BuilderController extends Controller
             'request' => $request,
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
-            'regionsList' => config('regions', []),
+            'regionsList' => $dbRegions,
             'tariffAccess' => $this->tariffService->checkOpenContact(),
             'userOpenLog' => $userOpenLog,
         ]);

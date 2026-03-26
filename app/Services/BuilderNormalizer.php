@@ -76,6 +76,10 @@ class BuilderNormalizer
 
         $lower = mb_strtolower(trim($raw));
 
+        if (in_array($lower, ['не указано', 'не указан', 'нет', '-', 'н/д'])) {
+            return 'не указано';
+        }
+
         if (in_array($lower, ['сз', 'самозанятый', 'самозанятая', 'самозанятость'])) {
             return 'СЗ';
         }
@@ -163,13 +167,14 @@ class BuilderNormalizer
             return null;
         }
 
-        $digits = preg_replace('/[^0-9]/', '', $raw);
+        $cleaned = preg_replace('/[^0-9.,]/', '', $raw);
+        $cleaned = str_replace(',', '.', $cleaned);
 
-        if (!$digits || !is_numeric($digits)) {
+        if ($cleaned === '' || !is_numeric($cleaned)) {
             return null;
         }
 
-        return (int)$digits;
+        return (int)round((float)$cleaned);
     }
 
     // TODO (Stage 2): перейти на DI через app(BuilderNormalizer::class),

@@ -100,7 +100,7 @@ class ApiAIOllama
     public function setConfig(array $config)
     {
         $this->host = $config['host']
-            ?? config('services.ollama.host', 'http://79.175.45.41:11434');
+            ?? config('services.ollama.host', 'http://localhost:11434');
 
         $this->model = $config['model']
             ?? config('services.ollama.model', 'qwen2.5:7b-instruct-q4_K_M');

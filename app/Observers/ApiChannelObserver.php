@@ -25,7 +25,18 @@ class ApiChannelObserver
             return;
         }
 
-        Builder::whereIn('api_channel_post_id', $postIds)->update(['region' => $channel->region]);
-        Specialist::whereIn('api_channel_post_id', $postIds)->update(['region' => $channel->region]);
+        $oldRegion = $channel->getOriginal('region');
+
+        Builder::whereIn('api_channel_post_id', $postIds)
+            ->where(function ($q) use ($oldRegion) {
+                $q->where('region', $oldRegion)->orWhereNull('region');
+            })
+            ->update(['region' => $channel->region]);
+
+        Specialist::whereIn('api_channel_post_id', $postIds)
+            ->where(function ($q) use ($oldRegion) {
+                $q->where('region', $oldRegion)->orWhereNull('region');
+            })
+            ->update(['region' => $channel->region]);
     }
 }
