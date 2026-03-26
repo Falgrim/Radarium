@@ -126,7 +126,9 @@ class BuilderController extends Controller
                 });
             }
         })
-            ->whereDoesntHave('specialists');
+            ->whereDoesntHave('specialists', function (Builder $query) {
+                $query->where('status', ApiPostAiStatusEnum::Active);
+            });
 
         if (!empty($validated['open_contacts']) AND Auth::check()) {
             $authors = $authors->whereIn('id', function($query){

@@ -82,7 +82,7 @@
                     <p>Специалисты и&nbsp;подрядчики в&nbsp;области строительства</p>
                     <div class="varcols var50">
                         <div class="varcols-item">
-                            <p class="specinfo accent"><span>{{ $builderContactSum }}</span>Общее количество специалистов</p>
+                            <p class="specinfo accent"><span>{{ $builderContactSum }}</span>Общее количество строителей</p>
                         </div>
                         <div class="varcols-item">
                             <p class="specinfo"><span>{{ $builderContactTodaySum }}</span>Новых объявлений добавлено за сутки</p>

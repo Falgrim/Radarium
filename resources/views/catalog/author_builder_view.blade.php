@@ -22,7 +22,7 @@
     @endif
 
     <div class="container my-5 profile_page">
-        <h1 class="text-body-emphasis text-center">Карточка специалиста</h1>
+        <h1 class="text-body-emphasis text-center">Карточка строителя</h1>
 
         <div class="row mt-3">
             <div class="col-4">
