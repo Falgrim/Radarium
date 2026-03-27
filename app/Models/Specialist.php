@@ -68,7 +68,7 @@ class Specialist extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
-            'post_date' =>'datetime:Y-m-d H:i:s',
+            'post_date' => 'datetime:Y-m-d H:i:s',
             'status' => ApiPostAiStatusEnum::class,
         ];
     }
@@ -160,7 +160,7 @@ class Specialist extends Model
      */
     protected static function booted(): void
     {
-        parent::boot();
+        parent::booted();
 
         static::creating(function (Specialist $specialist) {
             if (isset($specialist->specialitiesForMoonshine)) {

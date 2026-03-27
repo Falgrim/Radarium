@@ -231,7 +231,7 @@ class ApiPostUser extends Model
 
     public function builderData(): array
     {
-        $data = BuilderReview::where('api_post_user_id', $this->id)
+        $data = Builder::where('api_post_user_id', $this->id)
             ->where('status', ApiPostAiStatusEnum::Active)
             ->get();
 

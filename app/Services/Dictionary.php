@@ -5,19 +5,11 @@ namespace App\Services;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\DictionaryEnum;
 use App\Models\DictionarySpeciality;
-use App\Models\Specialist;
-use App\Models\SpecialistSpeciality;
-use Faker\Core\DateTime;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class Dictionary
 {
-    public function __construct() {
-
-    }
-
     public function parseOkcoString(string $name): array
     {
         preg_match('#^([0-9\.]{1,})+\s?\-?\s?(.*)$#', $name, $mathes);
@@ -28,7 +20,7 @@ class Dictionary
         ];
     }
 
-    public static function acronym (?string $name)
+    public static function acronym(?string $name): ?string
     {
         if (!$name) {
             return null;

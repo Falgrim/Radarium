@@ -5,16 +5,13 @@ namespace App\Console\Commands;
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelPostStatusEnum;
-use App\Enum\ApiChannelSourceEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ModerationAlertSystemEnum;
 use App\Enum\ModerationAlertTableNameEnum;
-use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
-use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
@@ -112,8 +109,8 @@ class AiCompanyPosts extends Command
                     $result['json']['ai_type'] = Str::lower($result['json']['ai_type']);
 
                     if (
-                        $result['json']['ai_type'] != 'вакансия' AND
-                        $result['json']['ai_type'] != 'поиск того кто окажет услугу' AND
+                        $result['json']['ai_type'] != 'вакансия' &&
+                        $result['json']['ai_type'] != 'поиск того кто окажет услугу' &&
                         $result['json']['ai_type'] != 'поиск подрядчика'
                     ) {
                         $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
@@ -148,7 +145,7 @@ class AiCompanyPosts extends Command
                     $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                     $post->save();
 
-                    if ($companyJob->status === CompanyJobStatusEnum::InModeration OR $companyJob->status === CompanyJobStatusEnum::Active) {
+                    if ($companyJob->status === CompanyJobStatusEnum::InModeration || $companyJob->status === CompanyJobStatusEnum::Active) {
                         $this->info('Создана вакансия ID: '.$companyJob->id.' user ID '.$companyJob->api_post_user_id);
 
                         $moderationAlertService->createAlert(

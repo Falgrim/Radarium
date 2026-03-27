@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enum\ApiDataTypeEnum;
-use App\Services\BuilderNormalizer;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -29,10 +28,10 @@ class ApiAIOllama
         $this->aiLogging = config('services.ai.logging');
     }
 
-    protected function getKeyRows(ApiDataTypeEnum $isCompany)
+    protected function getKeyRows(ApiDataTypeEnum $isCompany): array
     {
-        if ($isCompany === ApiDataTypeEnum::Company) {
-            return [
+        return match ($isCompany) {
+            ApiDataTypeEnum::Company => [
                 'type'          => ['id' => 'ai_type', 'type' => 'string'],
                 'reason'        => ['id' => 'ai_reason', 'type' => 'string'],
                 'position'      => ['id' => 'position', 'type' => 'string'],
@@ -47,16 +46,15 @@ class ApiAIOllama
                 'period'        => ['id' => 'period', 'type' => 'string'],
                 'extra_conditions'  => ['id' => 'extra_conditions', 'type' => 'string'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
-            ];
-        } elseif ($isCompany === ApiDataTypeEnum::Specialist) {
-            return [
+            ],
+            ApiDataTypeEnum::Specialist => [
                 'type'              => ['id' => 'ai_type', 'type' => 'string'],
                 'reason'            => ['id' => 'ai_reason', 'type' => 'string'],
                 'experience'        => ['id' => 'experience', 'type' => 'string'],
                 'soft_experience'   => ['id' => 'soft_experience', 'type' => 'string'],
                 'education'         => ['id' => 'education', 'type' => 'string'],
                 'work_schedule'     => ['id' => 'work_schedule', 'type' => 'string'],
-                'total_work_project'=> ['id' => 'total_work_project', 'type' => 'string'],
+                'total_work_project' => ['id' => 'total_work_project', 'type' => 'string'],
                 'type_of_work'      => ['id' => 'type_of_work', 'type' => 'string'],
                 'price_by_hour'     => ['id' => 'price_by_hour', 'type' => 'price'],
                 'price_by_project'  => ['id' => 'price_by_project', 'type' => 'price'],
@@ -65,16 +63,15 @@ class ApiAIOllama
                 'spec_requirements' => ['id' => 'spec_requirements', 'type' => 'string'],
                 'link_resume'       => ['id' => 'link_resume', 'type' => 'string'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
-            ];
-        } elseif ($isCompany === ApiDataTypeEnum::Builder) {
-            return [
+            ],
+            ApiDataTypeEnum::Builder => [
                 'type'              => ['id' => 'ai_type', 'type' => 'string'],
                 'reason'            => ['id' => 'ai_reason', 'type' => 'string'],
                 'experience'        => ['id' => 'experience', 'type' => 'string'],
                 'soft_experience'   => ['id' => 'soft_experience', 'type' => 'string'],
                 'education'         => ['id' => 'education', 'type' => 'string'],
                 'work_schedule'     => ['id' => 'work_schedule', 'type' => 'string'],
-                'total_work_project'=> ['id' => 'total_work_project', 'type' => 'string'],
+                'total_work_project' => ['id' => 'total_work_project', 'type' => 'string'],
                 'type_of_work'      => ['id' => 'type_of_work', 'type' => 'string'],
                 'price_by_hour'     => ['id' => 'price_by_hour', 'type' => 'price'],
                 'price_by_project'  => ['id' => 'price_by_project', 'type' => 'price'],
@@ -93,11 +90,11 @@ class ApiAIOllama
                 'location_city'     => ['id' => 'location_city', 'type' => 'string'],
                 'location_region'   => ['id' => 'location_region', 'type' => 'string'],
                 'price_comment'     => ['id' => 'price_comment', 'type' => 'string'],
-            ];
-        }
+            ],
+        };
     }
 
-    public function setConfig(array $config)
+    public function setConfig(array $config): void
     {
         $this->host = $config['host']
             ?? config('services.ollama.host', 'http://localhost:11434');
@@ -106,12 +103,12 @@ class ApiAIOllama
             ?? config('services.ollama.model', 'qwen2.5:7b-instruct-q4_K_M');
     }
 
-    public function setPromt(string $promt)
+    public function setPromt(string $promt): void
     {
         $this->promt = $promt;
     }
 
-    public function setText(string $text)
+    public function setText(string $text): void
     {
         $this->text = $text;
     }
@@ -172,7 +169,7 @@ class ApiAIOllama
             } elseif ($row['type'] == 'bool') {
                 $modelRows[$row['id']] = (bool)$modelRows[$row['id']];
             } else {
-                if(is_array($modelRows[$row['id']])) {
+                if (is_array($modelRows[$row['id']])) {
                     $modelRows[$row['id']] = implode('; ', $modelRows[$row['id']]);
                 }
                 $modelRows[$row['id']] = trim($modelRows[$row['id']]);
@@ -226,10 +223,10 @@ class ApiAIOllama
         return $body;
     }
 
-    public function logging(mixed $text, bool $isError = false)
+    public function logging(mixed $text, bool $isError = false): void
     {
         if (!$this->aiLogging) {
-            return false;
+            return;
         }
 
         $message = is_string($text) ? $this->logPrefix . ' ' . $text : $text;

@@ -15,7 +15,6 @@ use App\Models\Review;
 use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
-//use Illuminate\Database\Query\Builder;
 use App\Models\UserOpenContact;
 use App\Services\Tariff;
 use Illuminate\Database\Eloquent\Builder;
@@ -133,7 +132,7 @@ class CatalogController extends Controller
             }
         });
 
-        if (!empty($validated['open_contacts']) AND Auth::check()) {
+        if (!empty($validated['open_contacts']) && Auth::check()) {
             $authors = $authors->whereIn('id', function($query){
                 $query->select('api_post_user_id')
                     ->from(with(new UserOpenContact())->getTable())
@@ -380,7 +379,7 @@ class CatalogController extends Controller
 
         $author = ApiPostUser::where('id', $validatedRoute['id'])->firstOrFail();
 
-        if (isset($validated['specialist_id']) AND $validated['specialist_id']) {
+        if (isset($validated['specialist_id']) && $validated['specialist_id']) {
             $specialist = Specialist::where('id', $validated['specialist_id'])->firstOrFail();
         }
 
@@ -408,7 +407,7 @@ class CatalogController extends Controller
             'user_id'   => Auth::user()->id,
         ]);
 
-        if (isset($validated['extra_row']) AND count($validated['extra_row'])) {
+        if (isset($validated['extra_row']) && count($validated['extra_row'])) {
             foreach ($validated['extra_row'] as $item) {
                 if (!$item['title']) {
                     continue;

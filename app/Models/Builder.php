@@ -78,7 +78,7 @@ class Builder extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
-            'post_date' =>'datetime:Y-m-d H:i:s',
+            'post_date' => 'datetime:Y-m-d H:i:s',
             'status' => ApiPostAiStatusEnum::class,
             'service_types' => 'array',
             'object_types' => 'array',
@@ -98,7 +98,7 @@ class Builder extends Model
 
     public function lastReview(): string
     {
-        $data = BuilderReview::where('specialist_id', $this->id)
+        $data = BuilderReview::where('builder_id', $this->id)
             ->where('status', ReviewStatusEnum::Active)
             ->orderByDesc('created_at')
             ->first();
@@ -177,7 +177,7 @@ class Builder extends Model
      */
     protected static function booted(): void
     {
-        parent::boot();
+        parent::booted();
 
         static::creating(function (Builder $builder) {
             if (isset($builder->specialitiesForMoonshine)) {

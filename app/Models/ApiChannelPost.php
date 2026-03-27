@@ -61,16 +61,16 @@ class ApiChannelPost extends Model
 
     public function specialist(): HasOne
     {
-        return $this->HasOne(Specialist::class, 'api_channel_post_id', 'id');
+        return $this->hasOne(Specialist::class, 'api_channel_post_id', 'id');
     }
 
     public function companyJob(): HasOne
     {
-        return $this->HasOne(CompanyJob::class, 'api_channel_post_id', 'id');
+        return $this->hasOne(CompanyJob::class, 'api_channel_post_id', 'id');
     }
 
     public function apiPostUser(): HasOne
     {
-        return $this->HasOne(ApiPostUser::class, 'id', 'api_post_user_id');
+        return $this->hasOne(ApiPostUser::class, 'id', 'api_post_user_id');
     }
 }

@@ -16,15 +16,11 @@ class SyncChannelRegionToPosts extends Command
 
     public function handle(): int
     {
-        $channels = ApiChannel::all();
+        $channels = ApiChannel::whereNotNull('region')->cursor();
         $updatedBuilders = 0;
         $updatedSpecialists = 0;
 
         foreach ($channels as $channel) {
-            if (empty($channel->region)) {
-                continue;
-            }
-
             $postIds = ApiChannelPost::where('api_channel_id', $channel->id)->pluck('id');
             if ($postIds->isEmpty()) {
                 continue;
