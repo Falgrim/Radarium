@@ -163,7 +163,7 @@ class BuilderNormalizer
      */
     public static function cleanPrice(?string $raw): ?int
     {
-        if (empty($raw)) {
+        if ($raw === null || $raw === '') {
             return null;
         }
 
