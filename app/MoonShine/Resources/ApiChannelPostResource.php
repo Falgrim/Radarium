@@ -133,6 +133,10 @@ class ApiChannelPostResource extends ModelResource
                 ->options(
                     ApiChannelPostStatusEnum::getList()
                 ),
+            Select::make('Провайдер ИИ', 'ai_provider_used')
+                ->options(
+                    ApiAiSourceEnum::getList()
+                ),
         ];
     }
 
