@@ -18,6 +18,7 @@ use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostIndexPage;
 use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostFormPage;
 use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostDetailPage;
 
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use MoonShine\Fields\Checkbox;
@@ -25,6 +26,7 @@ use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
 use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
+use MoonShine\Fields\Field;
 use MoonShine\Fields\ID;
 use MoonShine\Fields\Json;
 use MoonShine\Fields\Number;
@@ -65,6 +67,20 @@ class ApiChannelPostResource extends ModelResource
     protected bool $stickyTable = true;
 
     protected bool $columnSelection = true;
+
+    protected bool $saveFilterState = true;
+
+    public function query(): Builder
+    {
+        $query = parent::query();
+
+        $channelType = request()->input('filters.channel_type');
+        if ($channelType !== null && $channelType !== '') {
+            $query->whereHas('channel', fn($q) => $q->where('is_company', (int) $channelType));
+        }
+
+        return $query;
+    }
 
     public function getActiveActions(): array
     {
@@ -130,16 +146,10 @@ class ApiChannelPostResource extends ModelResource
                 ->searchable(),
             Select::make('Тип выборки', 'channel_type')
                 ->options(
-                    \App\Enum\ApiDataTypeEnum::getList()
+                    ApiDataTypeEnum::getList()
                 )
-                ->onApply(function(\Illuminate\Database\Eloquent\Builder $query, $value) {
-                    if ($value === '' || $value === null) {
-                        return $query;
-                    }
-                    return $query->whereHas('channel', function ($q) use ($value) {
-                        $q->where('is_company', $value);
-                    });
-                }),
+                ->nullable()
+                ->onApply(fn(Builder $query, $value, Field $field) => $query),
             Text::make('API ID', 'post_id'),
             Text::make('ID аккаунта', 'api_post_user_id'),
             Text::make('Логин', 'user_login'),
