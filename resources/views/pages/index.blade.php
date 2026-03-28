@@ -77,7 +77,7 @@
                         </div>
                     </div>
                 </div>
-                <a href="{{ route('catalog.builders') }}" class="tricols-item depo-info" style="text-decoration: none; color: inherit; display: block;">
+                <a href="{{ route('catalog.builders') }}" class="tricols-item depo-info" style="text-decoration: none; color: inherit;">
                     <h3 class="title">Строители РФ</h3>
                     <p>Специалисты и&nbsp;подрядчики в&nbsp;области строительства</p>
                     <div class="varcols var50">
