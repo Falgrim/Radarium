@@ -123,8 +123,24 @@ class ApiChannelPostResource extends ModelResource
     {
         return [
             Text::make('ID', 'id'),
-            BelongsTo::make('Источник', 'channel', resource: new ApiChannelResource()),
-            Text::make('API ID', 'channel'),
+            Select::make('Источник', 'api_channel_id')
+                ->options(
+                    ['' => 'Все источники'] + \App\Models\ApiChannel::query()->pluck('title', 'id')->toArray()
+                )
+                ->searchable(),
+            Select::make('Тип выборки', 'channel_type')
+                ->options(
+                    \App\Enum\ApiDataTypeEnum::getList()
+                )
+                ->onApply(function(\Illuminate\Database\Eloquent\Builder $query, $value) {
+                    if ($value === '' || $value === null) {
+                        return $query;
+                    }
+                    return $query->whereHas('channel', function ($q) use ($value) {
+                        $q->where('is_company', $value);
+                    });
+                }),
+            Text::make('API ID', 'post_id'),
             Text::make('ID аккаунта', 'api_post_user_id'),
             Text::make('Логин', 'user_login'),
             DateRange::make('Дата публикации', 'post_date')->withTime(),

@@ -34,7 +34,7 @@ enum ApiAiSourceEnum:string {
         $result = $values->mapWithKeys(fn ($value): array => [
             $value->value => method_exists($value, 'toString') ? $value->toString() : $value->value
         ]);
-        $result->put('', 'Все провайдеры');
+        $result->prepend('Все провайдеры', '');
 
         return $result->toArray();
     }

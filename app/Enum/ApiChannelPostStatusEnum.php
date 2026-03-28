@@ -51,7 +51,7 @@ enum ApiChannelPostStatusEnum:int {
         $result = $values->mapWithKeys(fn ($value): array => [
             $value->value => method_exists($value, 'toString') ? $value->toString() : $value->value
         ]);
-        $result->put('', 'Все статусы');
+        $result->prepend('Все статусы', '');
 
         return $result->toArray();
     }
