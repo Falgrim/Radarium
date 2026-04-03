@@ -116,7 +116,7 @@ class CompanyJob extends Model
      */
     protected static function booted(): void
     {
-        parent::boot();
+        parent::booted();
 
         static::creating(function (CompanyJob $companyJob) {
             if (isset($companyJob->specialitiesForMoonshine)) {

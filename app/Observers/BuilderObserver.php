@@ -15,16 +15,16 @@ class BuilderObserver
      */
     public function created(Builder $builder): void
     {
-        if ($companyJob->status == ApiPostAiStatusEnum::Active) {
-            $apiPostUser = ApiPostUser::where('id', $companyJob->api_post_user_id)
-                ->where(function ($query) use ($companyJob) {
-                    $query->where('last_post_date', '<', $companyJob->post_date)
+        if ($builder->status == ApiPostAiStatusEnum::Active) {
+            $apiPostUser = ApiPostUser::where('id', $builder->api_post_user_id)
+                ->where(function ($query) use ($builder) {
+                    $query->where('last_post_date', '<', $builder->post_date)
                         ->orWhereNull('last_post_date');
                 })
                 ->first();
 
             if ($apiPostUser) {
-                $apiPostUser->last_post_date = $companyJob->post_date;
+                $apiPostUser->last_post_date = $builder->post_date;
                 $apiPostUser->save();
             }
         }
