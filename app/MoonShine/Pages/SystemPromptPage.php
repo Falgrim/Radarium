@@ -7,6 +7,7 @@ namespace App\MoonShine\Pages;
 use App\Enum\AdminSystemPromptScope;
 use App\Enum\ApiDataTypeEnum;
 use App\Services\AiSystemPromptAdminService;
+use Illuminate\Validation\Rule;
 use MoonShine\ActionButtons\ActionButton;
 use MoonShine\Components\FlexibleRender;
 use MoonShine\Decorations\Block;
@@ -34,9 +35,17 @@ abstract class SystemPromptPage extends Page
         $resource = app($this->sectionResourceClass);
         $resource->boot();
 
-        return [
+        $base = [
             $resource->url() => $this->sectionMenuLabel,
-            '#' => 'Системный промпт',
+        ];
+
+        if ($this->editingPresetQuery() === null) {
+            return $base + ['#' => 'Системный промпт'];
+        }
+
+        return $base + [
+            $this->url() => 'Системный промпт',
+            '#' => $this->editingPresetQuery() === 'new' ? 'Новый промпт' : 'Редактирование',
         ];
     }
 
@@ -46,18 +55,91 @@ abstract class SystemPromptPage extends Page
     public function components(): array
     {
         $service = app(AiSystemPromptAdminService::class);
-        $initial = $service->getBody($this->scope);
+        $editParam = $this->editingPresetQuery();
+
+        if ($editParam === null) {
+            return $this->listComponents($service);
+        }
+
+        return $this->editorComponents($service, $editParam);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    protected function listComponents(AiSystemPromptAdminService $service): array
+    {
+        $presets = $service->listPresets($this->scope);
+        $rows = [];
+        foreach ($presets as $preset) {
+            $applied = $service->isPresetCurrentlyApplied($this->applyDataType, $preset);
+            $applyBtn = ActionButton::make('Применить')
+                ->method('applySavedPresetToChannels', page: $this, message: 'Применение...')
+                ->withParams(['preset_id' => '#apply-preset-'.$preset->id]);
+            if ($applied) {
+                $applyBtn->success();
+            } else {
+                $applyBtn->primary();
+            }
+            $rows[] = [
+                'id' => $preset->id,
+                'name' => $preset->name,
+                'sourceLabel' => $preset->apiSourceAdminLabel(),
+                'editUrl' => $this->url().'?preset='.$preset->id,
+                'applyButtonHtml' => (string) $applyBtn,
+            ];
+        }
+
+        return [
+            Block::make([
+                FlexibleRender::make(
+                    view('moonshine.custom.system-prompt-list', [
+                        'createUrl' => $this->url().'?preset=new',
+                        'applyTypeLabel' => (string) ($this->applyDataType->toString() ?? ''),
+                        'rows' => $rows,
+                    ])
+                ),
+            ]),
+        ];
+    }
+
+    /**
+     * @throws Throwable
+     */
+    protected function editorComponents(AiSystemPromptAdminService $service, string $editParam): array
+    {
         $textareaId = $this->textareaElementId();
+        $presetId = null;
+        $initialName = '';
+        $initialSource = array_key_first($service->selectableAiSources()) ?? 'yandexgtp4';
+        $initialBody = '';
+
+        if ($editParam !== 'new' && ctype_digit($editParam)) {
+            $preset = $service->findPresetForScope($this->scope, (int) $editParam);
+            if ($preset === null) {
+                abort(404);
+            }
+            $presetId = $preset->id;
+            $initialName = $preset->name;
+            $initialSource = (string) $preset->api_source;
+            $initialBody = (string) ($preset->body ?? '');
+        }
+
+        $sourceOptions = $service->selectableAiSources();
 
         return [
             Block::make([
                 FlexibleRender::make(
                     view('moonshine.custom.system-prompt-editor', [
-                        'initialBody' => $initial,
+                        'listUrl' => $this->url(),
+                        'presetId' => $presetId,
+                        'initialName' => $initialName,
+                        'initialSource' => $initialSource,
+                        'initialBody' => $initialBody,
+                        'sourceOptions' => $sourceOptions,
                         'textareaId' => $textareaId,
                         'applyTypeLabel' => (string) ($this->applyDataType->toString() ?? ''),
-                        'saveButtonHtml' => $this->saveButtonMarkup($textareaId),
-                        'applyButtonHtml' => $this->applyButtonMarkup($textareaId),
+                        'saveButtonHtml' => $this->saveButtonMarkup($textareaId, $presetId),
                     ])
                 ),
             ]),
@@ -69,31 +151,59 @@ abstract class SystemPromptPage extends Page
         return $this->scope->value.'-system-prompt-text';
     }
 
-    protected function saveButtonMarkup(string $textareaId): string
+    protected function editingPresetQuery(): ?string
     {
+        $p = request()->query('preset');
+        if ($p === null || $p === '') {
+            return null;
+        }
+
+        $p = (string) $p;
+        if ($p === 'new') {
+            return 'new';
+        }
+
+        return ctype_digit($p) ? $p : null;
+    }
+
+    protected function saveButtonMarkup(string $textareaId, ?int $presetId): string
+    {
+        $nameId = $this->scope->value.'-system-prompt-name';
+        $sourceId = $this->scope->value.'-system-prompt-api-source';
+        $params = [
+            'name' => '#'.$nameId,
+            'api_source' => '#'.$sourceId,
+            'ai_promt' => '#'.$textareaId,
+        ];
+        if ($presetId !== null) {
+            $params['preset_id'] = '#'.$this->scope->value.'-system-prompt-preset-id';
+        }
+
         return (string) ActionButton::make('Сохранить')
             ->primary()
-            ->method('saveSystemPrompt', page: $this, message: 'Сохранение...')
-            ->withParams(["#{$textareaId}/ai_promt"]);
+            ->method('saveSystemPromptPreset', page: $this, message: 'Сохранение...')
+            ->withParams($params);
     }
 
-    protected function applyButtonMarkup(string $textareaId): string
+    public function saveSystemPromptPreset(MoonShineRequest $request): MoonShineJsonResponse
     {
-        return (string) ActionButton::make('Применить')
-            ->secondary()
-            ->method('applyPromptToChannels', page: $this, message: 'Применение...')
-            ->withParams(["#{$textareaId}/ai_promt"]);
-    }
-
-    public function saveSystemPrompt(MoonShineRequest $request): MoonShineJsonResponse
-    {
+        $service = app(AiSystemPromptAdminService::class);
+        $allowedSources = $service->allowedApiSourceKeys();
         $data = $request->validate([
+            'preset_id' => ['sometimes', 'nullable', 'integer', 'exists:admin_system_prompt_presets,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'api_source' => ['required', 'string', Rule::in($allowedSources)],
             'ai_promt' => ['nullable', 'string', 'max:100000'],
         ]);
 
-        app(AiSystemPromptAdminService::class)->saveBody(
+        $id = isset($data['preset_id']) ? (int) $data['preset_id'] : null;
+
+        $service->savePreset(
             $this->scope,
-            $data['ai_promt'] ?? ''
+            $data['name'],
+            $data['api_source'],
+            $data['ai_promt'] ?? '',
+            $id,
         );
 
         return MoonShineJsonResponse::make()
@@ -101,23 +211,23 @@ abstract class SystemPromptPage extends Page
             ->redirect($this->url());
     }
 
-    public function applyPromptToChannels(MoonShineRequest $request): MoonShineJsonResponse
+    public function applySavedPresetToChannels(MoonShineRequest $request): MoonShineJsonResponse
     {
         $data = $request->validate([
-            'ai_promt' => ['nullable', 'string', 'max:100000'],
+            'preset_id' => ['required', 'integer', 'exists:admin_system_prompt_presets,id'],
         ]);
 
-        $prompt = $data['ai_promt'] ?? '';
-        $count = app(AiSystemPromptAdminService::class)->applyToChannels(
+        $count = app(AiSystemPromptAdminService::class)->applyPresetToChannels(
+            $this->scope,
             $this->applyDataType,
-            $prompt
+            (int) $data['preset_id'],
         );
 
         return MoonShineJsonResponse::make()
             ->toast(
                 $count > 0
                     ? "Промпт применён к {$count} источникам"
-                    : 'Нет источников с выбранным типом выборки',
+                    : 'Нет подходящих источников: проверьте тип выборки и (для пресета с одним провайдером) привязку сервиса ИИ у каналов',
                 ToastType::SUCCESS
             );
     }

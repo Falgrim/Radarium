@@ -1,19 +1,32 @@
 @php
+    /** @var string $listUrl */
+    /** @var int|null $presetId */
+    /** @var string $initialName */
+    /** @var string $initialSource */
     /** @var string $initialBody */
+    /** @var array<string, string> $sourceOptions */
     /** @var string $textareaId */
     /** @var string $saveButtonHtml */
-    /** @var string $applyButtonHtml */
     /** @var string $applyTypeLabel */
+    $nameId = str_replace('-text', '-name', $textareaId);
+    $sourceId = str_replace('-text', '-api-source', $textareaId);
+    $presetHiddenId = str_replace('-text', '-preset-id', $textareaId);
 @endphp
 
 <div
     class="space-y-4"
     x-data="{
+        name: @js($initialName),
+        savedName: @js($initialName),
+        source: @js($initialSource),
+        savedSource: @js($initialSource),
         content: @js($initialBody),
         saved: @js($initialBody),
         pendingUrl: '',
         leaveModal: false,
-        get dirty() { return this.content !== this.saved; },
+        get dirty() {
+            return this.content !== this.saved || this.name !== this.savedName || this.source !== this.savedSource;
+        },
         confirmLeave() {
             if (this.pendingUrl) {
                 window.location.href = this.pendingUrl;
@@ -61,9 +74,44 @@
         }, true);
     "
 >
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ $listUrl }}" class="btn btn-secondary">← К списку промптов</a>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <div>
+            <label for="{{ $nameId }}" class="form-label">Название промпта</label>
+            <input
+                type="text"
+                id="{{ $nameId }}"
+                name="name"
+                class="form-input"
+                maxlength="255"
+                x-model="name"
+            />
+        </div>
+        <div>
+            <label for="{{ $sourceId }}" class="form-label">Обработчик ИИ (модель)</label>
+            <select
+                id="{{ $sourceId }}"
+                name="api_source"
+                class="form-select"
+                x-model="source"
+            >
+                @foreach ($sourceOptions as $value => $label)
+                    <option value="{{ $value }}" @selected($value === $initialSource)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <p class="form-hint mt-1">По умолчанию — «Все ИИ обработчики»: при применении промпт запишется во все источники этой области без учёта выбранного сервиса ИИ. Остальные пункты — только активные «Сервисы ИИ» (если нет активных, показываются все поддерживаемые провайдеры).</p>
+        </div>
+    </div>
+
+    @if ($presetId !== null)
+        <input type="hidden" id="{{ $presetHiddenId }}" name="preset_id" value="{{ $presetId }}">
+    @endif
+
     <div>
-        <label for="{{ $textareaId }}" class="form-label">Системный промпт</label>
-        {{-- Обычный textarea: без x-moonshine-компонента (меньше точек отказа на проде). Alpine: x-on вместо @, чтобы Blade не перехватывал @click/@keydown. --}}
+        <label for="{{ $textareaId }}" class="form-label">Текст системного промпта</label>
         <textarea
             id="{{ $textareaId }}"
             name="ai_promt"
@@ -72,15 +120,12 @@
             x-model="content"
         ></textarea>
         <p class="form-hint mt-2">
-            «Применить» копирует текущий текст в поле «Промт для ИИ» у всех источников сообщений с типом выборки
-            «{{ $applyTypeLabel }}»
-            . «Сохранить» записывает текст на этой странице; «Отмена» сбрасывает несохранённые правки (перезагрузка).
+            «Сохранить» записывает этот вариант в списке. «Применить» в списке копирует сохранённый текст: при «Все ИИ обработчики» — во все источники типа «{{ $applyTypeLabel }}»; при выборе одного провайдера — только в каналы с этим ИИ. «Отмена» сбрасывает несохранённые правки (перезагрузка страницы).
         </p>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
         {!! $saveButtonHtml !!}
-        {!! $applyButtonHtml !!}
         <x-moonshine::form.button
             class="btn-secondary"
             x-on:click.prevent="window.location.reload()"
