@@ -36,12 +36,6 @@
     }"
     x-init="
         const root = $data;
-        window.addEventListener('beforeunload', function (e) {
-            if (root.dirty) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
         document.addEventListener('click', function (e) {
             if (!root.dirty) {
                 return;

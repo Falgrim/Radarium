@@ -81,6 +81,9 @@ abstract class SystemPromptPage extends Page
             } else {
                 $applyBtn->primary();
             }
+            $applyBtn->customAttributes([
+                'class' => 'btn-sm',
+            ]);
             $rows[] = [
                 'id' => $preset->id,
                 'name' => $preset->name,
@@ -95,7 +98,6 @@ abstract class SystemPromptPage extends Page
                 FlexibleRender::make(
                     view('moonshine.custom.system-prompt-list', [
                         'createUrl' => $this->url().'?preset=new',
-                        'applyTypeLabel' => (string) ($this->applyDataType->toString() ?? ''),
                         'rows' => $rows,
                     ])
                 ),
@@ -207,7 +209,7 @@ abstract class SystemPromptPage extends Page
         );
 
         return MoonShineJsonResponse::make()
-            ->toast('Системный промпт сохранён', ToastType::SUCCESS)
+            ->toast('Промпт успешно сохранён', ToastType::SUCCESS)
             ->redirect($this->url());
     }
 
