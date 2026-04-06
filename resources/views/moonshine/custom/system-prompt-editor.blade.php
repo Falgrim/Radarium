@@ -63,14 +63,14 @@
 >
     <div>
         <label for="{{ $textareaId }}" class="form-label">Системный промпт</label>
-        <x-moonshine::form.textarea
-            :attributes="new \Illuminate\View\ComponentAttributeBag([
-                'id' => $textareaId,
-                'name' => 'ai_promt',
-                'rows' => 18,
-                'x-model' => 'content',
-            ])"
-        />
+        {{-- Обычный textarea: без x-moonshine-компонента (меньше точек отказа на проде). Alpine: x-on вместо @, чтобы Blade не перехватывал @click/@keydown. --}}
+        <textarea
+            id="{{ $textareaId }}"
+            name="ai_promt"
+            rows="18"
+            class="form-textarea"
+            x-model="content"
+        ></textarea>
         <p class="form-hint mt-2">
             «Применить» копирует текущий текст в поле «Промт для ИИ» у всех источников сообщений с типом выборки
             «{{ $applyTypeLabel }}»
@@ -83,7 +83,7 @@
         {!! $applyButtonHtml !!}
         <x-moonshine::form.button
             class="btn-secondary"
-            @click.prevent="window.location.reload()"
+            x-on:click.prevent="window.location.reload()"
         >Отмена</x-moonshine::form.button>
     </div>
 
@@ -92,20 +92,20 @@
         x-cloak
         class="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 px-4"
         style="display: none;"
-        @keydown.escape.window="leaveModal = false"
+        x-on:keydown.escape.window="leaveModal = false"
     >
         <div
             class="modal-content max-w-lg rounded-lg bg-white p-6 shadow-lg dark:bg-slate-900"
-            @click.outside="leaveModal = false"
+            x-on:click.outside="leaveModal = false"
         >
             <p class="text-sm text-slate-800 dark:text-slate-100">
                 Внимание! Сделанные изменения не будут сохранены
             </p>
             <div class="mt-6 flex flex-wrap justify-end gap-2">
-                <x-moonshine::form.button class="btn-secondary" @click.prevent="leaveModal = false">
+                <x-moonshine::form.button class="btn-secondary" x-on:click.prevent="leaveModal = false">
                     Отмена
                 </x-moonshine::form.button>
-                <x-moonshine::form.button class="btn-primary" @click.prevent="confirmLeave()">
+                <x-moonshine::form.button class="btn-primary" x-on:click.prevent="confirmLeave()">
                     ОК
                 </x-moonshine::form.button>
             </div>
