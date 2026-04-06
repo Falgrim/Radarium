@@ -18,7 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })->withSchedule(function (Schedule $schedule) {
 
-        $readSourceCron = Repositories::setting()->findByName('read_source_cron');
+        try {
+            $readSourceCron = Repositories::setting()->findByName('read_source_cron');
+        } catch (\Throwable) {
+            // Нет БД/таблицы на этапе migrate или в PHPUnit — fallback как при пустой настройке
+            $readSourceCron = null;
+        }
 
         if ($readSourceCron?->value) {
             if ($readSourceCron->value <= 59) {

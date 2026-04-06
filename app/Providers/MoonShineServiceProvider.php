@@ -23,6 +23,8 @@ use App\MoonShine\Resources\PaymentTariffResource;
 use App\MoonShine\Resources\ReviewCustomFieldResource;
 use App\MoonShine\Resources\ReviewResource;
 use App\MoonShine\Resources\SpecialistResource;
+use App\MoonShine\Pages\BuilderSystemPromptPage;
+use App\MoonShine\Pages\SpecialistSystemPromptPage;
 use App\MoonShine\Resources\UserResource;
 use App\MoonShine\Resources\UserRoleResource;
 use App\MoonShine\Resources\UserTariffResource;
@@ -55,7 +57,10 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
      */
     protected function pages(): array
     {
-        return [];
+        return [
+            new BuilderSystemPromptPage(),
+            new SpecialistSystemPromptPage(),
+        ];
     }
 
     /**
@@ -101,11 +106,13 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
 
             MenuGroup::make('Проектирование', [
                 MenuItem::make('Проектирование', new SpecialistResource(), 'heroicons.users'),
+                MenuItem::make('Системный промпт', new SpecialistSystemPromptPage(), 'heroicons.document-text'),
                 MenuItem::make('Отзывы', new ReviewResource(), 'heroicons.users'),
             ], 'heroicons.users'),
 
             MenuGroup::make('Строительство', [
                 MenuItem::make('Строительство', new BuilderResource(), 'heroicons.users'),
+                MenuItem::make('Системный промпт', new BuilderSystemPromptPage(), 'heroicons.document-text'),
                 MenuItem::make('Отзывы', new BuilderReviewResource(), 'heroicons.users'),
             ], 'heroicons.users'),
 

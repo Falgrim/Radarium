@@ -2,14 +2,11 @@
 
 namespace App\Observers;
 
-use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
-use App\Models\Specialist;
-use Illuminate\Support\Carbon;
 
 class CompanyJobObserver
 {
@@ -84,7 +81,7 @@ class CompanyJobObserver
     /**
      * Handle the UserTariff "force deleted" event.
      */
-    public function forceDeleted(Specialist $companyJob): void
+    public function forceDeleted(CompanyJob $companyJob): void
     {
         //
     }
