@@ -4,7 +4,7 @@
 @endphp
 
 <div class="space-y-4">
-    <div class="flex flex-wrap items-center justify-end gap-2">
+    <div class="flex flex-wrap items-center justify-start gap-2 pl-4">
         <a href="{{ $createUrl }}" class="btn btn-primary">Добавить промпт</a>
     </div>
 
