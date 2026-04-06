@@ -74,7 +74,7 @@ abstract class SystemPromptPage extends Page
         return (string) ActionButton::make('Сохранить')
             ->primary()
             ->filled()
-            ->method('saveSystemPrompt', page: $this, message: 'Сохранение…')
+            ->method('saveSystemPrompt', page: $this, message: 'Сохранение...')
             ->withParams(["#{$textareaId}/ai_promt"]);
     }
 
@@ -82,7 +82,7 @@ abstract class SystemPromptPage extends Page
     {
         return (string) ActionButton::make('Применить')
             ->secondary()
-            ->method('applyPromptToChannels', page: $this, message: 'Применение…')
+            ->method('applyPromptToChannels', page: $this, message: 'Применение...')
             ->withParams(["#{$textareaId}/ai_promt"]);
     }
 
