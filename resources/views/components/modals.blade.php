@@ -398,6 +398,32 @@
 
 
 <script>
+    function rdModalGet(id) {
+        var el = document.getElementById(id);
+        if (!el || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+            return null;
+        }
+        return bootstrap.Modal.getOrCreateInstance(el);
+    }
+
+    function rdModalHide(id) {
+        var m = rdModalGet(id);
+        if (m) {
+            m.hide();
+        } else if (window.jQuery && jQuery.fn.modal) {
+            jQuery('#' + id).modal('hide');
+        }
+    }
+
+    function rdModalShow(id) {
+        var m = rdModalGet(id);
+        if (m) {
+            m.show();
+        } else if (window.jQuery && jQuery.fn.modal) {
+            jQuery('#' + id).modal('show');
+        }
+    }
+
     $(document).ready(function() {
         $('#rd-drive-form').on('submit', function(e) {
             e.preventDefault();
@@ -413,36 +439,38 @@
             e.preventDefault();
             authRegistrationForm('#rd-registr-form')
         });
+
+        $(document).on('click', '#rd-tariff-guest-login-btn', function() {
+            rdModalHide('rd-tariff-guest');
+            setTimeout(function() {
+                rdModalShow('rd-registr');
+            }, 400);
+        });
+
+        $(document).on('click', '#rd-testdrive-guest-login-btn', function() {
+            rdModalHide('rd-testdrive-guest');
+            setTimeout(function() {
+                rdModalShow('rd-registr');
+            }, 400);
+        });
     });
 
-    // Правка от 08.07 АГ
-          // Обработчик для кнопки "Войти или зарегистрироваться" в модальном окне тарифа для гостей
-        $(document).on('click', '#rd-tariff-guest-login-btn', function() {
-            $('#rd-tariff-guest').modal('hide');
-            setTimeout(function() {
-                $('#rd-registr').modal('show');
-            }, 400);
-        });
-
-        // Обработчик для кнопки "Войти или зарегистрироваться" в модальном окне тест-драйва для гостей
-        $(document).on('click', '#rd-testdrive-guest-login-btn', function() {
-            $('#rd-testdrive-guest').modal('hide');
-            setTimeout(function() {
-                $('#rd-registr').modal('show');
-            }, 400);
-        });
-   
-
-
-
-
-
     function authRegistrationForm(form_id) {
+        var redirectScheduled = false;
+        var $btn = $(form_id + '-btn');
+        var isLoginForm = form_id === '#rd-registr-form';
 
-        $('#errorModal').modal('hide');
+        rdModalHide('errorModal');
         $('#errorModal .modal-body .alert').html('');
 
-        $(form_id+'-btn').prop('disabled', true);
+        if (isLoginForm && !$btn.data('auth-label-saved')) {
+            $btn.data('auth-label-saved', $btn.html());
+        }
+        if (isLoginForm) {
+            $btn.html('Вход…');
+        }
+
+        $btn.prop('disabled', true);
 
         $.ajax({
             url: $(form_id).attr('action'),
@@ -454,8 +482,17 @@
                 'Accept': 'application/json'
             },
             success: function(response) {
-                if (form_id === '#rd-registr-form' && response.redirect) {
-                    window.location.href = response.redirect;
+                if (isLoginForm && response.redirect) {
+                    redirectScheduled = true;
+                    rdModalHide('rd-registr');
+                    var overlay = document.createElement('div');
+                    overlay.id = 'auth-login-loading-overlay';
+                    overlay.setAttribute('role', 'status');
+                    overlay.setAttribute('aria-live', 'polite');
+                    overlay.style.cssText = 'position:fixed;inset:0;z-index:20000;background:rgba(255,255,255,.93);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;font-size:1.125rem;color:#333;';
+                    overlay.innerHTML = '<div class="spinner-border text-primary" aria-hidden="true"></div><div>Выполняется вход…</div>';
+                    document.body.appendChild(overlay);
+                    window.location.assign(response.redirect);
                     return;
                 }
                 $(form_id+'-message').html(
@@ -467,19 +504,15 @@
                 }
             },
             error: function(xhr) {
-
-                $('#errorModal').modal('show');
+                rdModalShow('errorModal');
                 $('#errorModal .modal-title').html('Ошибка!');
 
-                // Обработка ошибок
                 if (xhr.status === 422) {
-                    // Валидационные ошибки
                     var errors = xhr.responseJSON.errors;
                     $.each(errors, function(key, value) {
                         $('#errorModal .modal-body .alert').append('- '+value[0]+'<br />');
                     });
                 } else {
-                    // Другие ошибки
                     var errorMessage = xhr.responseJSON?.message ||
                         'An error occurred during registration.';
 
@@ -488,7 +521,12 @@
 
             },
             complete: function() {
-                $(form_id+'-btn').prop('disabled', false);
+                if (!redirectScheduled) {
+                    $btn.prop('disabled', false);
+                    if (isLoginForm && $btn.data('auth-label-saved')) {
+                        $btn.html($btn.data('auth-label-saved'));
+                    }
+                }
             }
         });
     }
