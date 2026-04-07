@@ -190,14 +190,13 @@ class ApiAIOllama
         }
 
         $jsonText = $data['choices'][0]['message']['content'];
-        if (!$jsonText) {
+        if ($jsonText === null || $jsonText === '') {
             throw new \Exception($this->logPrefix . ' Пустой ответ: ' . json_encode($data));
         }
 
-        $jsonText = str_replace('```json', '', $jsonText);
-        $jsonText = str_replace('```', '', $jsonText);
+        $jsonText = str_replace(['```json', '```'], '', $jsonText);
 
-        return json_decode(trim($jsonText), true);
+        return AiModelJsonReplyDecoder::decode($jsonText, $this->logPrefix);
     }
 
     protected function sendRequest(): array
