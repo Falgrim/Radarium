@@ -75,14 +75,13 @@ class RegisteredUserController extends Controller
 
             Auth::login($user);
 
-            $redirectTo = session('redirect_auth');
-            if ($redirectTo) {
-                $redirectTo = redirect($redirectTo);
-            }
+            $redirectAuth = $request->session()->pull('redirect_auth');
+            $defaultUrl = $redirectAuth ?: route('dashboard', absolute: false);
+            $redirectUrl = $request->session()->pull('url.intended', $defaultUrl);
 
             return response()->json([
                 'message' => 'Регистрация завершена',
-                'redirect' => $redirectTo ? $redirectTo : route('dashboard', absolute: false)
+                'redirect' => $redirectUrl,
             ]);
         } catch (ValidationException $e) {
             return response()->json([

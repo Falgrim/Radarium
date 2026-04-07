@@ -454,7 +454,10 @@
                 'Accept': 'application/json'
             },
             success: function(response) {
-                // Успешная регистрация
+                if (form_id === '#rd-registr-form' && response.redirect) {
+                    window.location.href = response.redirect;
+                    return;
+                }
                 $(form_id+'-message').html(
                     '<div class="alert alert-success">' + response.message + '</div>'
                 );
