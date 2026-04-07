@@ -1593,46 +1593,96 @@ a:has(.social) {
   font-weight: 600;
 }
 
-.catalog-search-tabs-row {
-  align-items: center;
+/* Каталог: табы как продолжение блока поиска (градиент + активный таб как .tab-heading) */
+.catalog-search-panel {
+  margin-bottom: 0;
 }
 
-.catalog-search-tabs {
+.catalog-search-panel > form.needs-validation {
+  margin-bottom: 0;
+}
+
+.catalog-search-panel .catalog-search-tabs-row.row-flex {
+  align-items: flex-end;
+  margin-bottom: 0;
+}
+
+.catalog-search-panel .catalog-search-tabs-bar {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 4px;
+  background-image: var(--bg-linear02);
+  border-radius: 20px 20px 0 0;
+  padding: 0;
 }
 
-.catalog-search-tab {
+.catalog-search-panel a.catalog-search-tab {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin: 0;
   padding: 20px 40px;
+  border: none;
   border-radius: 20px 20px 0 0;
   font-weight: 600;
   font-size: 1.25rem;
   line-height: 1.2;
-  text-decoration: none;
-  background-color: rgba(255, 255, 255, 0.5);
-  color: var(--color-blue);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  text-decoration: none !important;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.92) !important;
+  background-color: rgba(0, 0, 0, 0.16);
+  transition: background-color 0.18s ease, color 0.18s ease, filter 0.12s ease, transform 0.08s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.catalog-search-tab:hover {
-  background-color: rgba(255, 255, 255, 0.85);
-  color: var(--color-blue);
+.catalog-search-panel a.catalog-search-tab:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.22);
 }
 
-.catalog-search-tab.is-active {
-  color: var(--color-light);
-  background-color: var(--color-blue);
+.catalog-search-panel a.catalog-search-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-.catalog-search-tab.is-active:hover {
-  color: var(--color-light);
-  background-color: var(--color-blue);
+.catalog-search-panel a.catalog-search-tab:active:not(.is-active) {
+  transform: scale(0.985);
+  filter: brightness(0.94);
+}
+
+.catalog-search-panel a.catalog-search-tab.is-active {
+  color: var(--color-light) !important;
+  background-color: var(--color-blue) !important;
+  filter: none;
+}
+
+.catalog-search-panel a.catalog-search-tab.is-active:hover {
+  color: var(--color-light) !important;
+  background-color: var(--color-blue) !important;
+  filter: brightness(1.09);
+}
+
+.catalog-search-panel a.catalog-search-tab.is-active:active {
+  transform: scale(0.987);
+  filter: brightness(0.88);
+}
+
+.catalog-search-panel .catalog-search-clear {
+  flex-shrink: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, transform 0.08s ease;
+}
+
+.catalog-search-panel .catalog-search-clear:hover {
+  opacity: 0.9;
+  color: var(--color-accent-h) !important;
+}
+
+.catalog-search-panel .catalog-search-clear:active {
+  transform: scale(0.97);
 }
 
 .search-field {
