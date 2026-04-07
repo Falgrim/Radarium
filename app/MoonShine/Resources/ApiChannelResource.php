@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
-use App\Enum\ApiAiSourceEnum;
-use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Models\ApiAi;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use App\Models\ApiChannel;
-
+use App\Services\AiSystemPromptAdminService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 use MoonShine\ActionButtons\ActionButton;
 use MoonShine\Components\FormBuilder;
+use MoonShine\Components\MoonShineComponent;
+use MoonShine\Decorations\Block;
+use MoonShine\Enums\ToastType;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\Enum;
+use MoonShine\Fields\Field;
+use MoonShine\Fields\ID;
 use MoonShine\Fields\Json;
-use MoonShine\Fields\Select;
-use MoonShine\Fields\Preview;
 use MoonShine\Fields\Relationships\BelongsTo;
-use MoonShine\Fields\Switcher;
+use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
 use MoonShine\Handlers\ExportHandler;
@@ -31,17 +31,14 @@ use MoonShine\Handlers\ImportHandler;
 use MoonShine\Http\Responses\MoonShineJsonResponse;
 use MoonShine\MoonShineRequest;
 use MoonShine\Resources\ModelResource;
-use MoonShine\Decorations\Block;
-use MoonShine\Fields\ID;
-use MoonShine\Fields\Field;
-use MoonShine\Components\MoonShineComponent;
-use MoonShine\Enums\ToastType;
 
 /**
  * @extends ModelResource<ApiChannel>
  */
 class ApiChannelResource extends ModelResource
 {
+    private const string AI_PROMPT_FIELD_LABEL = 'Промт для ИИ';
+
     protected string $model = ApiChannel::class;
 
     protected string $title = 'Источники сообщений';
@@ -117,7 +114,7 @@ class ApiChannelResource extends ModelResource
     public function massUpdateAiService(MoonShineRequest $request): MoonShineJsonResponse
     {
         $apiAiId = $request->integer('api_ai_id');
-        if (!$apiAiId || !ApiAi::query()->where('id', $apiAiId)->exists()) {
+        if (! $apiAiId || ! ApiAi::query()->where('id', $apiAiId)->exists()) {
             return MoonShineJsonResponse::make()
                 ->toast('Выберите корректный сервис ИИ', ToastType::ERROR);
         }
@@ -145,9 +142,9 @@ class ApiChannelResource extends ModelResource
     }
 
     /**
-     * @param ApiChannel $item
-     *
+     * @param  ApiChannel  $item
      * @return array<string, string[]|string>
+     *
      * @see https://laravel.com/docs/validation#available-validation-rules
      */
     public function rules(Model $item): array
@@ -158,17 +155,139 @@ class ApiChannelResource extends ModelResource
             $regionRules[] = Rule::in(array_merge([''], $regionKeys));
         }
 
+        $isCreate = ! $item->exists;
+
+        $apiAiRules = $isCreate
+            ? ['required', 'integer', Rule::notIn([0]), Rule::exists(ApiAi::class, 'id')]
+            : ['nullable', 'integer', Rule::notIn([0]), Rule::exists(ApiAi::class, 'id')];
+
+        $isCompanyRules = $isCreate
+            ? ['required', Rule::enum(ApiDataTypeEnum::class)]
+            : ['nullable', Rule::enum(ApiDataTypeEnum::class)];
+
         return [
             'title' => ['required', 'string', 'min:3'],
             'link' => ['required', 'url:http,https'],
             'description' => ['string', 'min:3'],
-            'ai_promt' => ['required', 'string', 'min:10'],
-            'api_ai_id' => ['exists:App\Models\ApiAi,id'],
+            'ai_promt' => ['nullable', 'string', $this->aiPromptRule($item)],
+            'api_ai_id' => $apiAiRules,
             'channel_source' => Rule::enum(ApiChannelSourceEnum::class),
             'status' => Rule::enum(ApiChannelStatusEnum::class),
-            'is_company' => Rule::enum(ApiDataTypeEnum::class),
+            'is_company' => $isCompanyRules,
             'region' => $regionRules,
         ];
+    }
+
+    public function prepareForValidation(): void
+    {
+        $req = request();
+        $raw = $req->input('ai_promt');
+        $trimmed = is_string($raw) ? trim($raw) : '';
+        if ($trimmed !== '') {
+            $req->merge(['ai_promt' => $trimmed]);
+
+            return;
+        }
+
+        $apiAiId = $req->input('api_ai_id');
+        if ($apiAiId === null || $apiAiId === '' || (int) $apiAiId === 0) {
+            return;
+        }
+
+        $rawIsCompany = $req->input('is_company');
+        if ($rawIsCompany === null || $rawIsCompany === '') {
+            return;
+        }
+
+        $dataType = ApiDataTypeEnum::tryFrom((int) $rawIsCompany);
+        if ($dataType === null) {
+            return;
+        }
+
+        $apiAi = ApiAi::query()->find((int) $apiAiId);
+        if ($apiAi === null) {
+            return;
+        }
+
+        $body = app(AiSystemPromptAdminService::class)->resolveActivePresetBodyForChannel($dataType, $apiAi);
+        if ($body !== null && mb_strlen($body) >= 10) {
+            $req->merge(['ai_promt' => $body]);
+        }
+    }
+
+    /**
+     * @return \Closure(string, mixed, \Closure(string): void): void
+     */
+    private function aiPromptRule(Model $item): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($item): void {
+            $trim = trim((string) $value);
+            if (mb_strlen($trim) >= 10) {
+                return;
+            }
+
+            $req = request();
+            $apiAiId = $req->input('api_ai_id');
+            $isCompany = $req->input('is_company');
+            $isCreate = ! $item->exists;
+
+            if ($isCreate) {
+                if ($apiAiId === null || $apiAiId === '' || (int) $apiAiId === 0) {
+                    return;
+                }
+                if ($isCompany === null || $isCompany === '') {
+                    return;
+                }
+            } else {
+                if ($apiAiId === null || $apiAiId === '' || (int) $apiAiId === 0
+                    || $isCompany === null || $isCompany === '') {
+                    $fail($this->aiPromptStandardRequiredMessage());
+
+                    return;
+                }
+            }
+
+            if ($trim !== '' && mb_strlen($trim) < 10) {
+                $fail($this->aiPromptStandardMinMessage());
+
+                return;
+            }
+
+            $dataType = ApiDataTypeEnum::tryFrom((int) $isCompany);
+            $apiAi = ApiAi::query()->find((int) $apiAiId);
+            if ($dataType === null || $apiAi === null) {
+                $fail($this->aiPromptStandardRequiredMessage());
+
+                return;
+            }
+
+            $promptService = app(AiSystemPromptAdminService::class);
+            if ($promptService->adminScopeForDataType($dataType) === null) {
+                $fail($this->aiPromptStandardRequiredMessage());
+
+                return;
+            }
+
+            $body = $promptService->resolveActivePresetBodyForChannel($dataType, $apiAi);
+            if ($body !== null && mb_strlen($body) >= 10) {
+                return;
+            }
+
+            $fail($this->aiPromptStandardRequiredMessage());
+        };
+    }
+
+    private function aiPromptStandardRequiredMessage(): string
+    {
+        return __('validation.required', ['attribute' => self::AI_PROMPT_FIELD_LABEL]);
+    }
+
+    private function aiPromptStandardMinMessage(): string
+    {
+        return __('validation.min.string', [
+            'attribute' => self::AI_PROMPT_FIELD_LABEL,
+            'min' => 10,
+        ]);
     }
 
     public function indexFields(): array
@@ -176,9 +295,9 @@ class ApiChannelResource extends ModelResource
         return [
             Text::make('Название', 'title'),
             Text::make('Ссылка', 'link'),
-            //Text::make('Описание', 'description'),
+            // Text::make('Описание', 'description'),
             BelongsTo::make('Сервис', 'apiAi')->setColumn('api_ai_id')->sortable(),
-            //Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+            // Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
             Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class)->sortable(),
             Text::make('Регион', 'region')->sortable(),
             Date::make('Дата начала', 'post_from_date')->format('d.m.Y')->sortable(),
@@ -198,7 +317,7 @@ class ApiChannelResource extends ModelResource
             Enum::make('Тип выборки', 'is_company')->attach(ApiDataTypeEnum::class),
             Text::make('Регион', 'region'),
             Enum::make('Статус', 'status')->attach(ApiChannelStatusEnum::class),
-            Text::make('Опции для обработки', 'options', fn($item) => $item->options ? json_encode($item->options) : ''),
+            Text::make('Опции для обработки', 'options', fn ($item) => $item->options ? json_encode($item->options) : ''),
         ];
     }
 
@@ -211,7 +330,7 @@ class ApiChannelResource extends ModelResource
         $fields[] = Text::make('Ссылка', 'link')->hint('Укажите ссылку в формате: https://');
         $fields[] = Text::make('Описание', 'description');
 
-        $fields[] = BelongsTo::make('Сервис ИИ', 'apiAi', resource: new ApiAiResource())
+        $fields[] = BelongsTo::make('Сервис ИИ', 'apiAi', resource: app(ApiAiResource::class))
             ->hint('Каким сервисом ИИ будет обработаны сообщения');
 
         $fields[] = Enum::make('Тип выборки', 'is_company')
@@ -228,7 +347,7 @@ class ApiChannelResource extends ModelResource
             ->hint('Необязательно. Город-миллионник РФ. Будет проставлен всем сообщениям из этого источника (в записи строителей или специалистов в зависимости от типа выборки).');
 
         $fields[] = Textarea::make('Промт для ИИ', 'ai_promt')
-            ->hint('Не меняйте промт без предварительного тестирования в самом ИИ, так как даже при небольших изменениях может поменяться результат и формат ответа')
+            ->hint('Если оставить пустым, подставится текст из сохранённого системного промпта для выбранных «Сервис ИИ» и «Тип выборки» (раздел «Системный промпт»). Имеет приоритет текст, введённый вручную. Не меняйте промт без предварительного тестирования в самом ИИ.')
             ->customAttributes(['rows' => '15']);
 
         $fields[] = Enum::make('Тип источника', 'channel_source')
@@ -244,5 +363,4 @@ class ApiChannelResource extends ModelResource
 
         return $fields;
     }
-
 }

@@ -165,4 +165,52 @@ final class AiSystemPromptAdminService
             return $current === $body;
         });
     }
+
+    /**
+     * Область пресетов админки для типа выборки источника (строитель / сотрудник).
+     * Для типа «Вакансия» отдельных системных пресетов в админке нет.
+     */
+    public function adminScopeForDataType(ApiDataTypeEnum $dataType): ?AdminSystemPromptScope
+    {
+        return match ($dataType) {
+            ApiDataTypeEnum::Builder => AdminSystemPromptScope::Builder,
+            ApiDataTypeEnum::Specialist => AdminSystemPromptScope::Specialist,
+            ApiDataTypeEnum::Company => null,
+        };
+    }
+
+    /**
+     * Текст активного пресета для пары «тип выборки» + провайдер выбранного сервиса ИИ.
+     * Приоритет: пресет с тем же api_source, что у сервиса; иначе пресет «Все ИИ обработчики».
+     * При нескольких записях берётся наиболее недавно обновлённая.
+     */
+    public function resolveActivePresetBodyForChannel(ApiDataTypeEnum $dataType, ApiAi $apiAi): ?string
+    {
+        $scope = $this->adminScopeForDataType($dataType);
+        if ($scope === null) {
+            return null;
+        }
+
+        $source = $apiAi->api_source;
+        $aiSourceValue = $source instanceof ApiAiSourceEnum ? $source->value : (string) $source;
+
+        $preset = AdminSystemPromptPreset::query()
+            ->where('scope', $scope->value)
+            ->where(static function ($q) use ($aiSourceValue): void {
+                $q->where('api_source', $aiSourceValue)
+                    ->orWhere('api_source', AdminSystemPromptPreset::API_SOURCE_ALL_HANDLERS);
+            })
+            ->orderByRaw('CASE WHEN api_source = ? THEN 0 ELSE 1 END', [$aiSourceValue])
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($preset === null) {
+            return null;
+        }
+
+        $body = trim((string) ($preset->body ?? ''));
+
+        return $body === '' ? null : $body;
+    }
 }
