@@ -19,8 +19,8 @@
   --bnr-lg1: #014ec9;
   --bg-linear01: linear-gradient(-135deg, var(--bnr-lg0) 0%, var(--bnr-lg1) 100%);
   --bg-linear02: linear-gradient(-135deg, #1476E2 0%, #0043ae 100%);
-  /* Активный таб: самый тёмный тон градиента bg-linear02 (слева в блоке) — визуально продолжение поля */
-  --catalog-search-tab-active-bg: #0043ae;
+  /* Активный таб (сплошная заливка по макету) */
+  --catalog-search-tab-active-bg: #044cb8;
   --bs-accordion-border-radius: 20px;
   --font100: clamp(2.813rem, 1.83rem + 4.91vw, 6.25rem);
   --font70: clamp(2.375rem, 1.804rem + 2.86vw, 4.375rem);
@@ -1634,7 +1634,7 @@ a:has(.social) {
   min-height: calc(1.25rem * 1.2 + 40px);
   padding: 20px 24px;
   border: none;
-  border-radius: 0;
+  border-radius: 20px 20px 0 0;
   font-weight: 600;
   font-size: 1.25rem;
   line-height: 1.2;
@@ -1642,19 +1642,6 @@ a:has(.social) {
   text-align: center;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-}
-
-/* Стык без щели: скруглены только внешние верхние углы пары табов */
-.catalog-search-panel .catalog-search-tabs-bar a.catalog-search-tab:first-child {
-  border-radius: 20px 0 0 0;
-}
-
-.catalog-search-panel .catalog-search-tabs-bar a.catalog-search-tab:last-child {
-  border-radius: 0 20px 0 0;
-}
-
-.catalog-search-panel .catalog-search-tabs-bar a.catalog-search-tab:first-child:last-child {
-  border-radius: 20px 20px 0 0;
 }
 
 /* Неактивный: светлый «лист», контраст с синим блоком */
