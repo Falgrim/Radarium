@@ -9,6 +9,7 @@ use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Infrastructures\Facades\Repositories;
+use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use App\Models\CompanyJob;
 use App\Models\Review;
@@ -17,10 +18,12 @@ use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Models\UserOpenContact;
 use App\Services\Tariff;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -37,17 +40,77 @@ class CatalogController extends Controller
 
     }
 
+    /**
+     * Одна лёгкая выборка последних постов для текущей страницы пагинации.
+     * Eloquent latestOfMany() при eager load даёт тяжёлый SQL на больших таблицах.
+     */
+    private function attachLatestCompletePostsToAuthorsPaginator(LengthAwarePaginator $authors): void
+    {
+        $rows = $authors->getCollection();
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        $userIds = $rows->pluck('id')->all();
+        $complete = ApiChannelPostStatusEnum::Complete->value;
+        $postsTable = (new ApiChannelPost())->getTable();
+
+        $maxDatePerUser = DB::table($postsTable)
+            ->select('api_post_user_id', DB::raw('MAX(post_date) as max_post_date'))
+            ->where('ai_parse_status', $complete)
+            ->whereIn('api_post_user_id', $userIds)
+            ->groupBy('api_post_user_id');
+
+        $postIdByUser = DB::query()
+            ->from($postsTable.' as p')
+            ->joinSub($maxDatePerUser, 'mx', function ($join) {
+                $join->on('p.api_post_user_id', '=', 'mx.api_post_user_id')
+                    ->on('p.post_date', '=', 'mx.max_post_date');
+            })
+            ->where('p.ai_parse_status', $complete)
+            ->groupBy('p.api_post_user_id')
+            ->select('p.api_post_user_id', DB::raw('MAX(p.id) as post_id'))
+            ->pluck('post_id', 'api_post_user_id');
+
+        if ($postIdByUser->isEmpty()) {
+            foreach ($rows as $author) {
+                $author->setRelation('latestCompletePost', null);
+            }
+
+            return;
+        }
+
+        $posts = ApiChannelPost::query()
+            ->whereIn('id', $postIdByUser->values())
+            ->get()
+            ->keyBy('api_post_user_id');
+
+        foreach ($rows as $author) {
+            $author->setRelation('latestCompletePost', $posts->get($author->id));
+        }
+    }
+
     public function authorsAsSpecialists(Request $request)
     {
-        $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist, false);
+        $specialitiesList = Cache::remember(
+            'catalog.specialists.specialities_list_v1',
+            3600,
+            static fn () => Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist, false)
+        );
 
-        $dbRegions = \App\Models\Specialist::whereNotNull('region')
-            ->where('region', '!=', '')
-            ->where('status', ApiPostAiStatusEnum::Active)
-            ->distinct()
-            ->orderBy('region')
-            ->pluck('region', 'region')
-            ->toArray();
+        $dbRegions = Cache::remember(
+            'catalog.specialists.regions_list_v1',
+            3600,
+            static function () {
+                return Specialist::whereNotNull('region')
+                    ->where('region', '!=', '')
+                    ->where('status', ApiPostAiStatusEnum::Active)
+                    ->distinct()
+                    ->orderBy('region')
+                    ->pluck('region', 'region')
+                    ->toArray();
+            }
+        );
 
         $validated = $request->validate([
             'key_word' => [
@@ -149,13 +212,20 @@ class CatalogController extends Controller
         $sortDirection = $validated['direction'] ?? 'desc';
 
         $authors = $authors
-            ->with(['specialistReviews'])
+            ->with([
+                'specialists' => static function (Builder $query): void {
+                    $query->where('status', ApiPostAiStatusEnum::Active)
+                        ->with(['specialities.dictionarySpeciality']);
+                },
+            ])
             ->withAvg(['specialistReviews' => function ($query) {
                 $query->where('rating', '>', 0);
             }], 'rating')
             ->orderBy($sortField, $sortDirection)
             ->paginate($this->onPage)
             ->withQueryString();
+
+        $this->attachLatestCompletePostsToAuthorsPaginator($authors);
 
         $userOpenLog = $this->tariffService->getAllContactsByUser(Auth::user());
 

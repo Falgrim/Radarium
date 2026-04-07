@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -78,6 +79,16 @@ class ApiPostUser extends Model
             ->orderByDesc('post_date');
     }
 
+    /**
+     * Последний полностью разобранный пост (для списков — под eager load вместо N+1 в lastPost()).
+     */
+    public function latestCompletePost(): HasOne
+    {
+        return $this->hasOne(ApiChannelPost::class, 'api_post_user_id', 'id')
+            ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
+            ->latestOfMany('post_date');
+    }
+
     public function specialists(): HasMany
     {
         return $this->hasMany(Specialist::class, 'api_post_user_id', 'id');
@@ -90,19 +101,36 @@ class ApiPostUser extends Model
 
     public function specialtiesWithShortName(int $substr = 0): array
     {
-        $data = $this->through('specialists')
-            ->has('specialities')
-            ->with('dictionarySpeciality')
-            ->get();
+        if ($this->relationLoaded('specialists') && $this->specialists->isNotEmpty()
+            && $this->specialists->every(static fn (Specialist $s) => $s->relationLoaded('specialities'))) {
+            $rows = [];
+            foreach ($this->specialists as $specialist) {
+                foreach ($specialist->specialities as $ss) {
+                    if ($ss->dictionarySpeciality) {
+                        $rows[] = $ss;
+                    }
+                }
+            }
+        } else {
+            $rows = $this->through('specialists')
+                ->has('specialities')
+                ->with('dictionarySpeciality')
+                ->get()
+                ->all();
+        }
 
         $result = [];
-        foreach ($data as $row) {
-            if ($row->dictionarySpeciality->short_name AND $row->dictionarySpeciality->short_name != $row->dictionarySpeciality->title) {
-                $name = $row->dictionarySpeciality->short_name.' - '.$row->dictionarySpeciality->title;
-            } elseif ($row->dictionarySpeciality->short_name) {
-                $name = $row->dictionarySpeciality->short_name;
+        foreach ($rows as $row) {
+            $d = $row->dictionarySpeciality;
+            if (! $d) {
+                continue;
+            }
+            if ($d->short_name && $d->short_name != $d->title) {
+                $name = $d->short_name.' - '.$d->title;
+            } elseif ($d->short_name) {
+                $name = $d->short_name;
             } else {
-                $name = $row->dictionarySpeciality->title;
+                $name = $d->title;
             }
 
             if ($substr) {
@@ -111,7 +139,7 @@ class ApiPostUser extends Model
 
             $result[$name] = [
                 'name' => $name,
-                'key_words' => $row->dictionarySpeciality->key_words,
+                'key_words' => $d->key_words,
             ];
         }
 
@@ -203,9 +231,15 @@ class ApiPostUser extends Model
 
     public function specialistData(): array
     {
-        $data = Specialist::where('api_post_user_id', $this->id)
-            ->where('status', ApiPostAiStatusEnum::Active)
-            ->get();
+        if ($this->relationLoaded('specialists')) {
+            $data = $this->specialists->filter(
+                static fn (Specialist $s) => $s->status === ApiPostAiStatusEnum::Active
+            )->values();
+        } else {
+            $data = Specialist::where('api_post_user_id', $this->id)
+                ->where('status', ApiPostAiStatusEnum::Active)
+                ->get();
+        }
 
         $result = [
             'experience' => [],
@@ -259,12 +293,14 @@ class ApiPostUser extends Model
 
     public function lastPost(): ?ApiChannelPost
     {
-        $data = ApiChannelPost::where('api_post_user_id', $this->id)
+        if ($this->relationLoaded('latestCompletePost')) {
+            return $this->latestCompletePost;
+        }
+
+        return ApiChannelPost::where('api_post_user_id', $this->id)
             ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
             ->orderByDesc('post_date')
             ->first();
-
-        return $data;
     }
 
     /**
