@@ -12,6 +12,7 @@
 <div class="container">
     <div class="row">
         <div class="col">
+            <div class="catalog-search-panel">
             <x-catalog-search-tabs />
             <form class="needs-validation {{ $formErrorClass }}" id="search_form" method="GET" action="{{ route('catalog.builders') }}" novalidate="">
                 <div class="search-field">
@@ -73,6 +74,7 @@
                     </div>
                 </div>
             </form>
+            </div>
         </div>
     </div>
 </div>
