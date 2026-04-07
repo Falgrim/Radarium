@@ -31,26 +31,23 @@ class AuthenticatedSessionController extends Controller
 
             $request->session()->regenerate();
 
-            $redirectTo = session('redirect_auth');
-            if ($redirectTo) {
-                return redirect()->intended(redirect($redirectTo));
-            }
+            $redirectAuth = $request->session()->pull('redirect_auth');
+            $defaultUrl = $redirectAuth ?: route('catalog.specialists', absolute: false);
 
-            return redirect()->intended(route('catalog.specialists', absolute: false));
+            return redirect()->intended($defaultUrl);
         } else {
             try {
                 $request->authenticate();
 
                 $request->session()->regenerate();
 
-                $redirectTo = session('redirect_auth');
-                if ($redirectTo) {
-                    $redirectTo = redirect($redirectTo);
-                }
+                $redirectAuth = $request->session()->pull('redirect_auth');
+                $defaultUrl = $redirectAuth ?: route('catalog.specialists', absolute: false);
+                $redirectUrl = $request->session()->pull('url.intended', $defaultUrl);
 
                 return response()->json([
                     'message' => 'Авторизация завершена',
-                    'redirect' => $redirectTo ? $redirectTo : route('catalog.specialists', absolute: false),
+                    'redirect' => $redirectUrl,
                 ]);
             } catch (ValidationException $e) {
                 return response()->json([
