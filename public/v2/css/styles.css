@@ -19,8 +19,8 @@
   --bnr-lg1: #014ec9;
   --bg-linear01: linear-gradient(-135deg, var(--bnr-lg0) 0%, var(--bnr-lg1) 100%);
   --bg-linear02: linear-gradient(-135deg, #1476E2 0%, #0043ae 100%);
-  /* Сплошной цвет верхней зоны блока поиска (под табами), совпадает с 0% градиента bg-linear02 */
-  --catalog-search-tab-active-bg: #1476e2;
+  /* Активный таб: самый тёмный тон градиента bg-linear02 (слева в блоке) — визуально продолжение поля */
+  --catalog-search-tab-active-bg: #0043ae;
   --bs-accordion-border-radius: 20px;
   --font100: clamp(2.813rem, 1.83rem + 4.91vw, 6.25rem);
   --font70: clamp(2.375rem, 1.804rem + 2.86vw, 4.375rem);
@@ -1615,8 +1615,8 @@ a:has(.social) {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 10px;
-  width: min(33.75rem, 100%);
+  gap: 0;
+  width: min(33.25rem, 100%);
   max-width: 100%;
   background: transparent;
   border-radius: 0;
@@ -1634,7 +1634,7 @@ a:has(.social) {
   min-height: calc(1.25rem * 1.2 + 40px);
   padding: 20px 24px;
   border: none;
-  border-radius: 20px 20px 0 0;
+  border-radius: 0;
   font-weight: 600;
   font-size: 1.25rem;
   line-height: 1.2;
@@ -1642,6 +1642,19 @@ a:has(.social) {
   text-align: center;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Стык без щели: скруглены только внешние верхние углы пары табов */
+.catalog-search-panel .catalog-search-tabs-bar a.catalog-search-tab:first-child {
+  border-radius: 20px 0 0 0;
+}
+
+.catalog-search-panel .catalog-search-tabs-bar a.catalog-search-tab:last-child {
+  border-radius: 0 20px 0 0;
+}
+
+.catalog-search-panel .catalog-search-tabs-bar a.catalog-search-tab:first-child:last-child {
+  border-radius: 20px 20px 0 0;
 }
 
 /* Неактивный: светлый «лист», контраст с синим блоком */
@@ -1670,11 +1683,10 @@ a:has(.social) {
   outline-offset: 3px;
 }
 
-/* Кнопка «Очистить» — вверху строки, не на одной линии с низом табов (не наезжает на блок) */
+/* Кнопка «Очистить» — по вертикали на уровне полосы с текстом табов */
 .catalog-search-panel .catalog-search-clear {
   flex-shrink: 0;
-  align-self: flex-start;
-  margin-top: 2px;
+  align-self: center;
 }
 
 .search-field {
