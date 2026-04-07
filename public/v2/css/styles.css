@@ -19,8 +19,10 @@
   --bnr-lg1: #014ec9;
   --bg-linear01: linear-gradient(-135deg, var(--bnr-lg0) 0%, var(--bnr-lg1) 100%);
   --bg-linear02: linear-gradient(-135deg, #1476E2 0%, #0043ae 100%);
-  /* Активный таб (сплошная заливка по макету) */
+  /* Активный таб «Строительство» */
   --catalog-search-tab-active-bg: #044cb8;
+  /* Активный таб «Проектирование» */
+  --catalog-search-tab-active-specialists-bg: #0858c3;
   --bs-accordion-border-radius: 20px;
   --font100: clamp(2.813rem, 1.83rem + 4.91vw, 6.25rem);
   --font70: clamp(2.375rem, 1.804rem + 2.86vw, 4.375rem);
@@ -1652,12 +1654,19 @@ a:has(.social) {
   box-shadow: inset 0 0 0 1px var(--color-greye5);
 }
 
-/* Активный: один цвет с верхней частью блока поиска под табом (без градиента) */
+/* Активный таб: общее; цвет заливки — по разделу */
 .catalog-search-panel a.catalog-search-tab.is-active {
   color: var(--color-light) !important;
-  background-color: var(--catalog-search-tab-active-bg) !important;
   background-image: none !important;
   box-shadow: none;
+}
+
+.catalog-search-panel a.catalog-search-tab.is-active.is-active-tab-builders {
+  background-color: var(--catalog-search-tab-active-bg) !important;
+}
+
+.catalog-search-panel a.catalog-search-tab.is-active.is-active-tab-specialists {
+  background-color: var(--catalog-search-tab-active-specialists-bg) !important;
 }
 
 .catalog-search-panel a.catalog-search-tab:focus,

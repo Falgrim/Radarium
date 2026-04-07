@@ -7,10 +7,10 @@
 <div class="row-flex catalog-search-tabs-row">
     <div class="catalog-search-tabs-bar">
         <a href="{{ route('catalog.builders') }}"
-           class="catalog-search-tab {{ $isBuilders ? 'is-active' : '' }}"
+           class="catalog-search-tab {{ $isBuilders ? 'is-active is-active-tab-builders' : '' }}"
            @if ($isBuilders) aria-current="page" @endif>Строительство</a>
         <a href="{{ route('catalog.specialists') }}"
-           class="catalog-search-tab {{ $isSpecialists ? 'is-active' : '' }}"
+           class="catalog-search-tab {{ $isSpecialists ? 'is-active is-active-tab-specialists' : '' }}"
            @if ($isSpecialists) aria-current="page" @endif>Проектирование</a>
     </div>
     <button class="btn btn-link btn-trans btn-trash catalog-search-clear" type="button"
