@@ -213,7 +213,7 @@ class CatalogController extends Controller
 
         $authors = $authors
             ->with([
-                'specialists' => static function (Builder $query): void {
+                'specialists' => static function ($query): void {
                     $query->where('status', ApiPostAiStatusEnum::Active)
                         ->with(['specialities.dictionarySpeciality']);
                 },
