@@ -215,13 +215,13 @@ class ApiAIYandex
         }
 
         $jsonText = $data['alternatives'][0]['message']['text'];
-        if (!$jsonText) {
-            throw new \Exception('Пустой ответ: '.json_encode($data));
+        if ($jsonText === null || $jsonText === '') {
+            throw new \Exception($this->logPrefix.' Пустой ответ: '.json_encode($data));
         }
 
-        $jsonText = str_replace('```', '', $jsonText);
+        $jsonText = str_replace(['```json', '```'], '', $jsonText);
 
-        return json_decode(trim($jsonText), true);
+        return AiModelJsonReplyDecoder::decode($jsonText, $this->logPrefix);
     }
 
     protected function sendRequest(): array
