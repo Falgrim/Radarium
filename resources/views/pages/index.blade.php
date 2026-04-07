@@ -245,6 +245,8 @@
             </div>
         </div>
         
+        @if(false)
+        {{-- Секция «Создатель Radarium» и блок сертификатов скрыты по дизайну главной --}}
         <div class="container">
             <div class="section-heading">
                 <h2 id="creator">Создатель Radarium</h2>
@@ -325,6 +327,7 @@
                 </div>
             </div>
         </div>
+        @endif
         
         <div class="container">
             <div id="faq2" class="section-heading">
