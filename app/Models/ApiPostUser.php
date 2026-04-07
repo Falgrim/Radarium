@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ApiPostUser extends Model
@@ -342,18 +343,88 @@ class ApiPostUser extends Model
         return asset('storage/'.ReadTelegramChats::PHOTO_PATH.'/'.$this->photo);
     }
 
-    public static function prepareLastPostText(string $post, bool $checkOpenContact)
+    /**
+     * @param  bool  $fullTextWithBlurredContacts  Полный текст и размытие контактов (каталог специалистов); иначе — укороченный превью-текст с маскировкой телефонов.
+     */
+    public static function prepareLastPostText(string $post, bool $checkOpenContact, bool $fullTextWithBlurredContacts = false): HtmlString
     {
+        if ($fullTextWithBlurredContacts) {
+            if ($checkOpenContact) {
+                return new HtmlString(nl2br(e($post)));
+            }
+
+            return new HtmlString(nl2br(self::wrapContactDataWithBlur($post)));
+        }
+
         $post = Str::limit($post, 250);
         if (!$checkOpenContact) {
             $post = preg_replace(
-                '/(?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s\-()]*\d{2}[\s\-()]*\d{2}/',
+                '/(?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s\-()]*\d{2}[\s\-()]*\d{2}/u',
                 '*********',
                 $post
-            );
+            ) ?? $post;
         }
 
-        return $post;
+        return new HtmlString(nl2br(e($post)));
+    }
+
+    /**
+     * Оборачивает распознанные контакты в span с blur; остальной текст экранируется.
+     */
+    private static function wrapContactDataWithBlur(string $post): string
+    {
+        $patterns = [
+            '/(?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s\-()]*\d{2}[\s\-()]*\d{2}/u',
+            '/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/u',
+            '/(?i)(?:https?:\/\/)?(?:t\.me|telegram\.me)\/[a-zA-Z][a-zA-Z0-9_]{3,31}(?:\/[a-zA-Z0-9_]+)?/',
+            '/(?i)https?:\/\/(?:wa\.me|api\.whatsapp\.com)\/\+?\d[\d]*/',
+            '/(?<![a-zA-Z0-9_])@[a-zA-Z][a-zA-Z0-9_]{3,31}(?![a-zA-Z0-9_])/u',
+        ];
+
+        $ranges = [];
+        foreach ($patterns as $pattern) {
+            if (preg_match_all($pattern, $post, $matches, PREG_OFFSET_CAPTURE)) {
+                foreach ($matches[0] as $match) {
+                    $start = $match[1];
+                    $ranges[] = [$start, $start + strlen($match[0])];
+                }
+            }
+        }
+
+        if ($ranges === []) {
+            return e($post);
+        }
+
+        usort($ranges, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
+        $merged = [];
+        foreach ($ranges as $range) {
+            if ($merged === []) {
+                $merged[] = $range;
+                continue;
+            }
+            $lastIdx = count($merged) - 1;
+            if ($range[0] <= $merged[$lastIdx][1]) {
+                $merged[$lastIdx][1] = max($merged[$lastIdx][1], $range[1]);
+            } else {
+                $merged[] = $range;
+            }
+        }
+
+        $html = '';
+        $cursor = 0;
+        foreach ($merged as [$start, $end]) {
+            if ($start > $cursor) {
+                $html .= e(substr($post, $cursor, $start - $cursor));
+            }
+            $chunk = substr($post, $start, $end - $start);
+            $html .= '<span class="last-post-contact-blur">'.e($chunk).'</span>';
+            $cursor = $end;
+        }
+        if ($cursor < strlen($post)) {
+            $html .= e(substr($post, $cursor));
+        }
+
+        return $html;
     }
 
     public static function profileSkillsFront(array $softExperience, array $specialties) {

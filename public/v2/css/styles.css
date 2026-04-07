@@ -2099,6 +2099,16 @@ figure.pers figcaption {
   overflow: hidden;
 }
 
+.author-last-post-full {
+  word-break: break-word;
+}
+
+.last-post-contact-blur {
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}
+
 .pagination-box {
   text-align: center;
 }
