@@ -2104,9 +2104,12 @@ figure.pers figcaption {
 }
 
 .last-post-contact-blur {
-  filter: blur(5px);
-  -webkit-filter: blur(5px);
+  display: inline-block;
+  max-width: 100%;
+  filter: blur(6px);
+  -webkit-filter: blur(6px);
   user-select: none;
+  vertical-align: bottom;
 }
 
 .pagination-box {

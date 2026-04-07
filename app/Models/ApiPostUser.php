@@ -344,28 +344,32 @@ class ApiPostUser extends Model
     }
 
     /**
-     * @param  bool  $fullTextWithBlurredContacts  Полный текст и размытие контактов (каталог специалистов); иначе — укороченный превью-текст с маскировкой телефонов.
+     * Полный текст последнего сообщения в каталоге: при закрытом контакте — размытие найденных контактов.
      */
-    public static function prepareLastPostText(string $post, bool $checkOpenContact, bool $fullTextWithBlurredContacts = false): HtmlString
+    public static function prepareLastPostText(string $post, bool $checkOpenContact): HtmlString
     {
-        if ($fullTextWithBlurredContacts) {
-            if ($checkOpenContact) {
-                return new HtmlString(nl2br(e($post)));
-            }
+        $post = self::sanitizeCatalogPostString($post);
 
-            return new HtmlString(nl2br(self::wrapContactDataWithBlur($post)));
+        if ($checkOpenContact) {
+            return new HtmlString(nl2br(e($post)));
         }
 
-        $post = Str::limit($post, 250);
-        if (!$checkOpenContact) {
-            $post = preg_replace(
-                '/(?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s\-()]*\d{2}[\s\-()]*\d{2}/u',
-                '*********',
-                $post
-            ) ?? $post;
+        return new HtmlString(nl2br(self::wrapContactDataWithBlur($post)));
+    }
+
+    /**
+     * Без валидного UTF-8 preg с модификатором u даёт false — совпадений нет и blur не применяется.
+     */
+    private static function sanitizeCatalogPostString(string $post): string
+    {
+        $post = (string) $post;
+        if ($post === '') {
+            return $post;
         }
 
-        return new HtmlString(nl2br(e($post)));
+        $converted = @iconv('UTF-8', 'UTF-8//IGNORE', $post);
+
+        return $converted !== false ? $converted : $post;
     }
 
     /**
@@ -374,17 +378,24 @@ class ApiPostUser extends Model
     private static function wrapContactDataWithBlur(string $post): string
     {
         $patterns = [
-            '/(?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s\-()]*\d{2}[\s\-()]*\d{2}/u',
-            '/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/u',
+            // +7 / 8 / 7 и ровно 10 цифр номера (любые разделители и юникод-пробелы)
+            '/(?:\+7|8|7)(?:[\s\p{Zs}()._-]*\d){10}(?!\d)/u',
+            // Классический шаблон групп 3-3-2-2
+            '/(?:\+7|8|7)[\s\p{Zs}()._-]*\d{3}[\s\p{Zs}()._-]*\d{3}[\s\p{Zs}()._-]*\d{2}[\s\p{Zs}()._-]*\d{2}(?!\d)/u',
+            '/(?:[\p{L}a-zA-Z0-9._%+-]+)@(?:[\p{L}a-zA-Z0-9.-]+)\.(?:[a-zA-Z\p{L}]{2,})/u',
             '/(?i)(?:https?:\/\/)?(?:t\.me|telegram\.me)\/[a-zA-Z][a-zA-Z0-9_]{3,31}(?:\/[a-zA-Z0-9_]+)?/',
             '/(?i)https?:\/\/(?:wa\.me|api\.whatsapp\.com)\/\+?\d[\d]*/',
-            '/(?<![a-zA-Z0-9_])@[a-zA-Z][a-zA-Z0-9_]{3,31}(?![a-zA-Z0-9_])/u',
+            // Telegram: 5–32 символа, первый — буква
+            '/(?<![a-zA-Z0-9_])@[a-zA-Z][a-zA-Z0-9_]{4,31}(?![a-zA-Z0-9_])/u',
         ];
 
         $ranges = [];
         foreach ($patterns as $pattern) {
             if (preg_match_all($pattern, $post, $matches, PREG_OFFSET_CAPTURE)) {
                 foreach ($matches[0] as $match) {
+                    if ($match[0] === '') {
+                        continue;
+                    }
                     $start = $match[1];
                     $ranges[] = [$start, $start + strlen($match[0])];
                 }

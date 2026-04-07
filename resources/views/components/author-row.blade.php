@@ -64,7 +64,7 @@
     </td>
     <td class="def-cell-05">
         @if($lastPost?->post)
-            <p class="author-last-post-full"><span class="txt-date">{{ $lastPost->post_date->format('d.m.Y') }}</span>{{ \App\Models\ApiPostUser::prepareLastPostText($lastPost->post, $checkOpenContact, true) }}</p>
+            <p class="author-last-post-full"><span class="txt-date">{{ $lastPost->post_date->format('d.m.Y') }}</span>{!! \App\Models\ApiPostUser::prepareLastPostText($lastPost->post, $checkOpenContact)->toHtml() !!}</p>
         @endif
     </td>
     <td class="def-cell-06">
