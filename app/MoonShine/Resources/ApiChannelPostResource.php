@@ -7,41 +7,32 @@ namespace App\MoonShine\Resources;
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
-use App\Enum\ApiChannelStatusEnum;
-use App\Enum\CompanyJobStatusEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
-use App\Enums\PaymentStatusEnum;
-use Illuminate\Database\Eloquent\Model;
+use App\Enum\CompanyJobStatusEnum;
 use App\Models\ApiChannelPost;
-use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostIndexPage;
-use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostFormPage;
-use App\MoonShine\Pages\ApiChannelPost2\ApiChannelPostDetailPage;
-
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use MoonShine\Fields\Checkbox;
+use MoonShine\ActionButtons\ActionButton;
+use MoonShine\Components\FormBuilder;
+use MoonShine\Enums\ToastType;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
-use MoonShine\Fields\Email;
 use MoonShine\Fields\Enum;
 use MoonShine\Fields\Field;
-use MoonShine\Fields\ID;
-use MoonShine\Fields\Json;
-use MoonShine\Fields\Number;
-use MoonShine\Fields\Phone;
+use MoonShine\Fields\HiddenIds;
 use MoonShine\Fields\Relationships\BelongsTo;
-use MoonShine\Fields\Relationships\HasMany;
 use MoonShine\Fields\Relationships\HasOne;
 use MoonShine\Fields\Select;
-use MoonShine\Fields\Switcher;
 use MoonShine\Fields\Text;
 use MoonShine\Fields\Textarea;
 use MoonShine\Handlers\ExportHandler;
 use MoonShine\Handlers\ImportHandler;
+use MoonShine\Http\Responses\MoonShineJsonResponse;
+use MoonShine\MoonShineRequest;
 use MoonShine\Resources\ModelResource;
-use MoonShine\Pages\Page;
 
 /**
  * @extends ModelResource<ApiChannelPost>
@@ -76,7 +67,7 @@ class ApiChannelPostResource extends ModelResource
 
         $channelType = request()->input('filters.channel_type');
         if ($channelType !== null && $channelType !== '') {
-            $query->whereHas('channel', fn($q) => $q->where('is_company', (int) $channelType));
+            $query->whereHas('channel', fn ($q) => $q->where('is_company', (int) $channelType));
         }
 
         return $query;
@@ -85,6 +76,86 @@ class ApiChannelPostResource extends ModelResource
     public function getActiveActions(): array
     {
         return ['view', 'update', 'delete', 'massDelete'];
+    }
+
+    protected function modifyMassDeleteButton(ActionButton $button): ActionButton
+    {
+        return $button->setLabel('Удалить выбранные');
+    }
+
+    /**
+     * @return list<ActionButton>
+     */
+    public function getIndexItemButtons(): array
+    {
+        return [
+            ...parent::getIndexItemButtons(),
+            $this->massUpdateAiParseStatusButton(),
+        ];
+    }
+
+    /**
+     * Массовая смена «Статус ИИ» для отмеченных строк таблицы (те же права, что и massDelete).
+     */
+    public function massUpdateAiParseStatus(MoonShineRequest $request): MoonShineJsonResponse
+    {
+        if (! $this->can('massDelete')) {
+            return MoonShineJsonResponse::make()
+                ->toast('Недостаточно прав для массовых операций', ToastType::ERROR);
+        }
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:'.ApiChannelPost::table().',id'],
+            'ai_parse_status' => ['required', Rule::enum(ApiChannelPostStatusEnum::class)],
+        ]);
+
+        $status = ApiChannelPostStatusEnum::from((int) $validated['ai_parse_status']);
+
+        $updated = ApiChannelPost::query()
+            ->whereIn('id', $validated['ids'])
+            ->update([
+                'ai_parse_status' => $status->value,
+                'updated_at' => now(),
+            ]);
+
+        return MoonShineJsonResponse::make()
+            ->toast(
+                $updated > 0
+                    ? "Статус ИИ обновлён у {$updated} сообщ."
+                    : 'Записи не обновлены',
+                $updated > 0 ? ToastType::SUCCESS : ToastType::WARNING
+            )
+            ->redirect(to_page(resource: self::class));
+    }
+
+    protected function massUpdateAiParseStatusButton(): ActionButton
+    {
+        $statusOptions = collect(ApiChannelPostStatusEnum::cases())
+            ->mapWithKeys(fn (ApiChannelPostStatusEnum $case): array => [
+                (string) $case->value => $case->toString() ?? (string) $case->value,
+            ])
+            ->all();
+
+        return ActionButton::make('Статус ИИ', '#')
+            ->bulk($this->listComponentName())
+            ->icon('heroicons.arrow-path')
+            ->showInLine()
+            ->canSee(fn (): bool => $this->can('massDelete'))
+            ->inOffCanvas(
+                fn (): string => 'Статус ИИ для выбранных сообщений',
+                fn () => FormBuilder::make()
+                    ->name('mass-ai-parse-status-form')
+                    ->fields([
+                        HiddenIds::make($this->listComponentName()),
+                        Select::make('Статус ИИ', 'ai_parse_status')
+                            ->options($statusOptions)
+                            ->required(),
+                    ])
+                    ->asyncMethod('massUpdateAiParseStatus', resource: $this)
+                    ->submit('Применить'),
+                isLeft: false,
+            );
     }
 
     public function import(): ?ImportHandler
@@ -117,9 +188,9 @@ class ApiChannelPostResource extends ModelResource
     }
 
     /**
-     * @param ApiChannelPost $item
-     *
+     * @param  ApiChannelPost  $item
      * @return array<string, string[]|string>
+     *
      * @see https://laravel.com/docs/validation#available-validation-rules
      */
     public function rules(Model $item): array
@@ -149,7 +220,7 @@ class ApiChannelPostResource extends ModelResource
                     ApiDataTypeEnum::getList()
                 )
                 ->nullable()
-                ->onApply(fn(Builder $query, $value, Field $field) => $query),
+                ->onApply(fn (Builder $query, $value, Field $field) => $query),
             Text::make('API ID', 'post_id'),
             Text::make('ID аккаунта', 'api_post_user_id'),
             Text::make('Логин', 'user_login'),
@@ -170,23 +241,24 @@ class ApiChannelPostResource extends ModelResource
     {
         return [
             Text::make('ID', 'id')->sortable(),
-            BelongsTo::make('Источник', 'channel', 'api_channel_id', resource: new ApiChannelResource())->setColumn('api_channel_id')->sortable(),
+            BelongsTo::make('Источник', 'channel', 'api_channel_id', resource: new ApiChannelResource)->setColumn('api_channel_id')->sortable(),
             Text::make('API ID', 'post_id')->sortable(),
             Text::make('Логин', 'user_login')->sortable(),
-            Text::make('Сообщение', 'post', fn($item) => Str::limit($item->post, 100)),
+            Text::make('Сообщение', 'post', fn ($item) => Str::limit($item->post, 100)),
             Date::make('Дата публикации', 'post_date')->withTime()->sortable(),
             Date::make('Создан', 'created_at')->withTime()->sortable(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class)->sortable(),
             Text::make('Провайдер ИИ', 'ai_provider_used', function ($item) {
-                if (!$item->ai_provider_used) {
+                if (! $item->ai_provider_used) {
                     return '';
                 }
                 $enum = ApiAiSourceEnum::tryFrom($item->ai_provider_used);
-                if (!$enum) {
+                if (! $enum) {
                     return $item->ai_provider_used;
                 }
                 $color = $enum->getColor();
                 $label = $enum->toString();
+
                 return "<span class=\"badge badge-{$color}\">{$label}</span>";
             })->sortable(),
         ];
@@ -196,7 +268,7 @@ class ApiChannelPostResource extends ModelResource
     {
         if ($this->item->channel->is_company === ApiDataTypeEnum::Company) {
             $aiData = [
-                HasOne::make('ИИ. Вакансия', 'companyJob', resource: new CompanyJobResource())->fields([
+                HasOne::make('ИИ. Вакансия', 'companyJob', resource: new CompanyJobResource)->fields([
                     Text::make('ID', 'id'),
                     Text::make('Тип сообщения', 'ai_type'),
                     Text::make('Подробнее о типе', 'ai_reason'),
@@ -213,11 +285,11 @@ class ApiChannelPostResource extends ModelResource
                     Text::make('Доп. условия', 'extra_conditions'),
                     Enum::make('Статус', 'status')->attach(CompanyJobStatusEnum::class),
                     Date::make('Создан', 'created_at')->withTime(),
-                ])
+                ]),
             ];
         } else {
             $aiData = [
-                HasOne::make('ИИ. Специалист (резюме)', 'specialist', resource: new SpecialistResource())->fields([
+                HasOne::make('ИИ. Специалист (резюме)', 'specialist', resource: new SpecialistResource)->fields([
                     Text::make('ID', 'id'),
                     Text::make('Тип сообщения', 'ai_type'),
                     Text::make('Подробнее о типе', 'ai_reason'),
@@ -235,7 +307,7 @@ class ApiChannelPostResource extends ModelResource
                     Text::make('Ссылка на резюме', 'link_resume'),
                     Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class),
                     Date::make('Создан', 'created_at')->withTime(),
-                ])
+                ]),
             ];
         }
 
@@ -248,10 +320,11 @@ class ApiChannelPostResource extends ModelResource
             Date::make('Создан', 'created_at')->withTime(),
             Enum::make('Статус ИИ', 'ai_parse_status')->attach(ApiChannelPostStatusEnum::class),
             Text::make('Провайдер ИИ', 'ai_provider_used', function ($item) {
-                if (!$item->ai_provider_used) {
+                if (! $item->ai_provider_used) {
                     return '—';
                 }
                 $enum = ApiAiSourceEnum::tryFrom($item->ai_provider_used);
+
                 return $enum ? $enum->toString() : $item->ai_provider_used;
             }),
             Text::make('Ответ ИИ', 'ai_result'),
@@ -261,19 +334,19 @@ class ApiChannelPostResource extends ModelResource
         $result = array_merge($result, $aiData);
 
         $result = array_merge($result, [
-                HasOne::make('Аккаунт', 'apiPostUser', resource: new ApiPostUserResource())->fields([
-                    Text::make('ID', 'id'),
-                    Text::make('Source ID', 'user_id'),
-                    Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-                    Text::make('Логин', 'username'),
-                    Text::make('Имя', 'first_name'),
-                    Text::make('Фамилия', 'last_name'),
-                    Text::make('Телефон', 'phone'),
-                    Text::make('Тип профиля', 'user_type'),
-                    Date::make('Онлайн', 'last_online_date')->withTime(),
-                    Date::make('Создан', 'created_at')->withTime(),
-                ]),
-            ]);
+            HasOne::make('Аккаунт', 'apiPostUser', resource: new ApiPostUserResource)->fields([
+                Text::make('ID', 'id'),
+                Text::make('Source ID', 'user_id'),
+                Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
+                Text::make('Логин', 'username'),
+                Text::make('Имя', 'first_name'),
+                Text::make('Фамилия', 'last_name'),
+                Text::make('Телефон', 'phone'),
+                Text::make('Тип профиля', 'user_type'),
+                Date::make('Онлайн', 'last_online_date')->withTime(),
+                Date::make('Создан', 'created_at')->withTime(),
+            ]),
+        ]);
 
         return $result;
     }

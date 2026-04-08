@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Опционально: источники VK (нужен VK_SERVICE_TOKEN в .env для парсинга)
+        // $this->call(VkConstructionGroupsChannelSeeder::class);
+
         // User::factory(10)->create();
 
         /*User::factory()->create([

@@ -358,7 +358,7 @@ class ApiChannelResource extends ModelResource
             ->attach(ApiChannelStatusEnum::class);
 
         $fields[] = Json::make('Опции для обработки', 'options')
-            ->hint('Технические параметры для доп. настройки<br />Для Telegram обязательны параметры: api_id, api_hash, reply_to_msg_id (если требуется брать данные только из одного чата канала/группы)')
+            ->hint('Технические параметры (без секретов). Telegram: api_id, api_hash; при необходимости reply_to_msg_id. VK: токен в .env (VK_SERVICE_TOKEN); опционально screen_name или owner_id; репосты по умолчанию сохраняются с текстом из copy_history (отключить: VK_SKIP_REPOSTS=true); аватары VK — VK_DOWNLOAD_AVATARS и файлы vk_{id}.jpg в каталоге как у Telegram.')
             ->keyValue();
 
         return $fields;

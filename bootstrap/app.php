@@ -1,10 +1,10 @@
 <?php
 
 use App\Infrastructures\Facades\Repositories;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,14 +33,20 @@ return Application::configure(basePath: dirname(__DIR__))
                         $schedule->command('app:tg_parse:specialist')->withoutOverlapping();
                         $schedule->command('app:tg_parse:builder')->withoutOverlapping();
                         $schedule->command('app:tg_parse:company')->withoutOverlapping();
-                });
+                        $schedule->command('app:vk_parse:specialist')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:builder')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:company')->withoutOverlapping();
+                    });
             } elseif ($readSourceCron->value <= 1439) {
                 // Каждые Х часов
-                $schedule->cron('0 */'.ceil($readSourceCron->value/60).' * * *')
+                $schedule->cron('0 */'.ceil($readSourceCron->value / 60).' * * *')
                     ->group(function (Schedule $schedule) {
                         $schedule->command('app:tg_parse:specialist')->withoutOverlapping();
                         $schedule->command('app:tg_parse:builder')->withoutOverlapping();
                         $schedule->command('app:tg_parse:company')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:specialist')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:builder')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:company')->withoutOverlapping();
                     });
             } else {
                 // Каждый день в 00:00
@@ -49,12 +55,18 @@ return Application::configure(basePath: dirname(__DIR__))
                         $schedule->command('app:tg_parse:specialist')->withoutOverlapping();
                         $schedule->command('app:tg_parse:builder')->withoutOverlapping();
                         $schedule->command('app:tg_parse:company')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:specialist')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:builder')->withoutOverlapping();
+                        $schedule->command('app:vk_parse:company')->withoutOverlapping();
                     });
             }
         } else {
             $schedule->command('app:tg_parse:specialist')->withoutOverlapping()->hourly();
             $schedule->command('app:tg_parse:builder')->withoutOverlapping()->hourly();
             $schedule->command('app:tg_parse:company')->withoutOverlapping()->hourly();
+            $schedule->command('app:vk_parse:specialist')->withoutOverlapping()->hourly();
+            $schedule->command('app:vk_parse:builder')->withoutOverlapping()->hourly();
+            $schedule->command('app:vk_parse:company')->withoutOverlapping()->hourly();
         }
 
         // Отправка запросов в ИИ
