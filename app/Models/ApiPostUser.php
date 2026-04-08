@@ -377,15 +377,25 @@ class ApiPostUser extends Model
      */
     private static function wrapContactDataWithBlur(string $post): string
     {
+        $post = html_entity_decode($post, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $post = self::sanitizeCatalogPostString($post);
+        $post = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{00AD}]/u', '', $post) ?? $post;
+
+        // \p{Nd} — любые десятичные цифры (в т.ч. не ASCII); плюс — ASCII и полноширинный (U+FF0B, U+FE62)
+        $plus7 = '(?:\+|[\x{FF0B}\x{FE62}])7';
+        $prefix78 = '(?:8|7)';
+
         $patterns = [
-            // +7 / 8 / 7 и ровно 10 цифр номера (любые разделители и юникод-пробелы)
-            '/(?:\+7|8|7)(?:[\s\p{Zs}()._-]*\d){10}(?!\d)/u',
-            // Классический шаблон групп 3-3-2-2
-            '/(?:\+7|8|7)[\s\p{Zs}()._-]*\d{3}[\s\p{Zs}()._-]*\d{3}[\s\p{Zs}()._-]*\d{2}[\s\p{Zs}()._-]*\d{2}(?!\d)/u',
+            '/'.$plus7.'(?:[\s\p{Zs}()._-]*\p{Nd}){10}(?!\p{Nd})/u',
+            '/'.$prefix78.'(?:[\s\p{Zs}()._-]*\p{Nd}){10}(?!\p{Nd})/u',
+            '/'.$plus7.'[\s\p{Zs}()._-]*\p{Nd}{3}[\s\p{Zs}()._-]*\p{Nd}{3}[\s\p{Zs}()._-]*\p{Nd}{2}[\s\p{Zs}()._-]*\p{Nd}{2}(?!\p{Nd})/u',
+            '/'.$prefix78.'[\s\p{Zs}()._-]*\p{Nd}{3}[\s\p{Zs}()._-]*\p{Nd}{3}[\s\p{Zs}()._-]*\p{Nd}{2}[\s\p{Zs}()._-]*\p{Nd}{2}(?!\p{Nd})/u',
             '/(?:[\p{L}a-zA-Z0-9._%+-]+)@(?:[\p{L}a-zA-Z0-9.-]+)\.(?:[a-zA-Z\p{L}]{2,})/u',
             '/(?i)(?:https?:\/\/)?(?:t\.me|telegram\.me)\/[a-zA-Z][a-zA-Z0-9_]{3,31}(?:\/[a-zA-Z0-9_]+)?/',
             '/(?i)https?:\/\/(?:wa\.me|api\.whatsapp\.com)\/\+?\d[\d]*/',
-            // Telegram: 5–32 символа, первый — буква
+            // «tg: username» / «telegram: @nick» без ссылки и без @ в тексте
+            '/(?i)(?:tg|telegram)\s*:\s*@?[^\s,;.!?]+/u',
+            // Telegram @ник: 5–32 символа, первый — буква
             '/(?<![a-zA-Z0-9_])@[a-zA-Z][a-zA-Z0-9_]{4,31}(?![a-zA-Z0-9_])/u',
         ];
 
