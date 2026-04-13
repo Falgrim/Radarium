@@ -13,7 +13,8 @@ class AiResetBuilderQueue extends Command
     protected $signature = 'app:ai_parse:reset-builder-queue
                             {from : Начало периода (Y-m-d), например 2026-04-06}
                             {to : Конец периода включительно (Y-m-d), например 2026-04-13}
-                            {--date-field=post_date : post_date — по дате сообщения; ai_date — по дате последнего запроса к ИИ}
+                            {--date-field=ai_date : ai_date — по дате обработки ИИ; post_date — по дате написания сообщения в Telegram}
+                            {--provider=ollama_qwen : Провайдер ИИ, сообщения которого надо сбросить (по умолчанию ollama_qwen)}
                             {--dry-run : Показать количество без изменений в БД}
                             {--clear-metadata : Обнулить ai_result, ai_date, ai_provider_used (иначе старый ответ ИИ останется до нового прогона)}';
 
@@ -22,14 +23,15 @@ class AiResetBuilderQueue extends Command
     public function handle(): int
     {
         $dateField = (string) $this->option('date-field');
-        if (! in_array($dateField, ['post_date', 'ai_date'], true)) {
-            $this->error('Параметр --date-field должен быть post_date или ai_date.');
+        if (! in_array($dateField, ['post_date', 'ai_date', 'created_at'], true)) {
+            $this->error('Параметр --date-field должен быть post_date, ai_date или created_at.');
 
             return self::FAILURE;
         }
 
         $from = $this->argument('from') . ' 00:00:00';
         $to = $this->argument('to') . ' 23:59:59';
+        $provider = $this->option('provider');
 
         $requeueStatuses = [
             ApiChannelPostStatusEnum::Complete,
@@ -45,11 +47,16 @@ class AiResetBuilderQueue extends Command
             ->whereBetween('api_channel_posts.' . $dateField, [$from, $to])
             ->whereIn('api_channel_posts.ai_parse_status', $requeueStatuses);
 
+        if ($provider) {
+            $query->where('api_channel_posts.ai_provider_used', $provider);
+        }
+
         $ids = $query->pluck('api_channel_posts.id');
         $count = $ids->count();
 
         if ($this->option('dry-run')) {
-            $this->info("Записей для возврата в очередь: {$count} (поле даты: {$dateField}, период {$this->argument('from')} — {$this->argument('to')}).");
+            $this->info("Записей для возврата в очередь: {$count}");
+            $this->info("Условия: каналы Строителей, период {$from} — {$to} по полю {$dateField}, провайдер: " . ($provider ?: 'Любой'));
 
             return self::SUCCESS;
         }
@@ -75,7 +82,7 @@ class AiResetBuilderQueue extends Command
             ApiChannelPost::query()->whereIn('id', $chunk->all())->update($payload);
         }
 
-        $this->info("Обновлено записей: {$count}. Запустите обработку: php artisan app:ai_parse:builder (или дождитесь планировщика).");
+        $this->info("Обновлено записей: {$count}. Запустите обработку: php artisan app:ai_parse:builder");
 
         return self::SUCCESS;
     }
