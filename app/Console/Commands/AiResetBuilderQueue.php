@@ -79,6 +79,7 @@ class AiResetBuilderQueue extends Command
         }
 
         foreach ($ids->chunk(500) as $chunk) {
+            \App\Models\Builder::query()->whereIn('api_channel_post_id', $chunk->all())->delete();
             ApiChannelPost::query()->whereIn('id', $chunk->all())->update($payload);
         }
 
