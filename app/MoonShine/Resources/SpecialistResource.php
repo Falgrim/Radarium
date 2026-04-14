@@ -44,6 +44,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class SpecialistResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = Specialist::class;
 
     protected string $title = 'Проектирование';
@@ -125,11 +127,11 @@ class SpecialistResource extends ModelResource
             DateRange::make('Создан', 'created_at')->withTime(),
             /*Select::make('Источник', 'post.api_channel_id')->options(
                 $channelSelect
-            ),*/
+            )->nullable(),*/
             Select::make('Статус', 'status')
                 ->options(
                     ApiPostAiStatusEnum::getList()
-                ),
+                )->nullable(),
         ];
     }
 

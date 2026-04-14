@@ -41,6 +41,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class MailingMessageResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = MailingMessage::class;
 
     protected string $title = 'Рассылка';

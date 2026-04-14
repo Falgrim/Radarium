@@ -37,6 +37,8 @@ use MoonShine\Resources\ModelResource;
  */
 class ApiChannelResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     private const string AI_PROMPT_FIELD_LABEL = 'Промт для ИИ';
 
     protected string $model = ApiChannel::class;

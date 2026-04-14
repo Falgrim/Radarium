@@ -27,6 +27,8 @@ use MoonShine\Fields\Field;
  */
 class MailingMessageLogResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = MailingMessageLog::class;
 
     protected string $title = 'Рассылка. Лог';

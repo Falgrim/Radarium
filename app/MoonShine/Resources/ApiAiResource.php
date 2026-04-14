@@ -32,6 +32,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class ApiAiResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = ApiAi::class;
 
     protected string $title = 'Сервисы ИИ';

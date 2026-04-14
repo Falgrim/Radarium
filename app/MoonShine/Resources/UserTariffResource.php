@@ -33,6 +33,8 @@ use MoonShine\Fields\Field;
  */
 class UserTariffResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = UserTariff::class;
 
     protected string $title = 'Подписки';
@@ -75,7 +77,7 @@ class UserTariffResource extends ModelResource
     {
         return [
             Text::make('ID', 'id'),
-            Select::make('Статус', 'status')->options(UserTariffStatusEnum::getList()),
+            Select::make('Статус', 'status')->options(UserTariffStatusEnum::getList())->nullable(),
         ];
     }
 

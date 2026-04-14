@@ -37,6 +37,8 @@ use Propaganistas\LaravelPhone\PhoneNumber;
  */
 class UserResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = User::class;
 
     protected string $title = 'Пользователи';
@@ -130,6 +132,7 @@ class UserResource extends ModelResource
             Email::make('Tubus ID', 'tubus_id')->sortable(),
             Date::make('Регистрация', 'created_at')->withTime()->sortable(),
             Date::make('Подтвержден', 'email_verified_at')->withTime()->sortable(),
+            Date::make('Последний вход', 'last_login_at')->withTime()->sortable(),
         ];
     }
 
@@ -145,6 +148,7 @@ class UserResource extends ModelResource
             Email::make('Почта', 'email'),
             Email::make('Tubus ID', 'tubus_id'),
             Date::make('Регистрация', 'created_at')->withTime(),
+            Date::make('Последний вход', 'last_login_at')->withTime(),
         ];
     }
 
@@ -167,6 +171,7 @@ class UserResource extends ModelResource
             ->hideOnDetail()
             ->eye();
         $fields[] = Date::make('Регистрация', 'created_at')->withTime()->disabled()->readonly();
+        $fields[] = Date::make('Последний вход', 'last_login_at')->withTime()->disabled()->readonly();
 
         return $fields;
     }

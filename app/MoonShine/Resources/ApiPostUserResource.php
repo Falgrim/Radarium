@@ -39,6 +39,8 @@ use MoonShine\Pages\Page;
  */
 class ApiPostUserResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = ApiPostUser::class;
 
     protected string $title = 'Авторы сообщений';
@@ -119,8 +121,8 @@ class ApiPostUserResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Source ID', 'user_id'),
-            Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class),
-            Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class),
+            Enum::make('Тип источника', 'channel_source')->attach(ApiChannelSourceEnum::class)->nullable(),
+            Enum::make('Тип аккаунта', 'is_company')->attach(ApiDataTypeEnum::class)->nullable(),
             Text::make('Логин', 'username'),
             DateRange::make('Создан', 'created_at')->withTime(),
         ];

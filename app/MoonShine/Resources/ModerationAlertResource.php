@@ -41,6 +41,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class ModerationAlertResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = ModerationAlert::class;
 
     protected string $title = 'Модерация';
@@ -84,10 +86,10 @@ class ModerationAlertResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Пользователь ID', 'user_id'),
-            Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class),
-            Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class),
+            Enum::make('Создатель', 'is_system')->attach(ModerationAlertSystemEnum::class)->nullable(),
+            Enum::make('Раздел', 'table_name')->attach(ModerationAlertTableNameEnum::class)->nullable(),
             Text::make('ID записи', 'table_row_id'),
-            Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class),
+            Enum::make('Статус', 'status')->attach(ModerationAlertStatusEnum::class)->nullable(),
             DateRange::make('Создано', 'created_at')->withTime(),
         ];
     }

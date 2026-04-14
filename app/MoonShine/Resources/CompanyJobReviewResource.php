@@ -33,6 +33,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class CompanyJobReviewResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = CompanyJobReview::class;
 
     protected string $title = 'Отзывы (вакансии)';
@@ -77,9 +79,9 @@ class CompanyJobReviewResource extends ModelResource
             Text::make('ID', 'id'),
             Text::make('Пользователь ID', 'user_id'),
             Text::make('Вакансия ID', 'company_job_id'),
-            Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class),
+            Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class)->nullable(),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5),
-            Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class),
+            Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class)->nullable(),
             DateRange::make('Создан', 'created_at')->withTime(),
         ];
     }

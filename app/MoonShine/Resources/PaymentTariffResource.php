@@ -32,6 +32,8 @@ use MoonShine\Fields\Field;
  */
 class PaymentTariffResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = PaymentTariff::class;
 
     protected string $title = 'Управление тарифами';
@@ -77,7 +79,7 @@ class PaymentTariffResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Название', 'title'),
-            Enum::make('Статус', 'status')->attach(PaymentTariffStatusEnum::class),
+            Enum::make('Статус', 'status')->attach(PaymentTariffStatusEnum::class)->nullable(),
         ];
     }
 

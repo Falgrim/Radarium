@@ -24,6 +24,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class UserRoleResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = UserRole::class;
 
     protected string $title = 'Роли пользователей сайта';

@@ -44,6 +44,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class BuilderResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = \App\Models\Builder::class;
 
     protected string $title = 'Строительство';
@@ -125,11 +127,11 @@ class BuilderResource extends ModelResource
             DateRange::make('Создан', 'created_at')->withTime(),
             /*Select::make('Источник', 'post.api_channel_id')->options(
                 $channelSelect
-            ),*/
+            )->nullable(),*/
             Select::make('Статус', 'status')
                 ->options(
                     ApiPostAiStatusEnum::getList()
-                ),
+                )->nullable(),
         ];
     }
 

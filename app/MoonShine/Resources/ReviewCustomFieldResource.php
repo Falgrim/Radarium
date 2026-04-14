@@ -35,6 +35,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class ReviewCustomFieldResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = ReviewCustomField::class;
 
     protected string $title = 'Доп. поля';

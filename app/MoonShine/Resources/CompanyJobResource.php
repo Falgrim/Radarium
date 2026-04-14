@@ -35,6 +35,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class CompanyJobResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = CompanyJob::class;
 
     protected string $title = 'Вакансии';
@@ -107,7 +109,7 @@ class CompanyJobResource extends ModelResource
             Select::make('Статус', 'status')
                 ->options(
                     CompanyJobStatusEnum::getList()
-                ),
+                )->nullable(),
         ];
     }
 

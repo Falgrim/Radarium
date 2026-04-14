@@ -59,7 +59,7 @@ class ApiChannelPostResource extends ModelResource
 
     protected bool $columnSelection = true;
 
-    protected bool $saveFilterState = true;
+    protected bool $saveFilterState = false;
 
     public function query(): Builder
     {
@@ -214,7 +214,7 @@ class ApiChannelPostResource extends ModelResource
                 ->options(
                     ['' => 'Все источники'] + \App\Models\ApiChannel::query()->pluck('title', 'id')->toArray()
                 )
-                ->searchable(),
+                ->searchable()->nullable(),
             Select::make('Тип выборки', 'channel_type')
                 ->options(
                     ApiDataTypeEnum::getList()
@@ -229,11 +229,11 @@ class ApiChannelPostResource extends ModelResource
             Select::make('Статус', 'ai_parse_status')
                 ->options(
                     ApiChannelPostStatusEnum::getList()
-                ),
+                )->nullable(),
             Select::make('Провайдер ИИ', 'ai_provider_used')
                 ->options(
                     ApiAiSourceEnum::getList()
-                ),
+                )->nullable(),
         ];
     }
 

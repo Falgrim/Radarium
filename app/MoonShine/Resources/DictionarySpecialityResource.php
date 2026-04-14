@@ -38,6 +38,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class DictionarySpecialityResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = DictionarySpeciality::class;
 
     protected string $title = 'Специальности';
@@ -78,8 +80,8 @@ class DictionarySpecialityResource extends ModelResource
             Select::make('Тип выборки', 'api_data_type_id')
                 ->options(
                     ApiDataTypeEnum::getList()
-                ),
-            //Enum::make('Тип выборки', 'api_data_type_id')->attach(ApiDataTypeEnum::class),
+                )->nullable(),
+            //Enum::make('Тип выборки', 'api_data_type_id')->attach(ApiDataTypeEnum::class)->nullable(),
         ];
     }
 

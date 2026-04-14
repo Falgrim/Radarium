@@ -34,6 +34,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class SpecialistSpecialityResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = SpecialistSpeciality::class;
 
     protected string $title = 'Специальности специалистов';

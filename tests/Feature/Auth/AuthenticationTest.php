@@ -30,6 +30,20 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
+    public function test_last_login_at_is_set_after_successful_login(): void
+    {
+        $user = User::factory()->create(['last_login_at' => null]);
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $user->refresh();
+        $this->assertNotNull($user->last_login_at);
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();

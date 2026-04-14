@@ -35,6 +35,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class ReviewResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = Review::class;
 
     protected string $title = 'Отзывы (резюме)';
@@ -78,9 +80,9 @@ class ReviewResource extends ModelResource
         return [
             Text::make('ID', 'id'),
             Text::make('Пользователь ID', 'user_id'),
-            Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class),
+            Enum::make('Возможн. ред.', 'can_edit')->attach(ReviewCanEditEnum::class)->nullable(),
             Number::make('Оценка', 'rating')->hint('От 0 до 5')->min(0)->max(5),
-            Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class),
+            Enum::make('Статус', 'status')->attach(ReviewStatusEnum::class)->nullable(),
             DateRange::make('Создан', 'created_at')->withTime(),
         ];
     }

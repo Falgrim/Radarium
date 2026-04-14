@@ -28,6 +28,8 @@ use MoonShine\Components\MoonShineComponent;
  */
 class ConfigurationResource extends ModelResource
 {
+    protected bool $saveFilterState = false;
+
     protected string $model = Configuration::class;
 
     protected string $title = 'Настройки';
