@@ -1,0 +1,15 @@
+.offcanvas {
+    width: min(92vw, 760px);
+    max-width: min(92vw, 760px);
+}
+
+.offcanvas form[name="filters"] .form-group-inline {
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.offcanvas form[name="filters"] .form-group-inline > .form-input {
+    flex: 1 1 320px;
+    min-width: 0;
+    width: auto;
+}

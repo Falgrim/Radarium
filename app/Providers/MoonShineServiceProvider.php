@@ -128,6 +128,8 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
      */
     protected function theme(): array
     {
-        return [];
+        return [
+            'css' => '/css/moonshine-custom.css',
+        ];
     }
 }
