@@ -10,6 +10,7 @@ use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
+use App\Models\DictionarySpeciality;
 use App\Models\BuilderReview;
 use App\Models\BuilderReviewCustomField;
 use App\Models\CompanyJob;
@@ -42,6 +43,12 @@ class BuilderController extends Controller
     public function builders(Request $request)
     {
         $specialitiesList = Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Builder, false);
+        $groupedSpecialitiesList = Repositories::dictionarySpeciality()->getGroupedForBuilderSearch(ApiDataTypeEnum::Builder, false);
+
+        $allowedBuilderSpecialityIds = DictionarySpeciality::query()
+            ->where('api_data_type_id', ApiDataTypeEnum::Builder)
+            ->pluck('id')
+            ->all();
 
         $dbRegions = \App\Models\Builder::whereNotNull('region')
             ->where('region', '!=', '')
@@ -76,7 +83,7 @@ class BuilderController extends Controller
             'speciality_id.*' => [
                 'sometimes',
                 'integer',
-                Rule::in(array_keys($specialitiesList)),
+                Rule::in($allowedBuilderSpecialityIds),
             ],
             'open_contacts' => [
                 'sometimes',
@@ -171,6 +178,7 @@ class BuilderController extends Controller
             'request' => $request,
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
+            'groupedSpecialitiesList' => $groupedSpecialitiesList,
             'regionsList' => $dbRegions,
             'tariffAccess' => $this->tariffService->checkOpenContact(),
             'userOpenLog' => $userOpenLog,

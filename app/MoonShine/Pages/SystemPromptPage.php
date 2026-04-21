@@ -142,6 +142,7 @@ abstract class SystemPromptPage extends Page
                         'textareaId' => $textareaId,
                         'applyTypeLabel' => (string) ($this->applyDataType->toString() ?? ''),
                         'saveButtonHtml' => $this->saveButtonMarkup($textareaId, $presetId),
+                        'extraHint' => $this->systemPromptEditorExtraHint(),
                     ])
                 ),
             ]),
@@ -151,6 +152,14 @@ abstract class SystemPromptPage extends Page
     protected function textareaElementId(): string
     {
         return $this->scope->value.'-system-prompt-text';
+    }
+
+    /**
+     * Дополнительная подсказка под полем промпта (например, плейсхолдеры для builders).
+     */
+    protected function systemPromptEditorExtraHint(): ?string
+    {
+        return null;
     }
 
     protected function editingPresetQuery(): ?string

@@ -7,6 +7,7 @@ use App\Enum\ApiAiStatusEnum;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DictionarySpeciality extends Model
@@ -14,6 +15,7 @@ class DictionarySpeciality extends Model
     use ModelTableName;
 
     protected $fillable = [
+        'parent_id',
         'group_title',
         'title',
         'short_name',
@@ -40,6 +42,16 @@ class DictionarySpeciality extends Model
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'key_words'  => 'array',
         ];
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function specialists(): HasMany

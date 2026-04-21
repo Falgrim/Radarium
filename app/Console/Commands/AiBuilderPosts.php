@@ -16,7 +16,9 @@ use App\Models\ApiChannelPost;
 use App\Models\Builder;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
+use App\Services\BuilderAiPromptInjector;
 use App\Services\BuilderNormalizer;
+use App\Services\BuilderSpecialityMatcher;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
 use Illuminate\Console\Command;
@@ -97,7 +99,8 @@ class AiBuilderPosts extends Command
 
                 $aiService->logging('Анализ поста ID: '.$post->id);
                 $aiService->setConfig($options);
-                $aiService->setPromt($promt);
+                $promtWithSpecialities = BuilderAiPromptInjector::injectSpecialitiesList($promt, $specialityList);
+                $aiService->setPromt($promtWithSpecialities);
                 $aiService->setText($post->post);
                 $post->ai_provider_used = $apiSource->value;
                 $result = $aiService->getResult(ApiDataTypeEnum::Builder);
@@ -142,12 +145,20 @@ class AiBuilderPosts extends Command
                         );
                     }
 
-                    $aiSpecialities   = is_array($result['json']['service_types'] ?? null)
-                        ? $result['json']['service_types'] : [];
-                    $textSpecialities = $dictionary->checkMatchByList($post->post, $specialityList);
-                    $aiMatched        = !empty($aiSpecialities)
-                        ? $dictionary->matchFromAiList($aiSpecialities, $specialityList) : [];
-                    $mergedSpecialities = array_unique(array_merge($aiMatched, $textSpecialities));
+                    $aiSpecialities = [];
+                    if (is_array($result['json']['service_types'] ?? null)) {
+                        $aiSpecialities = array_merge($aiSpecialities, $result['json']['service_types']);
+                    }
+                    if (is_array($result['json']['specialities'] ?? null)) {
+                        $aiSpecialities = array_merge($aiSpecialities, $result['json']['specialities']);
+                    }
+                    $aiSpecialities = array_values(array_unique(array_filter(array_map('strval', $aiSpecialities))));
+
+                    $matcher = app(BuilderSpecialityMatcher::class);
+                    $resolved = $matcher->resolve((string) $post->post, $aiSpecialities);
+                    $mergedSpecialities = $resolved['ids'];
+                    $fromText = $resolved['log']['text_match_ids'] ?? [];
+                    $fromAi = $resolved['log']['ai_match_ids'] ?? [];
 
                     $result['json']['region'] =
                         !empty($result['json']['location_region'])
@@ -178,8 +189,9 @@ class AiBuilderPosts extends Command
                         'raw_type'           => $rawType,
                         'normalized_type'    => $builderType->value,
                         'specialities_total' => count($mergedSpecialities),
-                        'ai_matched'         => count($aiMatched),
-                        'text_matched'       => count($textSpecialities),
+                        'ai_matched'         => count($fromAi),
+                        'text_matched'       => count($fromText),
+                        'speciality_match_log' => $resolved['log'] ?? [],
                         'object_types'       => $result['json']['object_types'] ?? [],
                         'performer_type'     => $result['json']['performer_type'] ?? null,
                         'legal_form'         => $result['json']['legal_form'] ?? null,

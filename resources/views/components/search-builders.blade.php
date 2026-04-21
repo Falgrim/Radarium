@@ -31,8 +31,19 @@
                         <div class="row">
                             <div class="col-lg-12 col-xl-5">
                                 <select class="form-select" name="speciality_id[]" id="selectElementBuilders" multiple>
-                                    @foreach ($specialitiesList as $speciality)
-                                        <option value="{{ $speciality['id'] }}" {{ (collect(old('speciality_id', $request['speciality_id']))->contains($speciality['id'])) ? 'selected':'' }}>{{ $speciality['value'] }}</option>
+                                    @php
+                                        $selectedSpecialities = collect(old('speciality_id', $request['speciality_id'] ?? []));
+                                        $groups = $groupedSpecialitiesList ?? [];
+                                        if (empty($groups)) {
+                                            $groups = [['title' => 'Специализация', 'items' => array_values($specialitiesList)]];
+                                        }
+                                    @endphp
+                                    @foreach ($groups as $group)
+                                        <optgroup label="{{ $group['title'] }}">
+                                            @foreach ($group['items'] as $speciality)
+                                                <option value="{{ $speciality['id'] }}" @selected($selectedSpecialities->contains($speciality['id']))>{{ $speciality['value'] }}</option>
+                                            @endforeach
+                                        </optgroup>
                                     @endforeach
                                 </select>
                                 <label class="form-label mt-2 search-field-region-label" for="region">Регион</label>

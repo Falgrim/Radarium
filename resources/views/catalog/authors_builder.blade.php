@@ -11,7 +11,7 @@
             </div>
         </div>
 
-        <x-search-builders :$authors :$specialitiesList :$regionsList :$request :$errors />
+        <x-search-builders :$authors :$specialitiesList :$groupedSpecialitiesList :$regionsList :$request :$errors />
 
         @if ($errors->any())
             <div class="container">

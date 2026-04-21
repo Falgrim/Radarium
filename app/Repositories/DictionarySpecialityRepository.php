@@ -67,4 +67,92 @@ class DictionarySpecialityRepository extends Repository
 
         return $list;
     }
+
+    /**
+     * Группы для мультиселекта /builders: корневые записи с детьми — optgroup + дети; корень без детей — одна опция в своей группе.
+     *
+     * @return list<array{title: string, items: list<array{id: int, value: string, short_name: string|null}>}>
+     */
+    public function getGroupedForBuilderSearch(ApiDataTypeEnum $type, bool $withEmpty = true): array
+    {
+        if ($type !== ApiDataTypeEnum::Builder) {
+            return [];
+        }
+
+        $rootsQuery = $this->getQuery()
+            ->select('id', 'title', 'short_name', 'group_title', 'parent_id')
+            ->where('api_data_type_id', $type)
+            ->whereNull('parent_id')
+            ->orderBy('title');
+
+        if (! $withEmpty) {
+            $rootsQuery->where(function ($q): void {
+                $q->whereHas('builders')
+                    ->orWhereHas('children', static function ($c): void {
+                        $c->whereHas('builders');
+                    });
+            });
+        }
+
+        $roots = $rootsQuery->get();
+
+        $childrenQuery = $this->getQuery()
+            ->select('id', 'title', 'short_name', 'group_title', 'parent_id')
+            ->where('api_data_type_id', $type)
+            ->whereNotNull('parent_id')
+            ->orderBy('title');
+
+        if (! $withEmpty) {
+            $childrenQuery->whereHas('builders');
+        }
+
+        $childrenByParent = $childrenQuery->get()->groupBy('parent_id');
+
+        $groups = [];
+
+        foreach ($roots as $root) {
+            $subs = $childrenByParent->get($root->id, collect());
+            if ($subs->isEmpty()) {
+                $groups[] = [
+                    'title' => (string) $root->title,
+                    'items' => [[
+                        'id' => (int) $root->id,
+                        'value' => $this->formatSpecialityLabel($root),
+                        'short_name' => $root->short_name,
+                    ]],
+                ];
+
+                continue;
+            }
+
+            $items = [];
+            foreach ($subs as $child) {
+                $items[] = [
+                    'id' => (int) $child->id,
+                    'value' => $this->formatSpecialityLabel($child),
+                    'short_name' => $child->short_name,
+                ];
+            }
+
+            if ($items === []) {
+                continue;
+            }
+
+            $groups[] = [
+                'title' => (string) $root->title,
+                'items' => $items,
+            ];
+        }
+
+        return $groups;
+    }
+
+    private function formatSpecialityLabel(DictionarySpeciality $row): string
+    {
+        if ($row->group_title && $row->group_title !== $row->title) {
+            return $row->group_title.' - '.$row->title;
+        }
+
+        return (string) $row->title;
+    }
 }

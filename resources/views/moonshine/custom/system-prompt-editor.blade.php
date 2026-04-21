@@ -104,6 +104,10 @@
         <input type="hidden" id="{{ $presetHiddenId }}" name="preset_id" value="{{ $presetId }}">
     @endif
 
+    @if (! empty($extraHint ?? null))
+        <p class="alert alert-info text-sm">{{ $extraHint }}</p>
+    @endif
+
     <div>
         <label for="{{ $textareaId }}" class="form-label">Текст системного промпта</label>
         <textarea
