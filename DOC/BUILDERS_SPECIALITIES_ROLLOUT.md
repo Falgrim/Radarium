@@ -13,6 +13,9 @@
 1. `2026_04_21_100000_add_parent_id_to_dictionary_specialities_table.php` — колонка `parent_id`.
 2. `2026_04_21_100001_reseed_builder_dictionary_specialities.php` — пересид только справочника Builder + очистка `builder_specialities` по старым id.
 3. `2026_04_21_100002_append_builder_prompt_specialities_placeholder.php` — добавление блока с `{{SPECIALITIES_LIST}}` в `api_channels.ai_promt` и в пресеты `admin_system_prompt_presets` (scope `builder`), если плейсхолдера ещё нет.
+4. `2026_04_22_100000_reseed_builder_dictionary_v2_xlsx.php` — **новая версия** справочника по `DOC/builder_specialities_updated.xlsx` (лист «Специализации»); исходник с группой + специализацией и `key_words` в `app/Data/builder_speciality_dictionary.json` (генерация: `python scripts/build_builder_speciality_json.py`). Повторно очищает `builder_specialities` по старым id справочника.
+
+После п.4 на **PROD** обязателен пересчёт связей (см. ниже).
 
 ```bash
 php artisan migrate
