@@ -28,3 +28,6 @@ yarn-error.log
 /session.madeline
 /session.madeline.*
 /*.log
+# Диагностика с сервера (см. DOC/Logs/.gitignore)
+/DOC/Logs/*
+!/DOC/Logs/.gitignore
