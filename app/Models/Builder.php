@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\LenientJsonArray;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ReviewStatusEnum;
@@ -80,9 +81,9 @@ class Builder extends Model
             'updated_at' => 'datetime:Y-m-d H:i:s',
             'post_date' => 'datetime:Y-m-d H:i:s',
             'status' => ApiPostAiStatusEnum::class,
-            'service_types' => 'array',
-            'object_types' => 'array',
-            'equipment_skills_json' => 'array',
+            'service_types' => LenientJsonArray::class,
+            'object_types' => LenientJsonArray::class,
+            'equipment_skills_json' => LenientJsonArray::class,
         ];
     }
 

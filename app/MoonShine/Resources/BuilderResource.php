@@ -178,6 +178,23 @@ class BuilderResource extends ModelResource
         return 'Запись #'.$item->getKey();
     }
 
+    /**
+     * Textarea в MoonShine получает значение из модели как есть: для cast array нужна строка JSON.
+     */
+    private function jsonArrayTextarea(string $label, string $column, int $rows = 3): Textarea
+    {
+        return Textarea::make($label, $column)
+            ->customAttributes(['rows' => (string) $rows])
+            ->afterFill(function (Field $field): Field {
+                $v = $field->toValue(withDefault: false);
+                if (is_array($v)) {
+                    $field->setValue(json_encode($v, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                }
+
+                return $field;
+            });
+    }
+
     public function indexFields(): array
     {
         return [
@@ -263,7 +280,7 @@ class BuilderResource extends ModelResource
         $dictionarySpeciality = DictionarySpeciality::where('api_data_type_id', ApiDataTypeEnum::Builder)->get();
         $dictionaryArr = [];
         foreach ($dictionarySpeciality as $row) {
-            $dictionaryArr[$row['id']] = trim($row['okso_code'].' '.$row['title']);
+            $dictionaryArr[$row->id] = trim((string) $row->okso_code.' '.(string) $row->title);
         }
 
         $fields[] = Text::make('ID', 'id')->disabled()->readonly();
@@ -287,11 +304,11 @@ class BuilderResource extends ModelResource
         $fields[] = Text::make('Ссылка на резюме', 'link_resume');
         $fields[] = Textarea::make('Контакты из сообщения', 'contact_info');
         $fields[] = Text::make('Вид услуги (дословно)', 'service_type_raw');
-        $fields[] = Textarea::make('Специальности (AI JSON)', 'service_types')->customAttributes(['rows' => '3']);
-        $fields[] = Textarea::make('Типы объектов', 'object_types')->customAttributes(['rows' => '3']);
+        $fields[] = $this->jsonArrayTextarea('Специальности (AI JSON)', 'service_types', 3);
+        $fields[] = $this->jsonArrayTextarea('Типы объектов', 'object_types', 3);
         $fields[] = Text::make('Исполнитель (дословно)', 'performer_type_raw');
         $fields[] = Text::make('Тип исполнителя', 'performer_type');
-        $fields[] = Textarea::make('Оборудование и навыки', 'equipment_skills_json')->customAttributes(['rows' => '3']);
+        $fields[] = $this->jsonArrayTextarea('Оборудование и навыки', 'equipment_skills_json', 3);
         $fields[] = Text::make('Юридическая форма', 'legal_form');
         $fields[] = Text::make('Город', 'location_city');
         $fields[] = Text::make('Регион', 'location_region');
