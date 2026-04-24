@@ -11,11 +11,9 @@ use App\Enum\ApiPostAiStatusEnum;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
+use App\Models\Builder;
 use App\Models\DictionarySpeciality;
-use App\Models\SpecialistSpeciality;
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Specialist;
 
 use Illuminate\Support\Str;
 use MoonShine\Fields\Checkbox;
@@ -40,7 +38,7 @@ use MoonShine\Fields\Field;
 use MoonShine\Components\MoonShineComponent;
 
 /**
- * @extends ModelResource<Specialist>
+ * @extends ModelResource<\App\Models\Builder>
  */
 class BuilderResource extends ModelResource
 {
@@ -96,7 +94,7 @@ class BuilderResource extends ModelResource
     }
 
     /**
-     * @param Specialist $item
+     * @param Builder $item
      *
      * @return array<string, string[]|string>
      * @see https://laravel.com/docs/validation#available-validation-rules
@@ -137,98 +135,47 @@ class BuilderResource extends ModelResource
 
     protected function onBoot(): void
     {
-        // #region agent log
-        try {
-            $item = $this->getItem();
-            @file_put_contents(
-                base_path('debug-ea43a7.log'),
-                json_encode([
-                    'sessionId' => 'ea43a7',
-                    'hypothesisId' => 'A',
-                    'location' => 'BuilderResource::onBoot:entry',
-                    'message' => 'onBoot start',
-                    'data' => [
-                        'hasItem' => $item !== null,
-                        'itemId' => $item?->id,
-                        'modelClass' => $item ? get_class($item) : null,
-                    ],
-                    'timestamp' => (int) (microtime(true) * 1000),
-                ], JSON_UNESCAPED_UNICODE)."\n",
-                FILE_APPEND | LOCK_EX
-            );
-        } catch (\Throwable $e) {
-            @file_put_contents(
-                base_path('debug-ea43a7.log'),
-                json_encode([
-                    'sessionId' => 'ea43a7',
-                    'hypothesisId' => 'A',
-                    'location' => 'BuilderResource::onBoot:entry-catch',
-                    'message' => $e->getMessage(),
-                    'data' => ['exception' => get_class($e)],
-                    'timestamp' => (int) (microtime(true) * 1000),
-                ], JSON_UNESCAPED_UNICODE)."\n",
-                FILE_APPEND | LOCK_EX
-            );
-        }
-        // #endregion
-
         //dd($this, $this->getQuery());
-        if (!is_null($this->getItem())) {
-            // #region agent log
-            try {
-                $it = $this->getItem();
-                $ln = $it->last_name;
-                $fn = $it->first_name;
-                $mn = $it->middle_name;
-                @file_put_contents(
-                    base_path('debug-ea43a7.log'),
-                    json_encode([
-                        'sessionId' => 'ea43a7',
-                        'hypothesisId' => 'A',
-                        'location' => 'BuilderResource::onBoot:after-name-access',
-                        'message' => 'read name attrs',
-                        'data' => [
-                            'last_name_set' => array_key_exists('last_name', $it->getAttributes()),
-                            'first_name_set' => array_key_exists('first_name', $it->getAttributes()),
-                            'middle_name_set' => array_key_exists('middle_name', $it->getAttributes()),
-                            'ln' => $ln,
-                            'fn' => $fn,
-                            'mn' => $mn,
-                        ],
-                        'timestamp' => (int) (microtime(true) * 1000),
-                    ], JSON_UNESCAPED_UNICODE)."\n",
-                    FILE_APPEND | LOCK_EX
-                );
-            } catch (\Throwable $e) {
-                @file_put_contents(
-                    base_path('debug-ea43a7.log'),
-                    json_encode([
-                        'sessionId' => 'ea43a7',
-                        'hypothesisId' => 'A',
-                        'location' => 'BuilderResource::onBoot:name-access-catch',
-                        'message' => $e->getMessage(),
-                        'data' => ['exception' => get_class($e)],
-                        'timestamp' => (int) (microtime(true) * 1000),
-                    ], JSON_UNESCAPED_UNICODE)."\n",
-                    FILE_APPEND | LOCK_EX
-                );
-                throw $e;
-            }
-            // #endregion
-
-            $this->formPage()
-                ->setBreadcrumbs([
-                    $this->indexPage()->url() => $this->title(),
-                    '#' => $this->getItem()->last_name.' '.$this->getItem()->first_name.' '.$this->getItem()->middle_name,
-                ]);
-
-            $this->detailPage()->setBreadcrumbs([
-                $this->indexPage()->url() => $this->title(),
-                '#' => $this->getItem()->last_name.' '.$this->getItem()->first_name.' '.$this->getItem()->middle_name,
-            ]);
-        } else {
-            //$this->indexPage()->setTitle($this->title.': '.$this->query()->count());
+        $item = $this->getItem();
+        if (! $item instanceof Builder) {
+            return;
         }
+
+        $crumb = $this->builderBreadcrumbLabel($item);
+
+        $this->formPage()
+            ->setBreadcrumbs([
+                $this->indexPage()->url() => $this->title(),
+                '#' => $crumb,
+            ]);
+
+        $this->detailPage()->setBreadcrumbs([
+            $this->indexPage()->url() => $this->title(),
+            '#' => $crumb,
+        ]);
+    }
+
+    /**
+     * Подпись для хлебных крошек: ФИО и логин лежат у {@see ApiPostUser}, не у {@see Builder}.
+     */
+    private function builderBreadcrumbLabel(Builder $item): string
+    {
+        $user = $item->user;
+
+        if ($user instanceof ApiPostUser) {
+            $name = trim(implode(' ', array_filter(
+                [$user->last_name, $user->first_name],
+                static fn ($part): bool => is_string($part) && $part !== ''
+            )));
+            if ($name !== '') {
+                return $name;
+            }
+            if (is_string($user->username) && $user->username !== '') {
+                return $user->username;
+            }
+        }
+
+        return 'Запись #'.$item->getKey();
     }
 
     public function indexFields(): array
@@ -311,71 +258,9 @@ class BuilderResource extends ModelResource
 
     public function formFields(): array
     {
-        // #region agent log
-        try {
-            $item = $this->getItem();
-            $svc = null;
-            $obj = null;
-            $eq = null;
-            if ($item !== null) {
-                $svc = $item->service_types;
-                $obj = $item->object_types;
-                $eq = $item->equipment_skills_json;
-            }
-            @file_put_contents(
-                base_path('debug-ea43a7.log'),
-                json_encode([
-                    'sessionId' => 'ea43a7',
-                    'hypothesisId' => 'C',
-                    'location' => 'BuilderResource::formFields:json-casts',
-                    'message' => 'read json-cast attrs ok',
-                    'data' => [
-                        'itemId' => $item?->id,
-                        'svc_type' => gettype($svc),
-                        'obj_type' => gettype($obj),
-                        'eq_type' => gettype($eq),
-                    ],
-                    'timestamp' => (int) (microtime(true) * 1000),
-                ], JSON_UNESCAPED_UNICODE)."\n",
-                FILE_APPEND | LOCK_EX
-            );
-        } catch (\Throwable $e) {
-            @file_put_contents(
-                base_path('debug-ea43a7.log'),
-                json_encode([
-                    'sessionId' => 'ea43a7',
-                    'hypothesisId' => 'C',
-                    'location' => 'BuilderResource::formFields:json-casts-catch',
-                    'message' => $e->getMessage(),
-                    'data' => ['exception' => get_class($e)],
-                    'timestamp' => (int) (microtime(true) * 1000),
-                ], JSON_UNESCAPED_UNICODE)."\n",
-                FILE_APPEND | LOCK_EX
-            );
-            throw $e;
-        }
-        // #endregion
-
         $fields = [];
 
         $dictionarySpeciality = DictionarySpeciality::where('api_data_type_id', ApiDataTypeEnum::Builder)->get();
-        // #region agent log
-        try {
-            @file_put_contents(
-                base_path('debug-ea43a7.log'),
-                json_encode([
-                    'sessionId' => 'ea43a7',
-                    'hypothesisId' => 'D',
-                    'location' => 'BuilderResource::formFields:dict-loaded',
-                    'message' => 'dictionary rows',
-                    'data' => ['count' => $dictionarySpeciality->count()],
-                    'timestamp' => (int) (microtime(true) * 1000),
-                ], JSON_UNESCAPED_UNICODE)."\n",
-                FILE_APPEND | LOCK_EX
-            );
-        } catch (\Throwable) {
-        }
-        // #endregion
         $dictionaryArr = [];
         foreach ($dictionarySpeciality as $row) {
             $dictionaryArr[$row['id']] = trim($row['okso_code'].' '.$row['title']);
@@ -413,24 +298,6 @@ class BuilderResource extends ModelResource
         $fields[] = Textarea::make('Комментарий к цене', 'price_comment')->customAttributes(['rows' => '3']);
         $fields[] = Enum::make('Статус', 'status')->attach(ApiPostAiStatusEnum::class);
         $fields[] = Date::make('Создан', 'created_at')->withTime()->disabled()->readonly();
-
-        // #region agent log
-        try {
-            @file_put_contents(
-                base_path('debug-ea43a7.log'),
-                json_encode([
-                    'sessionId' => 'ea43a7',
-                    'hypothesisId' => 'E',
-                    'location' => 'BuilderResource::formFields:complete',
-                    'message' => 'formFields built',
-                    'data' => ['fieldCount' => count($fields)],
-                    'timestamp' => (int) (microtime(true) * 1000),
-                ], JSON_UNESCAPED_UNICODE)."\n",
-                FILE_APPEND | LOCK_EX
-            );
-        } catch (\Throwable) {
-        }
-        // #endregion
 
         return $fields;
     }
