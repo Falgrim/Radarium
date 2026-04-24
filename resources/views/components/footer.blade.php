@@ -24,13 +24,9 @@
 
 <script>
     $(document).ready(function () {
-        $('.moderation-alert').on('click', function (e) {
-            e.preventDefault();
-
+        $(document).on('click', '.moderation-alert', function () {
             $('#moderationAlert_type').val($(this).data('type'));
             $('#moderationAlert_row_id').val($(this).data('id'));
-
-            return false;
         });
 
         $(document).on('click', '.moderation-alert-save', function(e) {
@@ -42,6 +38,10 @@
                 url: "{{ route('moderationAlert.new') }}",
                 dataType: 'json',
                 type: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
                 data: {
                     '_token': "{{ csrf_token() }}",
                     'type': $('#moderationAlert input[name=type]').val(),
@@ -52,11 +52,25 @@
                     $('#moderationAlertResult .modal-body p').html('Спасибо! В ближайшее время наша команда рассмотрит ваш запрос.')
                     $('#moderationAlertResult').modal('show');
                 },
-                error:function(response, responseCode){
-                    $('#moderationAlertResult .modal-body p').html('Упс! Возникла ошибка, попробуйте повторить ваш запрос.')
+                error:function(xhr){
+                    var msg = 'Упс! Возникла ошибка, попробуйте повторить ваш запрос.';
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON.errors) {
+                            var parts = [];
+                            $.each(xhr.responseJSON.errors, function (key, val) {
+                                if (val && val[0]) {
+                                    parts.push(val[0]);
+                                }
+                            });
+                            if (parts.length) {
+                                msg = parts.join(' ');
+                            }
+                        }
+                    }
+                    $('#moderationAlertResult .modal-body p').html(msg);
                     $('#moderationAlertResult').modal('show');
-                    console.log(responseCode);
-                    console.log(response.responseJSON);
                 },
             });
 
