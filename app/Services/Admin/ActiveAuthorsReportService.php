@@ -37,7 +37,7 @@ final class ActiveAuthorsReportService
             ->when($onlyMultipleActiveCards, static fn (EloquentBuilder $q) => $q->where('agg.active_cards', '>=', 2))
             ->orderByDesc('agg.last_post_date')
             ->select("{$userTable}.*")
-            ->addSelect(['report_active_cards' => DB::raw('agg.active_cards')])
+            ->addSelect(DB::raw('agg.active_cards as report_active_cards'))
             ->paginate($perPage)
             ->withQueryString();
     }
@@ -61,7 +61,7 @@ final class ActiveAuthorsReportService
             ->when($onlyMultipleActiveCards, static fn (EloquentBuilder $q) => $q->where('agg.active_cards', '>=', 2))
             ->orderByDesc('agg.last_post_date')
             ->select("{$userTable}.*")
-            ->addSelect(['report_active_cards' => DB::raw('agg.active_cards')])
+            ->addSelect(DB::raw('agg.active_cards as report_active_cards'))
             ->cursor()
             ->map(function (ApiPostUser $user) use ($type, $dateFrom, $dateTo): ?ActiveAuthorsReportRow {
                 $count = (int) ($user->getAttribute('report_active_cards') ?? 0);

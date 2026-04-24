@@ -78,7 +78,7 @@
                     ])>
                         <td class="p-3 whitespace-nowrap">
                             @if($user->username)
-                                <a href="https://t.me/{{ $user->username }}" target="_blank" rel="noopener" class="text-primary">@{{ $user->username }}</a>
+                                <a href="https://t.me/{{ $user->username }}" target="_blank" rel="noopener" class="text-primary">{{ '@' . $user->username }}</a>
                             @elseif($user->user_id)
                                 <span class="text-gray-500">id:{{ $user->user_id }}</span>
                             @else
