@@ -1,7 +1,7 @@
+@props(['showRegionNoneFilterOption' => true])
 @php
     $formErrorClass = "";
     $contactsLimit = Auth::check() ? Auth::user()->getLeftContacts() : [];
-    
 @endphp
 
 @if ($errors->any())
@@ -39,7 +39,9 @@
                                 <label class="form-label mt-2 search-field-region-label" for="region">Регион</label>
                                 <select class="form-select" name="region" id="region">
                                     <option value="">— любой —</option>
-                                    <option value="none" {{ old('region', $request->region) === 'none' ? 'selected' : '' }}>без указания географии работ</option>
+                                    @if ($showRegionNoneFilterOption)
+                                        <option value="none" {{ old('region', $request->region) === 'none' ? 'selected' : '' }}>без указания географии работ</option>
+                                    @endif
                                     @foreach ($regionsList ?? [] as $regionKey => $regionLabel)
                                         <option value="{{ $regionKey }}" {{ old('region', $request->region) == $regionKey ? 'selected' : '' }}>{{ $regionLabel }}</option>
                                     @endforeach

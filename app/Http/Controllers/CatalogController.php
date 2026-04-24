@@ -17,7 +17,6 @@ use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Models\UserOpenContact;
-use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -91,6 +90,85 @@ class CatalogController extends Controller
         }
     }
 
+    /**
+     * Регионы для выпадающего списка каталога проектировщиков: только значения, по которым есть записи
+     * при текущих фильтрах (без учёта выбранного региона).
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array{0: array<string, string>, 1: bool}
+     */
+    private function specialistCatalogRegionOptions(array $validated): array
+    {
+        $base = $this->specialistsMatchingCatalogScope($validated);
+
+        $hasNullRegion = (clone $base)
+            ->where(function (Builder $q) {
+                $q->whereNull('region')->orWhere('region', '');
+            })
+            ->exists();
+
+        $names = (clone $base)
+            ->whereNotNull('region')
+            ->where('region', '!=', '')
+            ->distinct()
+            ->orderBy('region')
+            ->pluck('region')
+            ->all();
+
+        $regionsList = [];
+        foreach ($names as $name) {
+            $regionsList[$name] = $name;
+        }
+
+        return [$regionsList, $hasNullRegion];
+    }
+
+    /**
+     * Специалисты, попадающие в каталог при тех же условиях поиска, что и основной список, без фильтра по region.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return Builder<\App\Models\Specialist>
+     */
+    private function specialistsMatchingCatalogScope(array $validated): Builder
+    {
+        return Specialist::query()
+            ->when($this->onlyActive, function (Builder $q) {
+                $q->where('status', '=', ApiPostAiStatusEnum::Active);
+            })
+            ->when(! empty($validated['key_word_tags']), function (Builder $query) use ($validated) {
+                $query->whereHas('post', function (Builder $postQuery) use ($validated) {
+                    $postQuery->where(function (Builder $inner) use ($validated) {
+                        foreach ($validated['key_word_tags'] as $keyWordTag) {
+                            $inner->orWhere('post', 'like', '%'.$keyWordTag.'%');
+                        }
+                    });
+                });
+            })
+            ->when(! empty($validated['speciality_id']), function (Builder $query) use ($validated) {
+                $query->whereRelation('specialities', function (Builder $relationQuery) use ($validated) {
+                    $relationQuery->whereIn('dictionary_speciality_id', $validated['speciality_id']);
+                });
+            })
+            ->whereHas('user', function (Builder $userQuery) use ($validated) {
+                $userQuery->whereHas('postsComplete', function (Builder $postsQuery) use ($validated) {
+                    if (! empty($validated['key_word'])) {
+                        $postsQuery->where('post', 'like', '%'.$validated['key_word'].'%');
+                    }
+                });
+                if (! empty($validated['open_contacts']) && Auth::check()) {
+                    $userQuery->whereIn('id', function ($sub) {
+                        $sub->select('api_post_user_id')
+                            ->from(with(new UserOpenContact())->getTable())
+                            ->where('user_id', Auth::user()->id);
+                    });
+                }
+                $userQuery->where(function (Builder $contact) {
+                    $contact->whereNotNull('phone')
+                        ->orWhere('username', '<>', '');
+                });
+            });
+    }
+
     public function authorsAsSpecialists(Request $request)
     {
         $specialitiesList = Cache::remember(
@@ -98,14 +176,6 @@ class CatalogController extends Controller
             3600,
             static fn () => Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist, false)
         );
-
-        $citiesMtime = @filemtime(base_path('app/Data/russian_cities_100k.json')) ?: 0;
-        $regionsCatalog = Cache::remember(
-            'catalog.specialists.regions_canonical_v2.'.$citiesMtime,
-            3600,
-            static fn () => app(RussianRegionNormalizer::class)->selectOptions()
-        );
-        $allowedRegions = array_merge(['none'], array_keys($regionsCatalog));
 
         $validated = $request->validate([
             'key_word' => [
@@ -153,9 +223,20 @@ class CatalogController extends Controller
                 'nullable',
                 'string',
                 'max:100',
-                Rule::in($allowedRegions),
             ],
         ]);
+
+        [$regionsList, $hasNullRegion] = $this->specialistCatalogRegionOptions($validated);
+
+        $allowedRegions = array_merge([''], array_keys($regionsList));
+        if ($hasNullRegion) {
+            $allowedRegions[] = 'none';
+            $allowedRegions = array_values(array_unique($allowedRegions));
+        }
+
+        Validator::make($request->all(), [
+            'region' => ['nullable', 'string', 'max:100', Rule::in($allowedRegions)],
+        ])->validate();
 
         $authors = ApiPostUser::whereHas('specialists', function (Builder $query) use ($validated) {
             if ($this->onlyActive) {
@@ -229,7 +310,8 @@ class CatalogController extends Controller
             'request' => $request,
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
-            'regionsList' => $regionsCatalog,
+            'regionsList' => $regionsList,
+            'showRegionNoneFilterOption' => $hasNullRegion,
             'tariffAccess' => $this->tariffService->checkOpenContact(),
             'userOpenLog' => $userOpenLog,
         ]);

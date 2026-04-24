@@ -11,7 +11,15 @@
             </div>
         </div>
 
-        <x-search-builders :$authors :$specialitiesList :$groupedSpecialitiesList :$regionsList :$request :$errors />
+        <x-search-builders
+            :$authors
+            :$specialitiesList
+            :$groupedSpecialitiesList
+            :$regionsList
+            :$request
+            :$errors
+            :show-region-none-filter-option="$showRegionNoneFilterOption"
+        />
 
         @if ($errors->any())
             <div class="container">

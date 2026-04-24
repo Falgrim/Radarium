@@ -11,7 +11,14 @@
             </div>
         </div>
 
-        <x-search-specialists :$authors :$specialitiesList :$regionsList :$request :$errors />
+        <x-search-specialists
+            :$authors
+            :$specialitiesList
+            :$regionsList
+            :$request
+            :$errors
+            :show-region-none-filter-option="$showRegionNoneFilterOption"
+        />
 
         <div class="container">
             <div class="table-box">

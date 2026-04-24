@@ -12,7 +12,6 @@ use App\Models\BuilderReview;
 use App\Models\BuilderReviewCustomField;
 use App\Models\DictionarySpeciality;
 use App\Models\UserOpenContact;
-use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -38,9 +37,6 @@ class BuilderController extends Controller
             ->where('api_data_type_id', ApiDataTypeEnum::Builder)
             ->pluck('id')
             ->all();
-
-        $regionsCatalog = app(RussianRegionNormalizer::class)->selectOptions();
-        $allowedRegions = array_merge(['none'], array_keys($regionsCatalog));
 
         $validated = $request->validate([
             'key_word' => [
@@ -88,7 +84,6 @@ class BuilderController extends Controller
                 'nullable',
                 'string',
                 'max:100',
-                Rule::in($allowedRegions),
             ],
         ]);
 
@@ -98,6 +93,18 @@ class BuilderController extends Controller
                 ApiDataTypeEnum::Builder
             )
             : [];
+
+        [$regionsList, $hasNullRegion] = $this->builderCatalogRegionOptions($validated, $specialityFilterIds);
+
+        $allowedRegions = array_merge([''], array_keys($regionsList));
+        if ($hasNullRegion) {
+            $allowedRegions[] = 'none';
+            $allowedRegions = array_values(array_unique($allowedRegions));
+        }
+
+        Validator::make($request->all(), [
+            'region' => ['nullable', 'string', 'max:100', Rule::in($allowedRegions)],
+        ])->validate();
 
         $authors = ApiPostUser::whereHas('builders', function (Builder $query) use ($validated, $specialityFilterIds) {
             $query->whereNotNull('api_channel_post_id')->where('api_channel_post_id', '>', 0);
@@ -171,7 +178,8 @@ class BuilderController extends Controller
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
             'groupedSpecialitiesList' => $groupedSpecialitiesList,
-            'regionsList' => $regionsCatalog,
+            'regionsList' => $regionsList,
+            'showRegionNoneFilterOption' => $hasNullRegion,
             'tariffAccess' => $this->tariffService->checkOpenContact(),
             'userOpenLog' => $userOpenLog,
         ]);
@@ -400,5 +408,91 @@ class BuilderController extends Controller
             ->json($review)
             ->setStatusCode(200)
             ->header('Content-Type', 'application/json');
+    }
+
+    /**
+     * Регионы для выпадающего списка: только те значения region, по которым есть строители,
+     * удовлетворяющие текущим фильтрам каталога (без учёта выбранного региона).
+     *
+     * @param  array<string, mixed>  $validated
+     * @param  list<int>  $specialityFilterIds
+     * @return array{0: array<string, string>, 1: bool}
+     */
+    private function builderCatalogRegionOptions(array $validated, array $specialityFilterIds): array
+    {
+        $base = $this->buildersMatchingCatalogScope($validated, $specialityFilterIds);
+
+        $hasNullRegion = (clone $base)
+            ->where(function (Builder $q) {
+                $q->whereNull('region')->orWhere('region', '');
+            })
+            ->exists();
+
+        $names = (clone $base)
+            ->whereNotNull('region')
+            ->where('region', '!=', '')
+            ->distinct()
+            ->orderBy('region')
+            ->pluck('region')
+            ->all();
+
+        $regionsList = [];
+        foreach ($names as $name) {
+            $regionsList[$name] = $name;
+        }
+
+        return [$regionsList, $hasNullRegion];
+    }
+
+    /**
+     * Запись строителя попадает в выборку каталога с теми же условиями, что и основной поиск, но без фильтра по region.
+     *
+     * @param  array<string, mixed>  $validated
+     * @param  list<int>  $specialityFilterIds
+     * @return Builder<\App\Models\Builder>
+     */
+    private function buildersMatchingCatalogScope(array $validated, array $specialityFilterIds): Builder
+    {
+        return \App\Models\Builder::query()
+            ->whereNotNull('api_channel_post_id')
+            ->where('api_channel_post_id', '>', 0)
+            ->when($this->onlyActive, function (Builder $query) {
+                $query->where('status', '=', ApiPostAiStatusEnum::Active);
+            })
+            ->when(! empty($validated['key_word_tags']), function (Builder $query) use ($validated) {
+                $query->whereHas('post', function (Builder $postQuery) use ($validated) {
+                    $postQuery->where(function (Builder $inner) use ($validated) {
+                        foreach ($validated['key_word_tags'] as $keyWordTag) {
+                            $inner->orWhere('post', 'like', '%'.$keyWordTag.'%');
+                        }
+                    });
+                });
+            })
+            ->when($specialityFilterIds !== [], function (Builder $query) use ($specialityFilterIds) {
+                $query->whereRelation('specialities', function (Builder $relationQuery) use ($specialityFilterIds) {
+                    $relationQuery->whereIn('dictionary_speciality_id', $specialityFilterIds);
+                });
+            })
+            ->when(! empty($validated['key_word']), function (Builder $query) use ($validated) {
+                $query->whereHas('post', function (Builder $postQuery) use ($validated) {
+                    $postQuery->where('post', 'like', '%'.$validated['key_word'].'%');
+                });
+            })
+            ->whereHas('user', function (Builder $userQuery) use ($validated) {
+                $userQuery->whereDoesntHave('specialists', function (Builder $specialistQuery) {
+                    $specialistQuery->where('status', ApiPostAiStatusEnum::Active);
+                });
+                if (! empty($validated['open_contacts']) && Auth::check()) {
+                    $userQuery->whereIn('id', function ($sub) {
+                        $sub->select('api_post_user_id')
+                            ->from(with(new UserOpenContact)->getTable())
+                            ->where('user_id', Auth::user()->id);
+                    });
+                }
+                $userQuery->where(function (Builder $contact) {
+                    $contact->whereNotNull('phone')
+                        ->orWhere('username', '<>', '');
+                });
+            });
     }
 }
