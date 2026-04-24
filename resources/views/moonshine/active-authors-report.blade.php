@@ -6,30 +6,21 @@
 
 <div class="space-y-8 p-4">
     <section class="rounded-xl border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 shadow-sm overflow-hidden">
-        <div class="border-b border-gray-200 dark:border-dark-600 px-5 py-4">
+        <div class="px-5 py-4">
             <div class="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h2 class="text-lg font-semibold">Отчёт: активные авторы</h2>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Авторы с активными карточками выбранного типа за заданный период.
-                    </p>
+                <div class="max-w-5xl rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950 dark:border-blue-900/40 dark:bg-blue-950/20 dark:text-blue-100">
+                    В этот отчет попадают <strong>уникальные авторы</strong> (аккаунты Telegram), у которых есть хотя бы одна
+                    <strong>сейчас активная</strong> запись выбранного типа. Дата публикации связанного сообщения учитывается по выбранному периоду.
+                    Сортировка: по дате последнего сообщения, новые сверху.
                 </div>
                 <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm dark:bg-dark-900">
                     <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">TOTAL</div>
                     <div class="text-2xl font-bold leading-none">{{ $paginator->total() }}</div>
                 </div>
             </div>
-        </div>
-
-        <div class="px-5 py-4">
-            <div class="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950 dark:border-blue-900/40 dark:bg-blue-950/20 dark:text-blue-100">
-                В список попадают <strong>уникальные авторы</strong> (аккаунты Telegram), у которых есть хотя бы одна
-                <strong>сейчас активная</strong> запись выбранного типа. Дата публикации связанного сообщения учитывается по выбранному периоду.
-                Сортировка: по дате последнего сообщения, новые сверху.
-            </div>
 
             <form method="get" action="{{ $reportFormAction }}" class="mt-4">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; align-items: end;">
+                <div style="display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 1rem; align-items: end;">
                     <div>
                         <label class="block text-sm font-medium mb-1">Тип записи</label>
                         <select name="type" class="form-select w-full rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
@@ -48,13 +39,13 @@
                         <input type="date" name="date_to" value="{{ request('date_to') }}"
                                class="form-input w-full rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
                     </div>
-                    <div class="rounded-lg border border-gray-200 px-3 py-2 dark:border-dark-600">
-                        <label class="inline-flex items-start gap-2 text-sm cursor-pointer">
-                            <input type="checkbox" name="multi_only" value="1" @checked($multiOnly)
-                                   class="mt-1 rounded border-gray-300 dark:border-dark-500">
-                            <span>Только авторы с <strong>2+</strong> активными карточками</span>
-                        </label>
-                    </div>
+                </div>
+                <div class="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 dark:border-dark-600 dark:bg-dark-900" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                    <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" name="multi_only" value="1" @checked($multiOnly)
+                               class="rounded border-gray-300 dark:border-dark-500">
+                        <span>Только авторы с <strong>2+</strong> активными карточками</span>
+                    </label>
                     <div style="display: flex; gap: .75rem; flex-wrap: wrap;">
                         <button type="submit" class="btn btn-primary">Показать</button>
                         <a href="{{ $exportUrl }}" class="btn btn-secondary">Скачать CSV</a>
