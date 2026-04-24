@@ -52,17 +52,16 @@
         @endif
     </div>
 
-    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-dark-600">
-        <table class="table-auto w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-dark-700 text-left">
+    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-dark-600 bg-gray-50 dark:bg-dark-900 p-3">
+        <table class="table-auto w-full text-sm border-separate" style="border-spacing: 0 0.75rem;">
+            <thead class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
             <tr>
-                <th class="p-3">Логин</th>
-                <th class="p-3 whitespace-nowrap">Активных карточек</th>
-                <th class="p-3">Последнее сообщение</th>
-                <th class="p-3">Дата публикации</th>
-                <th class="p-3">Создана запись ИИ</th>
-                <th class="p-3">Статусы ИИ</th>
-                <th class="p-3 w-56">Действия</th>
+                <th class="px-4 pb-1">Автор</th>
+                <th class="px-4 pb-1 text-center whitespace-nowrap">Карточки</th>
+                <th class="px-4 pb-1">Последнее сообщение</th>
+                <th class="px-4 pb-1 whitespace-nowrap">Даты</th>
+                <th class="px-4 pb-1">Статусы</th>
+                <th class="px-4 pb-1 w-56">Действия</th>
             </tr>
             </thead>
             <tbody>
@@ -72,56 +71,82 @@
                     $row = $entry['row'];
                 @endphp
                 @if($row)
-                    <tr @class([
-                        'border-t border-gray-200 dark:border-dark-600 align-top',
-                        'bg-amber-50 dark:bg-amber-950/25' => $row->postAiNotComplete,
-                    ])>
-                        <td class="p-3 whitespace-nowrap">
+                    @php
+                        $cellBgClass = $row->postAiNotComplete
+                            ? 'bg-amber-50 dark:bg-amber-950/25'
+                            : 'bg-white dark:bg-dark-800';
+                    @endphp
+                    <tr class="align-top shadow-sm">
+                        <td class="px-4 py-4 whitespace-nowrap rounded-l-lg {{ $cellBgClass }}">
                             @if($user->username)
-                                <a href="https://t.me/{{ $user->username }}" target="_blank" rel="noopener" class="text-primary">{{ '@' . $user->username }}</a>
+                                <a href="https://t.me/{{ $user->username }}" target="_blank" rel="noopener" class="text-primary font-semibold">{{ '@' . $user->username }}</a>
+                                @if($user->user_id)
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Telegram ID: {{ $user->user_id }}</div>
+                                @endif
                             @elseif($user->user_id)
-                                <span class="text-gray-500">id:{{ $user->user_id }}</span>
+                                <span class="font-semibold text-gray-700 dark:text-gray-200">id:{{ $user->user_id }}</span>
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif
                         </td>
-                        <td class="p-3 whitespace-nowrap text-center">{{ $row->activeCardsCount }}</td>
-                        <td class="p-3 max-w-md break-words">{{ $row->lastMessage }}</td>
-                        <td class="p-3 whitespace-nowrap">{{ $row->lastMessagePostDate?->format('d.m.Y H:i') ?? '—' }}</td>
-                        <td class="p-3 whitespace-nowrap">{{ $row->domainCreatedAt?->format('d.m.Y H:i') ?? '—' }}</td>
-                        <td class="p-3 text-xs">
-                            <div><span class="text-gray-500">Запись:</span> {{ $row->domainStatusLabel }}</div>
-                            <div><span class="text-gray-500">Сообщение:</span> {{ $row->postAiStatusLabel }}</div>
+                        <td class="px-4 py-4 whitespace-nowrap text-center {{ $cellBgClass }}">
+                            <span class="inline-flex min-w-9 items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-sm font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                {{ $row->activeCardsCount }}
+                            </span>
                         </td>
-                        <td class="p-3 space-y-1">
-                            <a href="{{ $authorDetailUrl($user->id) }}" class="btn btn-sm btn-primary w-full text-center">Автор</a>
-                            <a href="{{ route('admin.active-authors-report.edit', ['type' => $row->type->value, 'domain_id' => $row->domainId]) }}"
-                               class="btn btn-sm btn-secondary w-full text-center">Статусы ИИ</a>
-                            @if($row->postId)
-                                <a href="{{ $postFormUrl($row->postId) }}" class="btn btn-sm btn-secondary w-full text-center" target="_blank">Сообщение</a>
-                            @endif
-                            <a href="{{ $domainFormUrl($row->type, $row->domainId) }}" class="btn btn-sm btn-secondary w-full text-center" target="_blank">Запись в разделе</a>
-                            <form method="post" action="{{ $deleteUrl }}" class="mt-2 space-y-2"
-                                  onsubmit="const scope=this.delete_scope.value;const label=scope==='active_only'?'только активные записи типа «{{ $type->label() }}»':'все записи типа «{{ $type->label() }}»';return confirm('Удалить (мягкое удаление): '+label+' для этого автора?');">
-                                @csrf
-                                <input type="hidden" name="return_query" value="{{ e(request()->getQueryString() ?? '') }}">
-                                <input type="hidden" name="type" value="{{ $row->type->value }}">
-                                <input type="hidden" name="api_post_user_id" value="{{ $user->id }}">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">Объём удаления</label>
-                                    <select name="delete_scope" class="form-select form-select-sm w-full rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900 text-xs">
-                                        <option value="active_only">Только активные записи типа</option>
-                                        <option value="all">Все записи типа (включая неактивные)</option>
-                                    </select>
+                        <td class="px-4 py-4 min-w-80 max-w-xl break-words {{ $cellBgClass }}">
+                            <div style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ $row->lastMessage }}
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-xs text-gray-600 dark:text-gray-300 {{ $cellBgClass }}">
+                            <div><span class="text-gray-500 dark:text-gray-400">Пост:</span> {{ $row->lastMessagePostDate?->format('d.m.Y H:i') ?? '—' }}</div>
+                            <div class="mt-1"><span class="text-gray-500 dark:text-gray-400">ИИ:</span> {{ $row->domainCreatedAt?->format('d.m.Y H:i') ?? '—' }}</div>
+                        </td>
+                        <td class="px-4 py-4 text-xs {{ $cellBgClass }}">
+                            <div><span class="text-gray-500 dark:text-gray-400">Запись:</span> <span class="font-semibold">{{ $row->domainStatusLabel }}</span></div>
+                            <div class="mt-1"><span class="text-gray-500 dark:text-gray-400">Сообщение:</span> <span class="font-semibold">{{ $row->postAiStatusLabel }}</span></div>
+                            @if($row->postAiNotComplete)
+                                <div class="mt-2 inline-flex rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                                    Требует внимания
                                 </div>
-                                <button type="submit" class="btn btn-sm btn-error w-full">Удалить записи</button>
-                            </form>
+                            @endif
+                        </td>
+                        <td class="px-4 py-4 rounded-r-lg {{ $cellBgClass }}">
+                            <div class="grid gap-2">
+                                <a href="{{ $authorDetailUrl($user->id) }}" class="btn btn-sm btn-primary w-full text-center">Открыть автора</a>
+                                <a href="{{ route('admin.active-authors-report.edit', ['type' => $row->type->value, 'domain_id' => $row->domainId]) }}"
+                                   class="btn btn-sm btn-secondary w-full text-center">Редактировать статусы</a>
+                                @if($row->postId)
+                                    <a href="{{ $postFormUrl($row->postId) }}" class="btn btn-sm btn-secondary w-full text-center" target="_blank">Открыть сообщение</a>
+                                @endif
+                                <a href="{{ $domainFormUrl($row->type, $row->domainId) }}" class="btn btn-sm btn-secondary w-full text-center" target="_blank">Открыть запись</a>
+
+                                <details class="mt-1 border-t border-red-100 pt-2 dark:border-red-900/40">
+                                    <summary class="cursor-pointer text-xs font-semibold text-red-600 dark:text-red-300">Удаление</summary>
+                                    <form method="post" action="{{ $deleteUrl }}" class="mt-2 space-y-2"
+                                          onsubmit="const scope=this.delete_scope.value;const label=scope==='active_only'?'только активные записи типа «{{ $type->label() }}»':'все записи типа «{{ $type->label() }}»';return confirm('Удалить (мягкое удаление): '+label+' для этого автора?');">
+                                        @csrf
+                                        <input type="hidden" name="return_query" value="{{ e(request()->getQueryString() ?? '') }}">
+                                        <input type="hidden" name="type" value="{{ $row->type->value }}">
+                                        <input type="hidden" name="api_post_user_id" value="{{ $user->id }}">
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Объём удаления</label>
+                                            <select name="delete_scope" class="form-select form-select-sm w-full rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900 text-xs">
+                                                <option value="active_only">Только активные записи типа</option>
+                                                <option value="all">Все записи типа (включая неактивные)</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-sm btn-error w-full">Удалить записи</button>
+                                    </form>
+                                </details>
+                            </div>
                         </td>
                     </tr>
                 @endif
             @empty
                 <tr>
-                    <td colspan="7" class="p-6 text-center text-gray-500">Нет данных по заданным критериям.</td>
+                    <td colspan="6" class="p-6 text-center text-gray-500">Нет данных по заданным критериям.</td>
                 </tr>
             @endforelse
             </tbody>
