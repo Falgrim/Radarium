@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\ReviewCanEditEnum;
@@ -110,9 +109,6 @@ class BuilderController extends Controller
 
         $authors = ApiPostUser::whereHas('builders', function (Builder $query) use ($validated, $specialityFilterIds) {
             $query->whereNotNull('api_channel_post_id')->where('api_channel_post_id', '>', 0);
-            $query->whereHas('post', function (Builder $postQuery) {
-                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-            });
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
@@ -460,9 +456,6 @@ class BuilderController extends Controller
         return \App\Models\Builder::query()
             ->whereNotNull('api_channel_post_id')
             ->where('api_channel_post_id', '>', 0)
-            ->whereHas('post', function (Builder $postQuery) {
-                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-            })
             ->when($this->onlyActive, function (Builder $query) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             })

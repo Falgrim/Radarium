@@ -1,13 +1,30 @@
 <?php
 
+use App\Http\Controllers\Admin\ActiveAuthorsReportActionController;
 use App\Http\Controllers\BuilderController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\IndexController;
 use App\Http\Controllers\ModerationAlertController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\IndexController;
 use App\Http\Controllers\SubscribeController;
 use App\Http\Controllers\TariffController;
 use Illuminate\Support\Facades\Route;
+use MoonShine\Http\Middleware\Authenticate as MoonShineAuthenticate;
+
+$adminPrefix = trim((string) config('moonshine.route.prefix', 'admin'), '/');
+
+Route::middleware(['web', MoonShineAuthenticate::class])
+    ->prefix($adminPrefix)
+    ->group(function () {
+        Route::get('/active-authors-report/edit', [ActiveAuthorsReportActionController::class, 'edit'])
+            ->name('admin.active-authors-report.edit');
+        Route::post('/active-authors-report/update', [ActiveAuthorsReportActionController::class, 'update'])
+            ->name('admin.active-authors-report.update');
+        Route::get('/active-authors-report/export', [ActiveAuthorsReportActionController::class, 'export'])
+            ->name('admin.active-authors-report.export');
+        Route::post('/active-authors-report/delete', [ActiveAuthorsReportActionController::class, 'destroy'])
+            ->name('admin.active-authors-report.destroy');
+    });
 
 Route::get('/', [IndexController::class, 'index'])->name('index');
 Route::get('/tech', [IndexController::class, 'tech'])->name('tech');
@@ -28,7 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/builders/builder/{id}', [BuilderController::class, 'builderStoreReview'])->name('catalog.builder.store');
     Route::post('/builders/builder/{id}/review', [BuilderController::class, 'builderEditReview'])->name('catalog.builder.edit_review');
 
-    //Route::get('/profile/subscribe', [SubscribeController::class, 'main'])->name('profile.subscribe');
+    // Route::get('/profile/subscribe', [SubscribeController::class, 'main'])->name('profile.subscribe');
 });
 
 Route::get('/dashboard', function () {

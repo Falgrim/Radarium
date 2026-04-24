@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Models\MailingMessage;
+use App\MoonShine\Pages\ActiveAuthorsReportPage;
+use App\MoonShine\Pages\BuilderSystemPromptPage;
+use App\MoonShine\Pages\SpecialistSystemPromptPage;
 use App\MoonShine\Resources\ApiAiResource;
 use App\MoonShine\Resources\ApiChannelPostResource;
 use App\MoonShine\Resources\ApiChannelResource;
@@ -23,21 +25,18 @@ use App\MoonShine\Resources\PaymentTariffResource;
 use App\MoonShine\Resources\ReviewCustomFieldResource;
 use App\MoonShine\Resources\ReviewResource;
 use App\MoonShine\Resources\SpecialistResource;
-use App\MoonShine\Pages\BuilderSystemPromptPage;
-use App\MoonShine\Pages\SpecialistSystemPromptPage;
 use App\MoonShine\Resources\UserResource;
 use App\MoonShine\Resources\UserRoleResource;
 use App\MoonShine\Resources\UserTariffResource;
-use MoonShine\Providers\MoonShineApplicationServiceProvider;
-use MoonShine\MoonShine;
-use MoonShine\Menu\MenuGroup;
-use MoonShine\Menu\MenuItem;
-use MoonShine\Resources\MoonShineUserResource;
-use MoonShine\Resources\MoonShineUserRoleResource;
+use Closure;
 use MoonShine\Contracts\Resources\ResourceContract;
 use MoonShine\Menu\MenuElement;
+use MoonShine\Menu\MenuGroup;
+use MoonShine\Menu\MenuItem;
 use MoonShine\Pages\Page;
-use Closure;
+use MoonShine\Providers\MoonShineApplicationServiceProvider;
+use MoonShine\Resources\MoonShineUserResource;
+use MoonShine\Resources\MoonShineUserRoleResource;
 
 class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
 {
@@ -47,8 +46,8 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
     protected function resources(): array
     {
         return [
-            new ReviewCustomFieldResource(),
-            new MailingMessageLogResource(),
+            new ReviewCustomFieldResource,
+            new MailingMessageLogResource,
         ];
     }
 
@@ -58,8 +57,9 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
     protected function pages(): array
     {
         return [
-            new BuilderSystemPromptPage(),
-            new SpecialistSystemPromptPage(),
+            new BuilderSystemPromptPage,
+            new SpecialistSystemPromptPage,
+            new ActiveAuthorsReportPage,
         ];
     }
 
@@ -69,56 +69,60 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
     protected function menu(): array
     {
         return [
-            MenuGroup::make(static fn() => __('moonshine::ui.resource.system'), [
+            MenuGroup::make(static fn () => __('moonshine::ui.resource.system'), [
                 MenuItem::make(
-                    static fn() => __('moonshine::ui.resource.admins_title'),
-                    new MoonShineUserResource()
+                    static fn () => __('moonshine::ui.resource.admins_title'),
+                    new MoonShineUserResource
                 ),
                 MenuItem::make(
-                    static fn() => __('moonshine::ui.resource.role_title'),
-                    new MoonShineUserRoleResource()
+                    static fn () => __('moonshine::ui.resource.role_title'),
+                    new MoonShineUserRoleResource
                 ),
-                MenuItem::make('Настройки', new ConfigurationResource(), 'heroicons.cog'),
+                MenuItem::make('Настройки', new ConfigurationResource, 'heroicons.cog'),
             ]),
 
             MenuGroup::make('Пользователи', [
-                MenuItem::make('Пользователи', new UserResource(), 'heroicons.cog'),
-                MenuItem::make('Подписки', new UserTariffResource(), 'heroicons.cog'),
-                MenuItem::make('Роли', new UserRoleResource(), 'heroicons.cog'),
+                MenuItem::make('Пользователи', new UserResource, 'heroicons.cog'),
+                MenuItem::make('Подписки', new UserTariffResource, 'heroicons.cog'),
+                MenuItem::make('Роли', new UserRoleResource, 'heroicons.cog'),
             ], 'heroicons.users'),
+
+            MenuGroup::make('Отчёты', [
+                MenuItem::make('Активные авторы', new ActiveAuthorsReportPage, 'heroicons.document-text'),
+            ], 'heroicons.document-text'),
 
             MenuGroup::make('Основное меню', [
-                MenuItem::make('Сервисы ИИ', new ApiAiResource(), 'heroicons.users'),
-                MenuItem::make('Источники сообщений', new ApiChannelResource(), 'heroicons.users'),
-                MenuItem::make('Cообщения/Посты', new ApiChannelPostResource(), 'heroicons.users'),
-                MenuItem::make('Авторы сообщений', new ApiPostUserResource(), 'heroicons.users'),
-                MenuItem::make('Специализации', new DictionarySpecialityResource(), 'heroicons.users'),
-                MenuItem::make('Модерация', new ModerationAlertResource(), 'heroicons.users'),
+                MenuItem::make('Сервисы ИИ', new ApiAiResource, 'heroicons.users'),
+                MenuItem::make('Источники сообщений', new ApiChannelResource, 'heroicons.users'),
+                MenuItem::make('Cообщения/Посты', new ApiChannelPostResource, 'heroicons.users'),
+                MenuItem::make('Авторы сообщений', new ApiPostUserResource, 'heroicons.users'),
+                MenuItem::make('Специализации', new DictionarySpecialityResource, 'heroicons.users'),
+                MenuItem::make('Модерация', new ModerationAlertResource, 'heroicons.users'),
             ], 'heroicons.users'),
 
-            MenuItem::make('Управление тарифами', new PaymentTariffResource(), 'heroicons.users'),
+            MenuItem::make('Управление тарифами', new PaymentTariffResource, 'heroicons.users'),
 
             MenuGroup::make('Продвижение', [
-                MenuItem::make('Работодатели', new CompanyAuthorsResource(), 'heroicons.users'),
-                MenuItem::make('Рассылка', new MailingMessageResource(), 'heroicons.users'),
-                /*MenuItem::make('Рассылка. Лог', new MailingMessageLogResource(), 'heroicons.users'),*/
+                MenuItem::make('Работодатели', new CompanyAuthorsResource, 'heroicons.users'),
+                MenuItem::make('Рассылка', new MailingMessageResource, 'heroicons.users'),
+                /* MenuItem::make('Рассылка. Лог', new MailingMessageLogResource(), 'heroicons.users'), */
             ], 'heroicons.users'),
 
             MenuGroup::make('Проектирование', [
-                MenuItem::make('Проектирование', new SpecialistResource(), 'heroicons.users'),
-                MenuItem::make('Системный промпт', new SpecialistSystemPromptPage(), 'heroicons.document-text'),
-                MenuItem::make('Отзывы', new ReviewResource(), 'heroicons.users'),
+                MenuItem::make('Проектирование', new SpecialistResource, 'heroicons.users'),
+                MenuItem::make('Системный промпт', new SpecialistSystemPromptPage, 'heroicons.document-text'),
+                MenuItem::make('Отзывы', new ReviewResource, 'heroicons.users'),
             ], 'heroicons.users'),
 
             MenuGroup::make('Строительство', [
-                MenuItem::make('Строительство', new BuilderResource(), 'heroicons.users'),
-                MenuItem::make('Системный промпт', new BuilderSystemPromptPage(), 'heroicons.document-text'),
-                MenuItem::make('Отзывы', new BuilderReviewResource(), 'heroicons.users'),
+                MenuItem::make('Строительство', new BuilderResource, 'heroicons.users'),
+                MenuItem::make('Системный промпт', new BuilderSystemPromptPage, 'heroicons.document-text'),
+                MenuItem::make('Отзывы', new BuilderReviewResource, 'heroicons.users'),
             ], 'heroicons.users'),
 
             MenuGroup::make('Вакансии', [
-                MenuItem::make('Вакансии', new CompanyJobResource(), 'heroicons.users'),
-                MenuItem::make('Отзывы', new CompanyJobReviewResource(), 'heroicons.users'),
+                MenuItem::make('Вакансии', new CompanyJobResource, 'heroicons.users'),
+                MenuItem::make('Отзывы', new CompanyJobReviewResource, 'heroicons.users'),
             ], 'heroicons.users'),
         ];
     }
