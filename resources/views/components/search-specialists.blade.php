@@ -1,7 +1,7 @@
-@props(['showRegionNoneFilterOption' => true])
 @php
     $formErrorClass = "";
     $contactsLimit = Auth::check() ? Auth::user()->getLeftContacts() : [];
+    $showRegionNoneFilterOption = $showRegionNoneFilterOption ?? true;
 @endphp
 
 @if ($errors->any())
