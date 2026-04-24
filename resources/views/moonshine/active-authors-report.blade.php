@@ -4,53 +4,78 @@
     /** @var \Illuminate\Support\Collection<int, array{user: \App\Models\ApiPostUser, row: ?\App\Support\Admin\ActiveAuthorsReportRow}> $entries */
 @endphp
 
-<div class="space-y-6 p-4">
-    <div class="rounded-lg border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 p-4 shadow-sm">
-        <h2 class="text-lg font-semibold mb-2">Критерии выборки</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            В список попадают <strong>уникальные авторы</strong> (аккаунты Telegram), у которых есть хотя бы одна
-            <strong>сейчас активная</strong> запись выбранного типа, при этом дата публикации связанного сообщения попадает в выбранный период
-            (если период не задан — за всё время). Сортировка: по дате последнего сообщения (новые сверху).
-        </p>
-        <form method="get" action="{{ $reportFormAction }}" class="flex flex-wrap gap-4 items-end">
-            <div>
-                <label class="block text-sm font-medium mb-1">Тип записи</label>
-                <select name="type" class="form-select rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
-                    @foreach(ActiveAuthorsReportTypeEnum::cases() as $case)
-                        <option value="{{ $case->value }}" @selected($type === $case)>{{ $case->label() }}</option>
-                    @endforeach
-                </select>
+<div class="space-y-8 p-4">
+    <section class="rounded-xl border border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 shadow-sm overflow-hidden">
+        <div class="border-b border-gray-200 dark:border-dark-600 px-5 py-4">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold">Отчёт: активные авторы</h2>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Авторы с активными карточками выбранного типа за заданный период.
+                    </p>
+                </div>
+                <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm dark:bg-dark-900">
+                    <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">TOTAL</div>
+                    <div class="text-2xl font-bold leading-none">{{ $paginator->total() }}</div>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Дата с</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}"
-                       class="form-input rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
-            </div>
-            <div>
-                <label class="block text-sm font-medium mb-1">Дата по</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}"
-                       class="form-input rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
-            </div>
-            <div class="flex items-center pb-1">
-                <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="checkbox" name="multi_only" value="1" @checked($multiOnly)
-                           class="rounded border-gray-300 dark:border-dark-500">
-                    <span>Только авторы с 2+ активными карточками</span>
-                </label>
-            </div>
-            <button type="submit" class="btn btn-primary">Показать</button>
-            <a href="{{ $exportUrl }}" class="btn btn-secondary">Скачать CSV</a>
-        </form>
-    </div>
+        </div>
 
-    <div class="text-sm text-gray-600 dark:text-gray-400">
-        Найдено авторов: <strong>{{ $paginator->total() }}</strong>
-        @if($dateFrom || $dateTo)
-            <span class="ml-2">(период: {{ $dateFrom?->format('d.m.Y') ?? '…' }} — {{ $dateTo?->format('d.m.Y') ?? '…' }})</span>
-        @else
-            <span class="ml-2">(за всё время)</span>
-        @endif
-    </div>
+        <div class="px-5 py-4">
+            <div class="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950 dark:border-blue-900/40 dark:bg-blue-950/20 dark:text-blue-100">
+                В список попадают <strong>уникальные авторы</strong> (аккаунты Telegram), у которых есть хотя бы одна
+                <strong>сейчас активная</strong> запись выбранного типа. Дата публикации связанного сообщения учитывается по выбранному периоду.
+                Сортировка: по дате последнего сообщения, новые сверху.
+            </div>
+
+            <form method="get" action="{{ $reportFormAction }}" class="mt-4">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; align-items: end;">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Тип записи</label>
+                        <select name="type" class="form-select w-full rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
+                            @foreach(ActiveAuthorsReportTypeEnum::cases() as $case)
+                                <option value="{{ $case->value }}" @selected($type === $case)>{{ $case->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Дата с</label>
+                        <input type="date" name="date_from" value="{{ request('date_from') }}"
+                               class="form-input w-full rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Дата по</label>
+                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                               class="form-input w-full rounded-md border-gray-300 dark:border-dark-500 dark:bg-dark-900">
+                    </div>
+                    <div class="rounded-lg border border-gray-200 px-3 py-2 dark:border-dark-600">
+                        <label class="inline-flex items-start gap-2 text-sm cursor-pointer">
+                            <input type="checkbox" name="multi_only" value="1" @checked($multiOnly)
+                                   class="mt-1 rounded border-gray-300 dark:border-dark-500">
+                            <span>Только авторы с <strong>2+</strong> активными карточками</span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: .75rem; flex-wrap: wrap;">
+                        <button type="submit" class="btn btn-primary">Показать</button>
+                        <a href="{{ $exportUrl }}" class="btn btn-secondary">Скачать CSV</a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="mt-4 flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <div>
+                    Найдено авторов: <strong>{{ $paginator->total() }}</strong>
+                </div>
+                <div>
+                    @if($dateFrom || $dateTo)
+                        Период: <strong>{{ $dateFrom?->format('d.m.Y') ?? '…' }} — {{ $dateTo?->format('d.m.Y') ?? '…' }}</strong>
+                    @else
+                        Период: <strong>за всё время</strong>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </section>
 
     <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-dark-600 bg-gray-50 dark:bg-dark-900 p-3">
         <table class="table-auto w-full text-sm border-separate" style="border-spacing: 0 0.75rem;">
