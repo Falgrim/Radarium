@@ -13,6 +13,7 @@ use App\Models\BuilderReviewCustomField;
 use App\Models\DictionarySpeciality;
 use App\Models\UserOpenContact;
 use App\Services\Tariff;
+use App\Support\CatalogRegionOptions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -114,7 +115,9 @@ class BuilderController extends Controller
 
             if (! empty($validated['region'])) {
                 if ($validated['region'] === 'none') {
-                    $query->whereNull('region');
+                    $query->where(function (Builder $inner) {
+                        CatalogRegionOptions::applyRegionMissingConstraint($inner);
+                    });
                 } else {
                     $query->where('region', $validated['region']);
                 }
@@ -424,7 +427,7 @@ class BuilderController extends Controller
 
         $hasNullRegion = (clone $base)
             ->where(function (Builder $q) {
-                $q->whereNull('region')->orWhere('region', '');
+                CatalogRegionOptions::applyRegionMissingConstraint($q);
             })
             ->exists();
 
@@ -436,10 +439,7 @@ class BuilderController extends Controller
             ->pluck('region')
             ->all();
 
-        $regionsList = [];
-        foreach ($names as $name) {
-            $regionsList[$name] = $name;
-        }
+        $regionsList = CatalogRegionOptions::choicesFromRawNames($names);
 
         return [$regionsList, $hasNullRegion];
     }

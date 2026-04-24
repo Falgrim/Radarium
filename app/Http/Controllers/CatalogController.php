@@ -18,6 +18,7 @@ use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Models\UserOpenContact;
 use App\Services\Tariff;
+use App\Support\CatalogRegionOptions;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -103,7 +104,7 @@ class CatalogController extends Controller
 
         $hasNullRegion = (clone $base)
             ->where(function (Builder $q) {
-                $q->whereNull('region')->orWhere('region', '');
+                CatalogRegionOptions::applyRegionMissingConstraint($q);
             })
             ->exists();
 
@@ -115,10 +116,7 @@ class CatalogController extends Controller
             ->pluck('region')
             ->all();
 
-        $regionsList = [];
-        foreach ($names as $name) {
-            $regionsList[$name] = $name;
-        }
+        $regionsList = CatalogRegionOptions::choicesFromRawNames($names);
 
         return [$regionsList, $hasNullRegion];
     }
@@ -245,7 +243,9 @@ class CatalogController extends Controller
 
             if (!empty($validated['region'])) {
                 if ($validated['region'] === 'none') {
-                    $query->whereNull('region');
+                    $query->where(function (Builder $inner) {
+                        CatalogRegionOptions::applyRegionMissingConstraint($inner);
+                    });
                 } else {
                     $query->where('region', $validated['region']);
                 }
