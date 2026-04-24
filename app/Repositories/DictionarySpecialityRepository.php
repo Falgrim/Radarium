@@ -3,11 +3,8 @@
 namespace App\Repositories;
 
 use App\Enum\ApiDataTypeEnum;
-use App\Enum\ApiPostAiStatusEnum;
-use App\Models\Configuration;
 use App\Infrastructures\Repository\Repository;
 use App\Models\DictionarySpeciality;
-use App\Models\Specialist;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,16 +21,13 @@ class DictionarySpecialityRepository extends Repository
     /**
      * Список уникальных данных по специальности
      *
-     * @param array $list
-     * @param bool $withEmpty
-     *
-     * @return array
+     * @param  array  $list
      */
     public function getList(ApiDataTypeEnum $type, bool $withEmpty = true): array
     {
         $list = [];
 
-        if ($type === ApiDataTypeEnum::Specialist OR $type === ApiDataTypeEnum::Company) {
+        if ($type === ApiDataTypeEnum::Specialist or $type === ApiDataTypeEnum::Company) {
             $whereHas = 'specialists';
         } elseif ($type === ApiDataTypeEnum::Builder) {
             $whereHas = 'builders';
@@ -45,14 +39,14 @@ class DictionarySpecialityRepository extends Repository
             ->select('title', 'id', 'short_name', 'group_title')
             ->where('api_data_type_id', $type);
 
-        if (!$withEmpty) {
+        if (! $withEmpty) {
             $collection = $collection->whereHas($whereHas);
         }
 
         $collection = $collection->orderBy('title')->get();
 
         foreach ($collection as $row) {
-            if ($row->group_title AND $row->group_title != $row->title) {
+            if ($row->group_title and $row->group_title != $row->title) {
                 $title = $row->group_title.' - '.$row->title;
             } else {
                 $title = $row->title;
@@ -61,7 +55,7 @@ class DictionarySpecialityRepository extends Repository
             $list[$row->id] = [
                 'value' => $title,
                 'short_name' => $row->short_name,
-                'id'    => $row->id,
+                'id' => $row->id,
             ];
         }
 
@@ -117,7 +111,7 @@ class DictionarySpecialityRepository extends Repository
                     'title' => (string) $root->title,
                     'items' => [[
                         'id' => (int) $root->id,
-                        'value' => $this->formatSpecialityLabel($root),
+                        'value' => (string) $root->title,
                         'short_name' => $root->short_name,
                     ]],
                 ];
@@ -125,17 +119,19 @@ class DictionarySpecialityRepository extends Repository
                 continue;
             }
 
-            $items = [];
+            $items = [
+                [
+                    'id' => (int) $root->id,
+                    'value' => 'Вся группа',
+                    'short_name' => $root->short_name,
+                ],
+            ];
             foreach ($subs as $child) {
                 $items[] = [
                     'id' => (int) $child->id,
-                    'value' => $this->formatSpecialityLabel($child),
+                    'value' => (string) $child->title,
                     'short_name' => $child->short_name,
                 ];
-            }
-
-            if ($items === []) {
-                continue;
             }
 
             $groups[] = [
@@ -147,12 +143,33 @@ class DictionarySpecialityRepository extends Repository
         return $groups;
     }
 
-    private function formatSpecialityLabel(DictionarySpeciality $row): string
+    /**
+     * Выбор «вся группа» (id корня) в каталоге = фильтр по всем id этой ветки.
+     *
+     * @param  list<int|string>  $ids
+     * @return list<int>
+     */
+    public function expandBuilderSearchSpecialityIds(array $ids, ApiDataTypeEnum $type): array
     {
-        if ($row->group_title && $row->group_title !== $row->title) {
-            return $row->group_title.' - '.$row->title;
+        if ($type !== ApiDataTypeEnum::Builder || $ids === []) {
+            return array_values(array_unique(array_map('intval', $ids)));
         }
 
-        return (string) $row->title;
+        $out = [];
+        foreach (array_unique(array_map('intval', $ids)) as $id) {
+            $childIds = $this->getQuery()
+                ->where('api_data_type_id', $type)
+                ->where('parent_id', $id)
+                ->pluck('id')
+                ->all();
+
+            if ($childIds !== []) {
+                $out = array_merge($out, $childIds, [$id]);
+            } else {
+                $out[] = $id;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 }

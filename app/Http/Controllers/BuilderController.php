@@ -2,32 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiDataTypeEnum;
-use App\Enum\CompanyJobStatusEnum;
+use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\ReviewCanEditEnum;
 use App\Enum\ReviewStatusEnum;
-use App\Enum\ApiPostAiStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
-use App\Models\DictionarySpeciality;
 use App\Models\BuilderReview;
 use App\Models\BuilderReviewCustomField;
-use App\Models\CompanyJob;
-use App\Models\Review;
-use App\Models\ReviewCustomField;
-use App\Models\Specialist;
-use App\Models\SpecialistSpeciality;
+use App\Models\DictionarySpeciality;
 use App\Models\UserOpenContact;
 use App\Services\Tariff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
 class BuilderController extends Controller
 {
@@ -35,10 +26,7 @@ class BuilderController extends Controller
 
     protected int $onPage = 10;
 
-    public function __construct(protected Tariff $tariffService)
-    {
-
-    }
+    public function __construct(protected Tariff $tariffService) {}
 
     public function builders(Request $request)
     {
@@ -74,7 +62,7 @@ class BuilderController extends Controller
                 'sometimes',
                 'string',
                 'min:2',
-                'max:50'
+                'max:50',
             ],
             'speciality_id' => [
                 'nullable',
@@ -107,13 +95,20 @@ class BuilderController extends Controller
             ],
         ]);
 
-        $authors = ApiPostUser::whereHas('builders', function (Builder $query) use ($validated) {
+        $specialityFilterIds = ! empty($validated['speciality_id'])
+            ? Repositories::dictionarySpeciality()->expandBuilderSearchSpecialityIds(
+                $validated['speciality_id'],
+                ApiDataTypeEnum::Builder
+            )
+            : [];
+
+        $authors = ApiPostUser::whereHas('builders', function (Builder $query) use ($validated, $specialityFilterIds) {
             $query->whereNotNull('api_channel_post_id')->where('api_channel_post_id', '>', 0);
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
 
-            if (!empty($validated['region'])) {
+            if (! empty($validated['region'])) {
                 if ($validated['region'] === 'none') {
                     $query->whereNull('region');
                 } else {
@@ -121,7 +116,7 @@ class BuilderController extends Controller
                 }
             }
 
-            if (!empty($validated['key_word_tags'])) {
+            if (! empty($validated['key_word_tags'])) {
                 $query->whereHas('post', function (Builder $query) use ($validated) {
                     $query->where(function (Builder $query) use ($validated) {
                         foreach ($validated['key_word_tags'] as $keyWordTag) {
@@ -131,13 +126,13 @@ class BuilderController extends Controller
                 });
             }
 
-            if (!empty($validated['speciality_id'])) {
-                $query->whereRelation('specialities', function (Builder $query) use ($validated) {
-                    $query->whereIn('dictionary_speciality_id', $validated['speciality_id']);
+            if ($specialityFilterIds !== []) {
+                $query->whereRelation('specialities', function (Builder $query) use ($specialityFilterIds) {
+                    $query->whereIn('dictionary_speciality_id', $specialityFilterIds);
                 });
             }
 
-            if (!empty($validated['key_word'])) {
+            if (! empty($validated['key_word'])) {
                 $query->whereHas('post', function (Builder $query) use ($validated) {
                     $query->where('post', 'like', '%'.$validated['key_word'].'%');
                 });
@@ -147,10 +142,10 @@ class BuilderController extends Controller
                 $query->where('status', ApiPostAiStatusEnum::Active);
             });
 
-        if (!empty($validated['open_contacts']) && Auth::check()) {
-            $authors = $authors->whereIn('id', function($query){
+        if (! empty($validated['open_contacts']) && Auth::check()) {
+            $authors = $authors->whereIn('id', function ($query) {
                 $query->select('api_post_user_id')
-                    ->from(with(new UserOpenContact())->getTable())
+                    ->from(with(new UserOpenContact)->getTable())
                     ->where('user_id', Auth::user()->id);
             });
         }
@@ -213,7 +208,7 @@ class BuilderController extends Controller
 
         $reviews = $author->builderReviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
 
-        if (!$this->tariffService->checkContactAccess($author)) {
+        if (! $this->tariffService->checkContactAccess($author)) {
             return view('catalog.buy_tariff', []);
         }
         $this->tariffService->addOpenContactLog(Auth::user(), $author);
@@ -249,7 +244,7 @@ class BuilderController extends Controller
 
         $validatedRoute = $validator->validateWithBag('specialist');
 
-        //TODO: проверить был ли ранее отзыв опубликован, чтобы блокировать добавление новых
+        // TODO: проверить был ли ранее отзыв опубликован, чтобы блокировать добавление новых
 
         $validator = Validator::make($request->post(), [
             'text' => [
@@ -271,7 +266,7 @@ class BuilderController extends Controller
             'extra_row.*.title' => [
                 'sometimes',
                 'required_with:extra_row.*.value',
-                //'required_if:extra_row.*.value,required',
+                // 'required_if:extra_row.*.value,required',
                 'nullable',
                 'distinct:ignore_case',
                 'string',
@@ -282,7 +277,7 @@ class BuilderController extends Controller
                 'sometimes',
                 'required_with:extra_row.*.title',
                 'nullable',
-                //'required_if:extra_row.*.title,required',
+                // 'required_if:extra_row.*.title,required',
                 'string',
                 'min:1',
                 'max:100',
@@ -315,18 +310,18 @@ class BuilderController extends Controller
         }
 
         $review = BuilderReview::create([
-            'text'      => $validated['text'],
-            'can_edit'  => ReviewCanEditEnum::Allow,
-            'status'    => ReviewStatusEnum::InModeration,
-            'rating'    => $validated['rating'],
+            'text' => $validated['text'],
+            'can_edit' => ReviewCanEditEnum::Allow,
+            'status' => ReviewStatusEnum::InModeration,
+            'rating' => $validated['rating'],
             'builder_id' => isset($specialist) ? $specialist->id : 0,
             'api_post_user_id' => $author->id,
-            'user_id'   => Auth::user()->id,
+            'user_id' => Auth::user()->id,
         ]);
 
         if (isset($validated['extra_row']) && count($validated['extra_row'])) {
             foreach ($validated['extra_row'] as $item) {
-                if (!$item['title']) {
+                if (! $item['title']) {
                     continue;
                 }
 
@@ -372,7 +367,7 @@ class BuilderController extends Controller
             'extra_row.*.title' => [
                 'sometimes',
                 'required_with:extra_row.*.value',
-                //'required_if:extra_row.*.value,required',
+                // 'required_if:extra_row.*.value,required',
                 'nullable',
                 'distinct:ignore_case',
                 'string',
@@ -383,7 +378,7 @@ class BuilderController extends Controller
                 'sometimes',
                 'required_with:extra_row.*.title',
                 'nullable',
-                //'required_if:extra_row.*.title,required',
+                // 'required_if:extra_row.*.title,required',
                 'string',
                 'min:1',
                 'max:100',
@@ -405,8 +400,8 @@ class BuilderController extends Controller
         $review->save();
 
         return response()
-        ->json($review)
-        ->setStatusCode(200)
-        ->header('Content-Type', 'application/json');
+            ->json($review)
+            ->setStatusCode(200)
+            ->header('Content-Type', 'application/json');
     }
 }
