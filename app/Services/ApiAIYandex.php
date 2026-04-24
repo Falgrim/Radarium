@@ -76,6 +76,8 @@ class ApiAIYandex
                 'spec_requirements' => ['id' => 'spec_requirements', 'type' => 'string'],
                 'link_resume'       => ['id' => 'link_resume', 'type' => 'string'],
                 'contact_info'      => ['id' => 'contact_info', 'type' => 'array_string'],
+                'location_city'     => ['id' => 'location_city', 'type' => 'string'],
+                'location_region'   => ['id' => 'location_region', 'type' => 'string'],
             ],
             ApiDataTypeEnum::Builder => [
                 'type'              => ['id' => 'ai_type', 'type' => 'string'],

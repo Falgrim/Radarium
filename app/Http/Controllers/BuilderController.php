@@ -12,6 +12,7 @@ use App\Models\BuilderReview;
 use App\Models\BuilderReviewCustomField;
 use App\Models\DictionarySpeciality;
 use App\Models\UserOpenContact;
+use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -38,13 +39,8 @@ class BuilderController extends Controller
             ->pluck('id')
             ->all();
 
-        $dbRegions = \App\Models\Builder::whereNotNull('region')
-            ->where('region', '!=', '')
-            ->where('status', ApiPostAiStatusEnum::Active)
-            ->distinct()
-            ->orderBy('region')
-            ->pluck('region', 'region')
-            ->toArray();
+        $regionsCatalog = app(RussianRegionNormalizer::class)->selectOptions();
+        $allowedRegions = array_merge(['none'], array_keys($regionsCatalog));
 
         $validated = $request->validate([
             'key_word' => [
@@ -92,6 +88,7 @@ class BuilderController extends Controller
                 'nullable',
                 'string',
                 'max:100',
+                Rule::in($allowedRegions),
             ],
         ]);
 
@@ -174,7 +171,7 @@ class BuilderController extends Controller
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
             'groupedSpecialitiesList' => $groupedSpecialitiesList,
-            'regionsList' => $dbRegions,
+            'regionsList' => $regionsCatalog,
             'tariffAccess' => $this->tariffService->checkOpenContact(),
             'userOpenLog' => $userOpenLog,
         ]);

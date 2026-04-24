@@ -17,6 +17,7 @@ use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Models\UserOpenContact;
+use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -98,19 +99,13 @@ class CatalogController extends Controller
             static fn () => Repositories::dictionarySpeciality()->getList(ApiDataTypeEnum::Specialist, false)
         );
 
-        $dbRegions = Cache::remember(
-            'catalog.specialists.regions_list_v1',
+        $citiesMtime = @filemtime(base_path('app/Data/russian_cities_100k.json')) ?: 0;
+        $regionsCatalog = Cache::remember(
+            'catalog.specialists.regions_canonical_v2.'.$citiesMtime,
             3600,
-            static function () {
-                return Specialist::whereNotNull('region')
-                    ->where('region', '!=', '')
-                    ->where('status', ApiPostAiStatusEnum::Active)
-                    ->distinct()
-                    ->orderBy('region')
-                    ->pluck('region', 'region')
-                    ->toArray();
-            }
+            static fn () => app(RussianRegionNormalizer::class)->selectOptions()
         );
+        $allowedRegions = array_merge(['none'], array_keys($regionsCatalog));
 
         $validated = $request->validate([
             'key_word' => [
@@ -158,6 +153,7 @@ class CatalogController extends Controller
                 'nullable',
                 'string',
                 'max:100',
+                Rule::in($allowedRegions),
             ],
         ]);
 
@@ -233,7 +229,7 @@ class CatalogController extends Controller
             'request' => $request,
             'authors' => $authors,
             'specialitiesList' => $specialitiesList,
-            'regionsList' => $dbRegions,
+            'regionsList' => $regionsCatalog,
             'tariffAccess' => $this->tariffService->checkOpenContact(),
             'userOpenLog' => $userOpenLog,
         ]);

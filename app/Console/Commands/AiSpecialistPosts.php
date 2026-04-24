@@ -17,6 +17,7 @@ use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
+use App\Services\RussianRegionNormalizer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -130,9 +131,13 @@ class AiSpecialistPosts extends Command
 
                     $result['json']['status'] = ApiPostAiStatusEnum::Active;
 
-                    if (!empty($post->channel->region)) {
-                        $result['json']['region'] = $post->channel->region;
-                    }
+                    $rawRegion = ! empty($result['json']['location_region'])
+                        ? trim((string) $result['json']['location_region'])
+                        : trim((string) ($post->channel->region ?? ''));
+                    $rawRegion = $rawRegion === '' ? null : $rawRegion;
+                    $result['json']['region'] = app(RussianRegionNormalizer::class)->normalizeOrKeep($rawRegion);
+
+                    unset($result['json']['location_region'], $result['json']['location_city']);
 
                     $specialist = Specialist::create($result['json']);
 

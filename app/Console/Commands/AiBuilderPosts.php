@@ -19,6 +19,7 @@ use App\Services\ApiAIYandex;
 use App\Services\BuilderAiPromptInjector;
 use App\Services\BuilderNormalizer;
 use App\Services\BuilderSpecialityMatcher;
+use App\Services\RussianRegionNormalizer;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
 use Illuminate\Console\Command;
@@ -160,10 +161,11 @@ class AiBuilderPosts extends Command
                     $fromText = $resolved['log']['text_match_ids'] ?? [];
                     $fromAi = $resolved['log']['ai_match_ids'] ?? [];
 
-                    $result['json']['region'] =
-                        !empty($result['json']['location_region'])
-                            ? $result['json']['location_region']
-                            : ($post->channel->region ?? null);
+                    $rawRegion = ! empty($result['json']['location_region'])
+                        ? trim((string) $result['json']['location_region'])
+                        : trim((string) ($post->channel->region ?? ''));
+                    $rawRegion = $rawRegion === '' ? null : $rawRegion;
+                    $result['json']['region'] = app(RussianRegionNormalizer::class)->normalizeOrKeep($rawRegion);
 
                     $result['json']['post_date']           = $post->post_date;
                     $result['json']['api_post_user_id']    = $post->apiPostUser->id;
