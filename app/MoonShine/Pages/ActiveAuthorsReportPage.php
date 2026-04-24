@@ -24,6 +24,8 @@ final class ActiveAuthorsReportPage extends Page
     public function __construct()
     {
         parent::__construct('Отчёт: активные авторы', 'active-authors-report');
+
+        $this->customView('moonshine.active-authors-report-page');
     }
 
     /**
