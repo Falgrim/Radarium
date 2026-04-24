@@ -1,6 +1,6 @@
 @php
     use App\Enum\ActiveAuthorsReportTypeEnum;
-    /** @var \Illuminate\Contracts\Pagination\LengthAwarePaginator $paginator */
+    /** @var \Illuminate\Pagination\LengthAwarePaginator $paginator */
     /** @var \Illuminate\Support\Collection<int, array{user: \App\Models\ApiPostUser, row: ?\App\Support\Admin\ActiveAuthorsReportRow}> $entries */
 @endphp
 
@@ -128,9 +128,33 @@
         </table>
     </div>
 
-    @if($paginator->hasPages())
-        <div class="flex justify-center">
-            {{ $paginator->links() }}
+    <div class="space-y-2 text-center">
+        @if($paginator->hasPages())
+            <nav class="flex flex-wrap items-center justify-center gap-1" aria-label="Пагинация отчёта">
+                @if($paginator->onFirstPage())
+                    <span class="px-3 py-2 rounded-md border border-gray-200 dark:border-dark-600 text-gray-400 cursor-not-allowed">‹</span>
+                @else
+                    <a href="{{ $paginator->previousPageUrl() }}" class="px-3 py-2 rounded-md border border-gray-200 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700">‹</a>
+                @endif
+
+                @for($page = 1; $page <= $paginator->lastPage(); $page++)
+                    @if($page === $paginator->currentPage())
+                        <span class="px-3 py-2 rounded-md border border-primary bg-primary text-white" aria-current="page">{{ $page }}</span>
+                    @else
+                        <a href="{{ $paginator->url($page) }}" class="px-3 py-2 rounded-md border border-gray-200 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700">{{ $page }}</a>
+                    @endif
+                @endfor
+
+                @if($paginator->hasMorePages())
+                    <a href="{{ $paginator->nextPageUrl() }}" class="px-3 py-2 rounded-md border border-gray-200 dark:border-dark-600 hover:bg-gray-50 dark:hover:bg-dark-700">›</a>
+                @else
+                    <span class="px-3 py-2 rounded-md border border-gray-200 dark:border-dark-600 text-gray-400 cursor-not-allowed">›</span>
+                @endif
+            </nav>
+        @endif
+
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+            TOTAL: <strong>{{ $paginator->total() }}</strong>
         </div>
-    @endif
+    </div>
 </div>
