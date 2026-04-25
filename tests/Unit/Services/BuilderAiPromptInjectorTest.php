@@ -33,4 +33,18 @@ final class BuilderAiPromptInjectorTest extends TestCase
         $this->assertStringContainsString('- Тест', $out);
         $this->assertStringContainsString('Только текст', $out);
     }
+
+    public function test_replaces_backslashes_in_speciality_titles_for_json_safety(): void
+    {
+        $rows = collect([
+            (object) ['title' => 'Укладка плитки\\керамогранита'],
+            (object) ['title' => 'Монолитные работы \\ бетонные работы'],
+        ]);
+
+        $out = BuilderAiPromptInjector::injectSpecialitiesList(BuilderAiPromptInjector::PLACEHOLDER, $rows);
+
+        $this->assertStringContainsString('- Укладка плитки/керамогранита', $out);
+        $this->assertStringContainsString('- Монолитные работы / бетонные работы', $out);
+        $this->assertStringNotContainsString('\\', $out);
+    }
 }
