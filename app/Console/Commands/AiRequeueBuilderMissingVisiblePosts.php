@@ -82,9 +82,13 @@ class AiRequeueBuilderMissingVisiblePosts extends Command
         $this->newLine();
         $this->info('Распределение статусов постов в текущей выборке (после --limit, если указан):');
         foreach ($distribution as $row) {
-            $enum = ApiChannelPostStatusEnum::tryFrom((int) $row->ai_parse_status);
+            $status = $row->ai_parse_status;
+            $statusValue = $status instanceof ApiChannelPostStatusEnum ? $status->value : (int) $status;
+            $enum = $status instanceof ApiChannelPostStatusEnum
+                ? $status
+                : ApiChannelPostStatusEnum::tryFrom($statusValue);
             $label = $enum?->name ?? 'unknown';
-            $this->line(sprintf('  %s (%s): %s', $label, $row->ai_parse_status, $row->c));
+            $this->line(sprintf('  %s (%s): %s', $label, $statusValue, $row->c));
         }
 
         $this->printSamples($authorIds, $postIds);
@@ -185,7 +189,7 @@ class AiRequeueBuilderMissingVisiblePosts extends Command
 
     /**
      * @param  Collection<int, int>  $postIds
-     * @return array<int, object{ai_parse_status:int, c:int}>
+     * @return array<int, object{ai_parse_status:int|ApiChannelPostStatusEnum, c:int}>
      */
     protected function statusDistributionForPosts(Collection $postIds): array
     {
