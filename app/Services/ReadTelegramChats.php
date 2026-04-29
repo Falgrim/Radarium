@@ -17,8 +17,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 use danog\MadelineProto\Logger;
-use danog\MadelineProto\Settings\Logger as LoggerSettings;
-
 
 class ReadTelegramChats
 {
@@ -76,17 +74,7 @@ class ReadTelegramChats
                 ->setLangCode('RU')
         );
 
-        //$settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
-               // --- Детальное логирование ---
-        $loggerSettings = new LoggerSettings();
-        $loggerSettings->setType(Logger::FILE_LOGGER);
-        $loggerSettings->setLevel(Logger::ULTRA_VERBOSE);
-        $loggerSettings->setExtra($logPath);
-        $settings->setLogger($loggerSettings);
-        // --- END ---
-        
-        
-        
+        MadelineConnectionConfigurator::applyFileLogger($settings, Logger::ULTRA_VERBOSE);
 
         if (config('database.redis.default.password')) {
             $settings->setDb(
@@ -104,7 +92,7 @@ class ReadTelegramChats
         MadelineConnectionConfigurator::apply($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $MadelineProto->updateSettings($settings->getConnection());
+        $MadelineProto->updateSettings($settings);
 
         if (!$MadelineProto->getSelf()) {
             $MadelineProto->start();

@@ -77,11 +77,11 @@ class TelegramProfilesPhoto extends Command
                 ->setApiId($apiChannel->options['api_id'])
                 ->setApiHash($apiChannel->options['api_hash'])
         );
-        $settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
         MadelineConnectionConfigurator::apply($settings);
+        MadelineConnectionConfigurator::applyFileLogger($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $MadelineProto->updateSettings($settings->getConnection());
+        $MadelineProto->updateSettings($settings);
 
         $MadelineProto->start();
 

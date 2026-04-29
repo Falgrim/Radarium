@@ -63,8 +63,6 @@ class SendMessageTelegram
                 ->setLangCode('RU')
         );
 
-        $settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
-
         if (config('database.redis.default.password')) {
             $settings->setDb(
                 (new \danog\MadelineProto\Settings\Database\Redis)
@@ -79,9 +77,10 @@ class SendMessageTelegram
         }
 
         MadelineConnectionConfigurator::apply($settings);
+        MadelineConnectionConfigurator::applyFileLogger($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline.'.$apiId, $settings);
-        $MadelineProto->updateSettings($settings->getConnection());
+        $MadelineProto->updateSettings($settings);
 
         if (!$MadelineProto->getSelf()) {
             $MadelineProto->start();

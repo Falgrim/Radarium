@@ -2,12 +2,26 @@
 
 namespace App\Services;
 
+use danog\MadelineProto\Logger;
 use danog\MadelineProto\Settings;
+use danog\MadelineProto\Settings\Logger as LoggerSettings;
 use danog\MadelineProto\Stream\Proxy\HttpProxy;
 use danog\MadelineProto\Stream\Proxy\SocksProxy;
 
 class MadelineConnectionConfigurator
 {
+    /**
+     * Файловый лог в storage (не в cwd), чтобы дочерние IPC-процессы не писали MadelineProto.log в корень проекта.
+     */
+    public static function applyFileLogger(Settings $settings, int $level = Logger::LEVEL_ERROR): void
+    {
+        $loggerSettings = new LoggerSettings();
+        $loggerSettings->setType(Logger::FILE_LOGGER);
+        $loggerSettings->setLevel($level);
+        $loggerSettings->setExtra(storage_path('logs/MadelineProto.log'));
+        $settings->setLogger($loggerSettings);
+    }
+
     public static function apply(Settings $settings): void
     {
         $connection = (new Settings\Connection())
