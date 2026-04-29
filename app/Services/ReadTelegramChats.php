@@ -101,8 +101,7 @@ class ReadTelegramChats
             );
         }
 
-        $settings->setConnection((new Settings\Connection())->setTimeout(10));
-        $settings->setSerialization((new Settings\Serialization())->setInterval(30));
+        MadelineConnectionConfigurator::apply($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
 

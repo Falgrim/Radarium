@@ -19,7 +19,9 @@ use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIYandex;
 use App\Services\Dictionary;
+use App\Services\MadelineConnectionConfigurator;
 use App\Services\ReadTelegramChats;
+use danog\MadelineProto\Settings;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -69,13 +71,16 @@ class TelegramProfilesPhoto extends Command
             return;
         }
 
-        $settings = (new \danog\MadelineProto\Settings\AppInfo)
-            ->setApiId($apiChannel->options['api_id'])
-            ->setApiHash($apiChannel->options['api_hash']);
+        $settings = new Settings;
+        $settings->setAppInfo(
+            (new \danog\MadelineProto\Settings\AppInfo)
+                ->setApiId($apiChannel->options['api_id'])
+                ->setApiHash($apiChannel->options['api_hash'])
+        );
+        $settings->getLogger()->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
+        MadelineConnectionConfigurator::apply($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $settings = (new \danog\MadelineProto\Settings\Logger)->setLevel(\danog\MadelineProto\Logger::LEVEL_ERROR);
-        $MadelineProto->updateSettings($settings);
 
         $MadelineProto->start();
 
