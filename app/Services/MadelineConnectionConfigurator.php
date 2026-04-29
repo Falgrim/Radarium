@@ -11,7 +11,8 @@ class MadelineConnectionConfigurator
     public static function apply(Settings $settings): void
     {
         $connection = (new Settings\Connection())
-            ->setTimeout(self::intEnv('MPROTO_CONNECTION_TIMEOUT', 10));
+            ->setTimeout(self::intEnv('MPROTO_CONNECTION_TIMEOUT', 10))
+            ->setIpv6(self::boolEnv('MPROTO_IPV6_ENABLED', false));
 
         if (self::boolEnv('MPROTO_PROXY_ENABLED', false)) {
             $proxyConfig = [

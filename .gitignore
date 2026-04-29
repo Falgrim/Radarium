@@ -11,6 +11,14 @@
 .env
 .env.backup
 .env.production
+.env.local
+.env.*.local
+# Любые «дополнительные» .env.* кроме шаблона для репозитория
+.env.*
+!.env.example
+# Копия продового .env в DOC (не коммитить)
+/DOC/env
+/DOC/.env
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -24,7 +32,6 @@ yarn-error.log
 /.vscode
 /.zed
 /dev
-/.env
 /session.madeline
 /session.madeline.*
 /*.log
