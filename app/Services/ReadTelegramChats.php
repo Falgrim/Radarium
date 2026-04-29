@@ -104,7 +104,7 @@ class ReadTelegramChats
         MadelineConnectionConfigurator::apply($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $MadelineProto->updateSettings($settings);
+        $MadelineProto->updateSettings($settings->getConnection());
 
         if (!$MadelineProto->getSelf()) {
             $MadelineProto->start();
