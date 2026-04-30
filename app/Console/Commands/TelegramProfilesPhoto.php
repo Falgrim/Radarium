@@ -81,7 +81,6 @@ class TelegramProfilesPhoto extends Command
         MadelineConnectionConfigurator::applyFileLogger($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $MadelineProto->updateSettings($settings);
 
         $MadelineProto->start();
 

@@ -80,7 +80,6 @@ class SendMessageTelegram
         MadelineConnectionConfigurator::applyFileLogger($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline.'.$apiId, $settings);
-        $MadelineProto->updateSettings($settings);
 
         if (!$MadelineProto->getSelf()) {
             $MadelineProto->start();

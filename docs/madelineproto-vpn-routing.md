@@ -18,6 +18,8 @@
 
 Если `MPROTO_PROXY_ENABLED=true`, в `MadelineProto` добавляется proxy через `Settings\Connection::addProxy(...)`.
 
+Логгер и соединение задаются в объекте `Settings` до вызова `new \danog\MadelineProto\API($session, $settings)`. После конструктора **`updateSettings` не вызывается** — иначе при IPC возможна гонка (`MTProto::$logger must not be accessed before initialization`); MadelineProto сам ставит merge настроек в очередь при подключении.
+
 ## Этап 1. Поднять xray-клиент на проде
 
 Ниже пример клиентского конфига `xray`:

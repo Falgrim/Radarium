@@ -92,7 +92,8 @@ class ReadTelegramChats
         MadelineConnectionConfigurator::apply($settings);
 
         $MadelineProto = new \danog\MadelineProto\API('session.madeline', $settings);
-        $MadelineProto->updateSettings($settings);
+        // Не вызывать updateSettings сразу после конструктора: API уже ставит в очередь merge
+        // полного $settings при подключении IPC; лишний sync-вызов даёт гонку (MTProto::$logger до init).
 
         if (!$MadelineProto->getSelf()) {
             $MadelineProto->start();
