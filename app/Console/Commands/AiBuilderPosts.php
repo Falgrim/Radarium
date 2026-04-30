@@ -5,10 +5,10 @@ namespace App\Console\Commands;
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelPostStatusEnum;
-use App\Enum\BuilderTypeEnum;
-use App\Enum\DictionaryEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Enum\BuilderTypeEnum;
+use App\Enum\DictionaryEnum;
 use App\Enum\ModerationAlertSystemEnum;
 use App\Enum\ModerationAlertTableNameEnum;
 use App\Models\ApiChannel;
@@ -19,9 +19,10 @@ use App\Services\ApiAIYandex;
 use App\Services\BuilderAiPromptInjector;
 use App\Services\BuilderNormalizer;
 use App\Services\BuilderSpecialityMatcher;
-use App\Services\RussianRegionNormalizer;
+use App\Services\BuilderVacancyGigHeuristic;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
+use App\Services\RussianRegionNormalizer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -55,8 +56,9 @@ class AiBuilderPosts extends Command
             ->take(100)
             ->get();
 
-        if (!count($posts)) {
+        if (! count($posts)) {
             $this->info('Нет списка постов для парсинга');
+
             return 0;
         }
 
@@ -84,6 +86,7 @@ class AiBuilderPosts extends Command
                 $this->info('Анализ поста ID: '.$post->id);
                 if ($post->channel->apiAi->status !== ApiAiStatusEnum::Active) {
                     $this->error('ИИ "'.$post->channel->apiAi->title.'" (ID '.$post->channel->apiAi->id.') отключен: '.$post->id);
+
                     continue;
                 }
 
@@ -95,6 +98,7 @@ class AiBuilderPosts extends Command
                     $aiService = new ApiAIOllama;
                 } else {
                     $this->warn('Неизвестный источник');
+
                     continue;
                 }
 
@@ -112,20 +116,49 @@ class AiBuilderPosts extends Command
                     // Stage 2: перейти на updateOrCreate().
 
                     $post->ai_result = $result['origin'];
-                    $post->ai_date   = now();
+                    $post->ai_date = now();
 
-                    $rawType      = Str::lower($result['json']['ai_type'] ?? '');
+                    $rawType = Str::lower($result['json']['ai_type'] ?? '');
                     $result['json']['ai_type'] = $rawType;
-                    $builderType  = BuilderNormalizer::normalizeType($rawType);
+
+                    $serviceLikeTypes = [
+                        'предложение услуги',
+                        'предложение услуг',
+                        'предоставление услуги',
+                        'резюме',
+                    ];
+                    $typeBeforeHeuristic = $rawType;
+                    if (
+                        in_array($rawType, $serviceLikeTypes, true)
+                        && BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy((string) $post->post)
+                    ) {
+                        $rawType = 'вакансия';
+                        $result['json']['ai_type'] = 'вакансия';
+
+                        Log::channel('builder_type_override')->info('Эвристика подработки: тип изменён', [
+                            'processed_at' => now()->format('Y-m-d H:i:s'),
+                            'post_date' => $post->post_date?->format('Y-m-d H:i:s'),
+                            'api_channel_post_id' => $post->id,
+                            'api_channel_id' => $post->api_channel_id,
+                            'ai_type_in' => $typeBeforeHeuristic,
+                            'ai_type_out' => $rawType,
+                            'post_text' => $this->truncateForOverrideLog((string) $post->post),
+                        ]);
+
+                        $this->warn('Эвристика подработки/найма: тип скорректирован на «вакансия», post_id='.$post->id);
+                    }
+
+                    $builderType = BuilderNormalizer::normalizeType($rawType);
 
                     if ($builderType !== BuilderTypeEnum::Service) {
                         $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
                         $post->save();
-                        $this->warn('Тип сообщения: ' . $rawType . ' → DontMatch');
+                        $this->warn('Тип сообщения: '.$rawType.' → DontMatch');
+
                         continue;
                     }
 
-                    $performerSource = !empty($result['json']['performer_type'])
+                    $performerSource = ! empty($result['json']['performer_type'])
                         ? $result['json']['performer_type']
                         : ($result['json']['performer_type_raw'] ?? '');
                     $result['json']['performer_type'] = BuilderNormalizer::normalizePerformerType($performerSource);
@@ -134,13 +167,13 @@ class AiBuilderPosts extends Command
                         $result['json']['legal_form'] ?? null
                     );
 
-                    if (!empty($result['json']['object_types']) && is_array($result['json']['object_types'])) {
+                    if (! empty($result['json']['object_types']) && is_array($result['json']['object_types'])) {
                         $result['json']['object_types'] = BuilderNormalizer::normalizeObjectTypes(
                             $result['json']['object_types']
                         );
                     }
 
-                    if (!empty($result['json']['equipment_skills_json']) && is_array($result['json']['equipment_skills_json'])) {
+                    if (! empty($result['json']['equipment_skills_json']) && is_array($result['json']['equipment_skills_json'])) {
                         $result['json']['equipment_skills_json'] = BuilderNormalizer::cleanEquipmentSkills(
                             $result['json']['equipment_skills_json']
                         );
@@ -167,12 +200,12 @@ class AiBuilderPosts extends Command
                     $rawRegion = $rawRegion === '' ? null : $rawRegion;
                     $result['json']['region'] = app(RussianRegionNormalizer::class)->normalizeOrKeep($rawRegion);
 
-                    $result['json']['post_date']           = $post->post_date;
-                    $result['json']['api_post_user_id']    = $post->apiPostUser->id;
+                    $result['json']['post_date'] = $post->post_date;
+                    $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                     $result['json']['api_channel_post_id'] = $post->id;
-                    $result['json']['status']              = ApiPostAiStatusEnum::Active;
+                    $result['json']['status'] = ApiPostAiStatusEnum::Active;
 
-                    if (!$result['json']['contact_info']) {
+                    if (! $result['json']['contact_info']) {
                         $result['json']['contact_info'] = '';
                     }
 
@@ -187,24 +220,24 @@ class AiBuilderPosts extends Command
                         );
                     }
 
-                    Log::channel('ai_debug')->info('[Builder] post_id=' . $post->id, [
-                        'raw_type'           => $rawType,
-                        'normalized_type'    => $builderType->value,
+                    Log::channel('ai_debug')->info('[Builder] post_id='.$post->id, [
+                        'raw_type' => $rawType,
+                        'normalized_type' => $builderType->value,
                         'specialities_total' => count($mergedSpecialities),
-                        'ai_matched'         => count($fromAi),
-                        'text_matched'       => count($fromText),
+                        'ai_matched' => count($fromAi),
+                        'text_matched' => count($fromText),
                         'speciality_match_log' => $resolved['log'] ?? [],
-                        'object_types'       => $result['json']['object_types'] ?? [],
-                        'performer_type'     => $result['json']['performer_type'] ?? null,
-                        'legal_form'         => $result['json']['legal_form'] ?? null,
-                        'location_city'      => $result['json']['location_city'] ?? null,
+                        'object_types' => $result['json']['object_types'] ?? [],
+                        'performer_type' => $result['json']['performer_type'] ?? null,
+                        'legal_form' => $result['json']['legal_form'] ?? null,
+                        'location_city' => $result['json']['location_city'] ?? null,
                     ]);
 
                     $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                     $post->save();
 
                     if ($builder->status === ApiPostAiStatusEnum::InModeration || $builder->status === ApiPostAiStatusEnum::Active) {
-                        $this->info('Создан строитель ID: ' . $builder->id);
+                        $this->info('Создан строитель ID: '.$builder->id);
                         $moderationAlertService->createAlert(
                             0,
                             ModerationAlertSystemEnum::System,
@@ -242,5 +275,17 @@ class AiBuilderPosts extends Command
         }
 
         $this->info('Завершено');
+    }
+
+    /**
+     * Ограничение длины текста поста в логе переопределения типа (Monolog/Laravel строка одной записи).
+     */
+    private function truncateForOverrideLog(string $text, int $maxChars = 20000): string
+    {
+        if (mb_strlen($text) <= $maxChars) {
+            return $text;
+        }
+
+        return mb_substr($text, 0, $maxChars)."\n… [обрезано, всего символов: ".mb_strlen($text).']';
     }
 }

@@ -145,6 +145,18 @@ return [
             'path' => storage_path('logs/ai_debug.log'),
         ],
 
+        /*
+         * Переопределение типа поста эвристикой подработки/найма (AiBuilderPosts).
+         * Пишется только если тип «услуга/резюме» с ИИ заменён на «вакансия».
+         */
+        'builder_type_override' => [
+            'driver' => 'daily',
+            'level' => 'info',
+            'path' => storage_path('logs/builder_type_override.log'),
+            'days' => env('LOG_BUILDER_TYPE_OVERRIDE_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
         'tubus' => [
             'driver' => 'single',
             'level' => 'info',
