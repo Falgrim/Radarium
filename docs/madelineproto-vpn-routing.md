@@ -20,6 +20,8 @@
 
 Логгер и соединение задаются в объекте `Settings` до вызова `new \danog\MadelineProto\API($session, $settings)`. После конструктора **`updateSettings` не вызывается** — иначе при IPC возможна гонка (`MTProto::$logger must not be accessed before initialization`); MadelineProto сам ставит merge настроек в очередь при подключении.
 
+**Патч vendor (автоматически):** скрипт [`scripts/patch-madelineproto-connection.php`](../scripts/patch-madelineproto-connection.php) удаляет из `vendor/danog/madelineproto/src/Connection.php` строку `$this->API->logger = $this->API->logger` (ошибка «Typed property … `$logger` must not be accessed before initialization» на PHP 8.3). Скрипт вызывается из **`composer.json` → `post-autoload-dump`**, то есть после каждого `composer install` / `composer update` на любом окружении.
+
 ## Этап 1. Поднять xray-клиент на проде
 
 Ниже пример клиентского конфига `xray`:
