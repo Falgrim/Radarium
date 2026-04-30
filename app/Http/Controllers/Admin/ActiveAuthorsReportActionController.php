@@ -63,12 +63,12 @@ final class ActiveAuthorsReportActionController extends Controller
                     ? CompanyJobStatusEnum::getList()
                     : ApiPostAiStatusEnum::getList(),
                 static fn ($label, $key): bool => $key !== '' && $key !== null,
-                ARRAY_FILTER_USE_KEY
+                ARRAY_FILTER_USE_BOTH
             ),
             'postAiStatusList' => array_filter(
                 ApiChannelPostStatusEnum::getList(),
                 static fn ($label, $key): bool => $key !== '' && $key !== null,
-                ARRAY_FILTER_USE_KEY
+                ARRAY_FILTER_USE_BOTH
             ),
         ]);
     }
