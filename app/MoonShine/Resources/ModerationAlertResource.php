@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
-use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ModerationAlertStatusEnum;
 use App\Enum\ModerationAlertSystemEnum;
 use App\Enum\ModerationAlertTableNameEnum;
 use App\Models\ApiChannelPost;
 use App\Models\ModerationAlert;
+use App\Services\Admin\ModerationAuthorPostCatalogService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -70,7 +70,8 @@ class ModerationAlertResource extends ModelResource
     public function detailButtons(): array
     {
         return [
-            $this->authorPostAiStatusButton(),
+            $this->authorReprocessAiButton(),
+            $this->authorRemoveFromCatalogButton(),
         ];
     }
 
@@ -80,15 +81,15 @@ class ModerationAlertResource extends ModelResource
     public function formButtons(): array
     {
         return [
-            $this->authorPostAiStatusButton(),
+            $this->authorReprocessAiButton(),
+            $this->authorRemoveFromCatalogButton(),
         ];
     }
 
     /**
-     * Смена «Статус ИИ» у сообщения автора без перехода в раздел «Сообщения/Посты»
-     * (кнопка «Сообщить об ошибке» создаёт запись с типом ApiPostUser в поле «Раздел»).
+     * Карточки каталога по посту → «Отключено», пост → «В очереди» (повторный прогон ИИ).
      */
-    public function updateAuthorPostAiParseStatus(MoonShineRequest $request): MoonShineJsonResponse
+    public function requeueAuthorPostForAi(MoonShineRequest $request): MoonShineJsonResponse
     {
         if (! $this->can('update')) {
             return MoonShineJsonResponse::make()
@@ -103,7 +104,6 @@ class ModerationAlertResource extends ModelResource
 
         $validated = $request->validate([
             'api_channel_post_id' => ['required', 'integer', 'exists:api_channel_posts,id'],
-            'ai_parse_status' => ['required', Rule::enum(ApiChannelPostStatusEnum::class)],
         ]);
 
         $post = ApiChannelPost::query()->findOrFail($validated['api_channel_post_id']);
@@ -112,72 +112,135 @@ class ModerationAlertResource extends ModelResource
                 ->toast('Сообщение не принадлежит автору из этого обращения', ToastType::ERROR);
         }
 
-        $post->ai_parse_status = ApiChannelPostStatusEnum::from((int) $validated['ai_parse_status']);
-        $post->save();
+        app(ModerationAuthorPostCatalogService::class)->requeueForAi($post);
 
         return MoonShineJsonResponse::make()
-            ->toast('Статус ИИ сообщения обновлён', ToastType::SUCCESS)
+            ->toast('Карточки сняты с публикации, сообщение поставлено в очередь ИИ', ToastType::SUCCESS)
             ->redirect($this->formPageUrl($alert));
     }
 
-    protected function authorPostAiStatusButton(): ActionButton
+    /**
+     * Только снять карточки каталога по посту; статус парсинга сообщения не меняется.
+     */
+    public function removeAuthorPostFromCatalog(MoonShineRequest $request): MoonShineJsonResponse
     {
-        $statusOptions = collect(ApiChannelPostStatusEnum::cases())
-            ->mapWithKeys(fn (ApiChannelPostStatusEnum $case): array => [
-                (string) $case->value => $case->toString() ?? (string) $case->value,
-            ])
-            ->all();
+        if (! $this->can('update')) {
+            return MoonShineJsonResponse::make()
+                ->toast('Недостаточно прав для изменения', ToastType::ERROR);
+        }
 
-        return ActionButton::make('Статус ИИ сообщения', '#')
+        $alert = $this->getItem();
+        if (! $alert instanceof ModerationAlert || $alert->table_name !== ModerationAlertTableNameEnum::Author) {
+            return MoonShineJsonResponse::make()
+                ->toast('Доступно только для обращений по автору сообщений', ToastType::ERROR);
+        }
+
+        $validated = $request->validate([
+            'api_channel_post_id' => ['required', 'integer', 'exists:api_channel_posts,id'],
+        ]);
+
+        $post = ApiChannelPost::query()->findOrFail($validated['api_channel_post_id']);
+        if ((int) $post->api_post_user_id !== (int) $alert->table_row_id) {
+            return MoonShineJsonResponse::make()
+                ->toast('Сообщение не принадлежит автору из этого обращения', ToastType::ERROR);
+        }
+
+        app(ModerationAuthorPostCatalogService::class)->removeFromCatalog($post);
+
+        return MoonShineJsonResponse::make()
+            ->toast('Карточки по сообщению сняты с публикации (без очереди ИИ)', ToastType::SUCCESS)
+            ->redirect($this->formPageUrl($alert));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function authorPostSelectOptions(): array
+    {
+        $item = $this->getItem();
+        $postOptions = [];
+        if ($item instanceof ModerationAlert && $item->table_name === ModerationAlertTableNameEnum::Author) {
+            $posts = ApiChannelPost::query()
+                ->where('api_post_user_id', $item->table_row_id)
+                ->orderByDesc('post_date')
+                ->limit(100)
+                ->get(['id', 'post_date', 'ai_parse_status', 'post']);
+            foreach ($posts as $post) {
+                $statusLabel = $post->ai_parse_status?->toString() ?? '—';
+                $snippet = Str::limit(preg_replace('/\s+/', ' ', strip_tags((string) $post->post)), 55);
+                $postOptions[(string) $post->id] = "#{$post->id} — {$statusLabel} — {$snippet}";
+            }
+        }
+
+        return $postOptions;
+    }
+
+    private function authorActionCanSee(): bool
+    {
+        if (! $this->can('update')) {
+            return false;
+        }
+        $item = $this->getItem();
+        if (! $item instanceof ModerationAlert || $item->table_name !== ModerationAlertTableNameEnum::Author) {
+            return false;
+        }
+
+        return ApiChannelPost::query()
+            ->where('api_post_user_id', $item->table_row_id)
+            ->exists();
+    }
+
+    protected function authorReprocessAiButton(): ActionButton
+    {
+        return ActionButton::make('Повторная ИИ обработка', '#')
             ->icon('heroicons.arrow-path')
-            ->secondary()
+            ->primary()
             ->showInLine()
-            ->canSee(function (): bool {
-                if (! $this->can('update')) {
-                    return false;
-                }
-                $item = $this->getItem();
-                if (! $item instanceof ModerationAlert || $item->table_name !== ModerationAlertTableNameEnum::Author) {
-                    return false;
-                }
-
-                return ApiChannelPost::query()
-                    ->where('api_post_user_id', $item->table_row_id)
-                    ->exists();
-            })
+            ->canSee(fn (): bool => $this->authorActionCanSee())
             ->inOffCanvas(
-                fn (): string => 'Изменить статус ИИ сообщения автора',
-                function () use ($statusOptions): FormBuilder {
-                    $item = $this->getItem();
-                    $postOptions = [];
-                    if ($item instanceof ModerationAlert && $item->table_name === ModerationAlertTableNameEnum::Author) {
-                        $posts = ApiChannelPost::query()
-                            ->where('api_post_user_id', $item->table_row_id)
-                            ->orderByDesc('post_date')
-                            ->limit(100)
-                            ->get(['id', 'post_date', 'ai_parse_status', 'post']);
-                        foreach ($posts as $post) {
-                            $statusLabel = $post->ai_parse_status?->toString() ?? '—';
-                            $snippet = Str::limit(preg_replace('/\s+/', ' ', strip_tags((string) $post->post)), 55);
-                            $postOptions[(string) $post->id] = "#{$post->id} — {$statusLabel} — {$snippet}";
-                        }
-                    }
-
+                fn (): string => 'Повторная ИИ обработка',
+                function (): FormBuilder {
                     return FormBuilder::make()
-                        ->name('moderation-author-post-ai-status-form')
+                        ->name('moderation-author-reprocess-ai-form')
                         ->fields([
                             Select::make('Сообщение', 'api_channel_post_id')
-                                ->options($postOptions)
+                                ->options($this->authorPostSelectOptions())
                                 ->required()
                                 ->searchable()
                                 ->placeholder('Выберите сообщение'),
-                            Select::make('Статус ИИ', 'ai_parse_status')
-                                ->options($statusOptions)
-                                ->required()
-                                ->placeholder('Выберите статус'),
+                            Preview::make('', 'reprocess_hint', static fn (): string => '<p class="text-sm text-gray-600 dark:text-gray-400">Для выбранного сообщения: все связанные карточки каталога получают статус «Отключено», у сообщения — «В очереди» (очередь парсинга ИИ). Пока ИИ не обработает снова, запись не в публичном каталоге и не в отчёте активных авторов.</p>')
+                                ->rawMode(),
                         ])
-                        ->asyncMethod('updateAuthorPostAiParseStatus', resource: $this)
-                        ->submit('Применить');
+                        ->asyncMethod('requeueAuthorPostForAi', resource: $this)
+                        ->submit('Запустить');
+                },
+                isLeft: false,
+            );
+    }
+
+    protected function authorRemoveFromCatalogButton(): ActionButton
+    {
+        return ActionButton::make('Убрать из каталога', '#')
+            ->icon('heroicons.eye-slash')
+            ->secondary()
+            ->showInLine()
+            ->canSee(fn (): bool => $this->authorActionCanSee())
+            ->inOffCanvas(
+                fn (): string => 'Убрать из каталога',
+                function (): FormBuilder {
+                    return FormBuilder::make()
+                        ->name('moderation-author-remove-catalog-form')
+                        ->fields([
+                            Select::make('Сообщение', 'api_channel_post_id')
+                                ->options($this->authorPostSelectOptions())
+                                ->required()
+                                ->searchable()
+                                ->placeholder('Выберите сообщение'),
+                            Preview::make('', 'remove_hint', static fn (): string => '<p class="text-sm text-gray-600 dark:text-gray-400">Для выбранного сообщения: связанные карточки каталога переводятся в «Отключено». Статус парсинга сообщения не меняется — повторная обработка ИИ не запускается. Автор пропадёт из каталога и отчёта по этому типу, если у него не останется других активных опубликованных карточек.</p>')
+                                ->rawMode(),
+                        ])
+                        ->asyncMethod('removeAuthorPostFromCatalog', resource: $this)
+                        ->submit('Убрать');
                 },
                 isLeft: false,
             );
@@ -296,7 +359,7 @@ class ModerationAlertResource extends ModelResource
                     return "<li><strong>#{$id}</strong> — {$status} — {$snippet}</li>";
                 })->implode('');
 
-                return '<p class="text-sm text-gray-600 mb-2">Быстрый обзор. Сменить статус: кнопка «Статус ИИ сообщения» сверху.</p><ul class="list-unstyled space-y-1">'.$rows.'</ul>';
+                return '<p class="text-sm text-gray-600 mb-2">Быстрый обзор. Действия: «Повторная ИИ обработка» или «Убрать из каталога» (кнопки сверху).</p><ul class="list-unstyled space-y-1">'.$rows.'</ul>';
             })->rawMode(),
             Text::make('Комментарий от автора', 'description'),
             Text::make('Комментарий модератора', 'comment'),
@@ -333,7 +396,7 @@ class ModerationAlertResource extends ModelResource
                 return "<li><strong>#{$id}</strong> — {$status} — {$snippet}</li>";
             })->implode('');
 
-            return '<p class="text-sm text-gray-600 mb-2">Сменить статус ИИ: кнопка «Статус ИИ сообщения» в блоке действий.</p><ul class="list-unstyled space-y-1">'.$rows.'</ul>';
+            return '<p class="text-sm text-gray-600 mb-2">«Повторная ИИ обработка» — снять с каталога и поставить в очередь ИИ. «Убрать из каталога» — только отключить карточки без очереди.</p><ul class="list-unstyled space-y-1">'.$rows.'</ul>';
         })->rawMode();
         $fields[] = TinyMce::make('Комментарий от автора', 'description')
             ->menubar('')
