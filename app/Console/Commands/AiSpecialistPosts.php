@@ -5,9 +5,9 @@ namespace App\Console\Commands;
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelPostStatusEnum;
-use App\Enum\DictionaryEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Enum\DictionaryEnum;
 use App\Enum\ModerationAlertSystemEnum;
 use App\Enum\ModerationAlertTableNameEnum;
 use App\Models\ApiChannel;
@@ -15,11 +15,12 @@ use App\Models\ApiChannelPost;
 use App\Models\Specialist;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
+use App\Services\BuilderVacancyGigHeuristic;
+use App\Services\CatalogPublicationGate;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
 use App\Services\RussianRegionNormalizer;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AiSpecialistPosts extends Command
@@ -51,8 +52,9 @@ class AiSpecialistPosts extends Command
             ->take(100)
             ->get();
 
-        if (!count($posts)) {
+        if (! count($posts)) {
             $this->info('Нет списка постов для парсинга');
+
             return 0;
         }
 
@@ -80,6 +82,7 @@ class AiSpecialistPosts extends Command
                 $this->info('Анализ поста ID: '.$post->id);
                 if ($post->channel->apiAi->status !== ApiAiStatusEnum::Active) {
                     $this->error('ИИ "'.$post->channel->apiAi->title.'" (ID '.$post->channel->apiAi->id.') отключен: '.$post->id);
+
                     continue;
                 }
 
@@ -91,6 +94,7 @@ class AiSpecialistPosts extends Command
                     $aiService = new ApiAIOllama;
                 } else {
                     $this->warn('Неизвестный источник');
+
                     continue;
                 }
 
@@ -118,6 +122,21 @@ class AiSpecialistPosts extends Command
                         $post->save();
 
                         $this->warn('Тип сообщения: '.$result['json']['ai_type']);
+
+                        continue;
+                    }
+
+                    $specialistServiceTypes = ['резюме', 'предоставление услуги', 'предложение услуг'];
+                    if (
+                        in_array($result['json']['ai_type'], $specialistServiceTypes, true)
+                        && BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy((string) $post->post)
+                    ) {
+                        $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+                        $post->save();
+                        $this->warn(
+                            'Эвристика подработки/найма: текст похож на набор людей со сменой, post_id='.$post->id.' → DontMatch'
+                        );
+
                         continue;
                     }
 
@@ -125,11 +144,9 @@ class AiSpecialistPosts extends Command
                     $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                     $result['json']['api_channel_post_id'] = $post->id;
 
-                    if (!$result['json']['contact_info']) {
+                    if (! $result['json']['contact_info']) {
                         $result['json']['contact_info'] = '';
                     }
-
-                    $result['json']['status'] = ApiPostAiStatusEnum::Active;
 
                     $rawRegion = ! empty($result['json']['location_region'])
                         ? trim((string) $result['json']['location_region'])
@@ -139,9 +156,29 @@ class AiSpecialistPosts extends Command
 
                     unset($result['json']['location_region'], $result['json']['location_city']);
 
+                    $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
+
+                    $gateDecision = app(CatalogPublicationGate::class)->decide(
+                        ApiDataTypeEnum::Specialist,
+                        (string) $post->post,
+                        array_values($specialistSpecialties),
+                        [
+                            'api_channel_post_id' => $post->id,
+                            'api_channel_id' => $post->api_channel_id,
+                            'ai_parser' => self::class,
+                        ]
+                    );
+                    $result['json']['status'] = $gateDecision['status'];
+                    if ($gateDecision['reasons'] !== []) {
+                        $this->warn(sprintf(
+                            'Каталог: без авто-публикации → модерация, post_id=%d. Причины: %s',
+                            $post->id,
+                            implode(', ', $gateDecision['reasons'])
+                        ));
+                    }
+
                     $specialist = Specialist::create($result['json']);
 
-                    $specialistSpecialties = $dictionary->checkMatchByList($post->post, $specialityList);
                     if (count($specialistSpecialties)) {
                         $dictionary->updateRelations(
                             DictionaryEnum::Speciality,

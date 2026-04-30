@@ -20,6 +20,7 @@ use App\Services\BuilderAiPromptInjector;
 use App\Services\BuilderNormalizer;
 use App\Services\BuilderSpecialityMatcher;
 use App\Services\BuilderVacancyGigHeuristic;
+use App\Services\CatalogPublicationGate;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
 use App\Services\RussianRegionNormalizer;
@@ -203,7 +204,25 @@ class AiBuilderPosts extends Command
                     $result['json']['post_date'] = $post->post_date;
                     $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                     $result['json']['api_channel_post_id'] = $post->id;
-                    $result['json']['status'] = ApiPostAiStatusEnum::Active;
+
+                    $gateDecision = app(CatalogPublicationGate::class)->decide(
+                        ApiDataTypeEnum::Builder,
+                        (string) $post->post,
+                        $mergedSpecialities,
+                        [
+                            'api_channel_post_id' => $post->id,
+                            'api_channel_id' => $post->api_channel_id,
+                            'ai_parser' => self::class,
+                        ]
+                    );
+                    $result['json']['status'] = $gateDecision['status'];
+                    if ($gateDecision['reasons'] !== []) {
+                        $this->warn(sprintf(
+                            'Каталог: без авто-публикации → модерация, post_id=%d. Причины: %s',
+                            $post->id,
+                            implode(', ', $gateDecision['reasons'])
+                        ));
+                    }
 
                     if (! $result['json']['contact_info']) {
                         $result['json']['contact_info'] = '';
@@ -224,6 +243,8 @@ class AiBuilderPosts extends Command
                         'raw_type' => $rawType,
                         'normalized_type' => $builderType->value,
                         'specialities_total' => count($mergedSpecialities),
+                        'catalog_status' => $gateDecision['status']->value,
+                        'catalog_gate_reasons' => $gateDecision['reasons'],
                         'ai_matched' => count($fromAi),
                         'text_matched' => count($fromText),
                         'speciality_match_log' => $resolved['log'] ?? [],

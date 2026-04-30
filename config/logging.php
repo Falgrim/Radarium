@@ -157,6 +157,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'catalog_publication_gate' => [
+            'driver' => 'daily',
+            'level' => 'info',
+            'path' => storage_path('logs/catalog_publication_gate.log'),
+            'days' => env('LOG_CATALOG_PUBLICATION_GATE_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
         'tubus' => [
             'driver' => 'single',
             'level' => 'info',
