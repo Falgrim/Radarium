@@ -84,4 +84,106 @@ final class CatalogPublicationGateTest extends TestCase
         $this->assertFileExists($path);
         $this->assertStringContainsString($token, (string) file_get_contents($path));
     }
+
+    public function test_builder_hiring_text_goes_to_moderation_even_with_speciality(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Требуется помощник - строитель. Оплата 500 руб./час.';
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertContains('post_text_hiring_or_staffing_signal', $out['reasons']);
+    }
+
+    public function test_builder_short_customer_order_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Добрый день, нужно смонтировать водосток -40м/п в лс';
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertContains('post_text_customer_request_without_offer', $out['reasons']);
+    }
+
+    public function test_builder_mass_hire_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Требуются: Моляры. Бригада 10-15 человек. Аванс на 3й день.';
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertContains('post_text_hiring_or_staffing_signal', $out['reasons']);
+    }
+
+    public function test_builder_heuristic_disabled_allows_active_with_speciality(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => false,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Требуются: Моляры. Бригада 10-15 человек.';
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::Active, $out['status']);
+        $this->assertSame([], $out['reasons']);
+    }
+
+    public function test_builder_service_offer_stays_active(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Мы бригада электриков, ищем заказ в Мурино, выполняем монтаж по проекту, звоните.';
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::Active, $out['status']);
+        $this->assertSame([], $out['reasons']);
+    }
+
+    public function test_specialist_not_affected_by_builder_heuristics(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Требуются: Моляры. Бригада 10-15 человек.';
+
+        $out = $gate->decide(ApiDataTypeEnum::Specialist, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::Active, $out['status']);
+        $this->assertSame([], $out['reasons']);
+    }
 }

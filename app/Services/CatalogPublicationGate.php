@@ -33,6 +33,14 @@ final class CatalogPublicationGate
             $reasons[] = 'no_dictionary_speciality_matched';
         }
 
+        if ($domain === ApiDataTypeEnum::Builder && config('catalog_publication_gate.builder_non_service_heuristics', true)) {
+            foreach ((new CatalogPublicationBuilderNonServiceSignals)->reasons($postText) as $code) {
+                if (! in_array($code, $reasons, true)) {
+                    $reasons[] = $code;
+                }
+            }
+        }
+
         if ($reasons !== []) {
             Log::channel('catalog_publication_gate')->info('Каталог: запись без авто-публикации (модерация)', array_merge([
                 'domain' => $domain->value,
