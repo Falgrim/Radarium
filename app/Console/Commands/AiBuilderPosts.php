@@ -18,6 +18,8 @@ use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
 use App\Services\BuilderAiPromptInjector;
 use App\Services\BuilderNormalizer;
+use App\Services\BuilderAiPipelineRuntimeConfig;
+use App\Services\BuilderServiceOfferClassifier;
 use App\Services\BuilderSpecialityMatcher;
 use App\Services\BuilderVacancyGigHeuristic;
 use App\Services\CatalogPublicationGate;
@@ -78,6 +80,7 @@ class AiBuilderPosts extends Command
         );
 
         $moderationAlertService = app()->make(ModerationAlertService::class);
+        $pipelineConfig = app(BuilderAiPipelineRuntimeConfig::class);
 
         foreach ($posts as $post) {
             try {
@@ -105,10 +108,57 @@ class AiBuilderPosts extends Command
 
                 $aiService->logging('Анализ поста ID: '.$post->id);
                 $aiService->setConfig($options);
+                $post->ai_provider_used = $apiSource->value;
+
+                if (
+                    $apiSource === ApiAiSourceEnum::OllamaQwen
+                    && $pipelineConfig->twoPassOllamaEnabled()
+                    && $aiService instanceof ApiAIOllama
+                ) {
+                    $pass1 = app(BuilderServiceOfferClassifier::class)->classify(
+                        $aiService,
+                        (string) $post->post
+                    );
+
+                    $aiService->logging([
+                        'builder_pass1' => [
+                            'api_channel_post_id' => $post->id,
+                            'type' => $pass1['type'],
+                            'source' => $pass1['source'],
+                            'reason' => $pass1['reason'],
+                        ],
+                    ]);
+
+                    if ($pass1['type'] !== BuilderServiceOfferClassifier::TYPE_SERVICE) {
+                        $post->ai_result = json_encode([
+                            'pass1' => $pass1,
+                            'route' => 'dont_match',
+                        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        $post->ai_date = now();
+                        $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+                        $post->save();
+
+                        $this->warn(sprintf(
+                            'Pass 1: мусор → DontMatch, post_id=%d, source=%s, reason=%s',
+                            $post->id,
+                            $pass1['source'],
+                            $pass1['reason'] ?? ''
+                        ));
+
+                        continue;
+                    }
+
+                    $aiService->setGenerationOptions();
+                }
+
+                $promt = trim((string) $promt);
+                if ($promt === '') {
+                    $promt = $pipelineConfig->pass2DefaultPrompt();
+                }
+
                 $promtWithSpecialities = BuilderAiPromptInjector::injectSpecialitiesList($promt, $specialityList);
                 $aiService->setPromt($promtWithSpecialities);
                 $aiService->setText($post->post);
-                $post->ai_provider_used = $apiSource->value;
                 $result = $aiService->getResult(ApiDataTypeEnum::Builder);
 
                 if (count($result['json'])) {

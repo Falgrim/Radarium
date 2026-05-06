@@ -4,7 +4,7 @@
 >
 > Ядро: Laravel 11 + MariaDB (по умолчанию используется в производстве) + доменная модель “посты из источников (Telegram / ВКонтакте) → AI → каталоги”.
 >
-> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на 2026-05-04 (VK-импорт, ворота публикации в каталог, доработки AI/UI/админки).
+> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на 2026-05-05 (VK-импорт, ворота публикации в каталог, двухэтапный Builder AI pipeline для Ollama/Qwen, доработки AI/UI/админки).
 
 ## 1. Общее описание
 
@@ -546,21 +546,69 @@ AI провайдеры описаны в таблице `api_ais` (модель
 
 Парсинг JSON выровнен с Yandex-веткой через `AiModelJsonReplyDecoder::decode`, затем приводятся типы (price→копейки, bool, integer и т.д.).
 
+Для компактных классификаторов сервис также умеет вернуть сырой декодированный JSON без доменного маппинга через `getDecodedJsonResult()`. Параметры генерации можно временно задать через `setGenerationOptions(...)`; для Pass 1 Builder используется `temperature = 0.0` и короткий лимит ответа.
+
+#### 7.3.3. Builder two-pass pipeline для Ollama/Qwen
+
+Для `api_source = ollama_qwen` в Builder-домене включён двухэтапный pipeline.
+Базовые fallback-параметры лежат в `config/builder_ai_pipeline.php`, а runtime-управление идёт через `configurations` (MoonShine → «Настройки») через `BuilderAiPipelineRuntimeConfig`:
+
+- `builder_two_pass_ollama_enabled` (checkbox) — быстрый rollback на one-pass без отката кода;
+- `builder_pass1_prompt` (textarea) — prompt бинарного классификатора;
+- `builder_pass2_default_prompt` (textarea) — fallback prompt для extraction, если у канала пустой `ai_promt`.
+
+`BUILDER_AI_TWO_PASS_OLLAMA_ENABLED=true` остаётся env-fallback по умолчанию, если runtime-ключ отсутствует в `configurations`.
+
+1. **Pass 0: hard reject эвристики.** До LLM повторно используются консервативные сигналы `CatalogPublicationBuilderNonServiceSignals`: найм, подработка, короткий заказ без самопрезентации исполнителя. Если сработали — пост получает `DontMatch`, extraction не запускается.
+2. **Pass 1: ультра-компактная классификация.** `BuilderServiceOfferClassifier` отправляет в Qwen только исходный текст и короткий system prompt. Модель обязана вернуть ровно один JSON-объект:
+
+```json
+{"type":"предложение услуги"}
+```
+
+или
+
+```json
+{"type":"мусор"}
+```
+
+На этом этапе запрещены extraction, нормализация, reason и дополнительные ключи. Если модель вернула неизвестный `type` или JSON с дополнительными полями, результат считается невалидным и маршрутизируется в `DontMatch`, чтобы не повышать false positive.
+
+3. **Pass 2: extraction + normalization.** Запускается только при `{"type":"предложение услуги"}`. Сначала берётся `api_channels.ai_promt`; если он пустой — используется `builder_pass2_default_prompt` (жёсткий JSON-контракт под текущий extractor). Далее выполняется `BuilderAiPromptInjector::injectSpecialitiesList(...)`, нормализаторы, словарный matcher, `CatalogPublicationGate` и создание `Builder`.
+
+Практический контракт маршрутизации:
+
+- Pass 1 = `мусор` → `api_channel_posts.ai_parse_status = DontMatch`, `builders` не создаётся, в `ai_result` сохраняется диагностический JSON `pass1`.
+- Pass 1 = `предложение услуги` → выполняется текущий полный extraction.
+- Ошибка HTTP/JSON на Pass 1 → общая ветка `Error`, потому что невозможно подтвердить классификацию.
+- YandexGPT и Specialist/Company pipeline этим изменением не затронуты.
+- `api_channel_posts.ai_provider_used` заполняется до маршрутизации Pass 1 (включая early-exit ветку `DontMatch`).
+
+Анти-hallucination меры:
+
+- минимальный Pass 1 prompt без словаря специализаций и без схемы карточки;
+- `temperature = 0.0` для классификации;
+- строгая проверка формы ответа: единственный ключ `type`;
+- conservative routing: при сомнении или невалидной форме — `мусор`/`DontMatch`;
+- post-filter `CatalogPublicationGate` остаётся вторым защитным слоем после extraction.
+- runtime-настройки pipeline кэшируются в памяти процесса на время выполнения команды (без повторных SELECT в горячем цикле по каждому посту).
+
 ### 7.4. Нормализация и создание доменных сущностей
 
 #### 7.4.1. Builders (`AiBuilderPosts`)
 
 Флоу (упрощённо, по текущему коду):
 
-1. Получает `result['json']` от провайдера; при непустом JSON удаляет старые `Builder` с тем же `api_channel_post_id` (**важно:** повторный прогон теряет ручные правки карточки — в коде отмечено как известный риск).
-2. Нормализует `ai_type` в нижний регистр.
-3. **Эвристика подработки/найма:** если тип похож на услугу/резюме, но текст поста удовлетворяет `BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy()`, тип принудительно меняется на `вакансия` (логируется в канал `builder_type_override`).
-4. Тип приводится к `BuilderTypeEnum` через `BuilderNormalizer::normalizeType(...)`. Для каталога «строительные услуги» допускается в итоге только **`BuilderTypeEnum::Service`**; иначе пост получает `DontMatch` и `Builder` не создаётся.
-5. Нормализуются поля карточки: `performer_type`, `legal_form`, `object_types`, `equipment_skills_json` и др. (`BuilderNormalizer`, `BuilderNormalizer::cleanEquipmentSkills`).
-6. Специализации: объединение подсказок ИИ (`service_types` / `specialities` в JSON) и текстового матчинга через **`BuilderSpecialityMatcher`** (`resolve` по тексту поста + AI), затем `Dictionary::updateRelations` для `builder_specialities`.
-7. Регион: `RussianRegionNormalizer::normalizeOrKeep` по полю из ответа ИИ или `api_channels.region`.
-8. **`CatalogPublicationGate`** (см. §7.8) выставляет `status` создаваемого `Builder` (`Active` или `InModeration`, если нет ни одной сопоставленной специализации при включённой политике).
-9. `Builder::create(...)`, пост → `Complete`, расширенный лог в `ai_debug`.
+1. Если провайдер `ollama_qwen` и включён `builder_ai_pipeline.two_pass_ollama_enabled`, выполняется Pass 1 (`BuilderServiceOfferClassifier`). При `мусор` пост получает `DontMatch`, полный extraction не запускается.
+2. Получает `result['json']` от провайдера; при непустом JSON удаляет старые `Builder` с тем же `api_channel_post_id` (**важно:** повторный прогон теряет ручные правки карточки — в коде отмечено как известный риск).
+3. Нормализует `ai_type` в нижний регистр.
+4. **Эвристика подработки/найма:** если тип похож на услугу/резюме, но текст поста удовлетворяет `BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy()`, тип принудительно меняется на `вакансия` (логируется в канал `builder_type_override`).
+5. Тип приводится к `BuilderTypeEnum` через `BuilderNormalizer::normalizeType(...)`. Для каталога «строительные услуги» допускается в итоге только **`BuilderTypeEnum::Service`**; иначе пост получает `DontMatch` и `Builder` не создаётся.
+6. Нормализуются поля карточки: `performer_type`, `legal_form`, `object_types`, `equipment_skills_json` и др. (`BuilderNormalizer`, `BuilderNormalizer::cleanEquipmentSkills`).
+7. Специализации: объединение подсказок ИИ (`service_types` / `specialities` в JSON) и текстового матчинга через **`BuilderSpecialityMatcher`** (`resolve` по тексту поста + AI), затем `Dictionary::updateRelations` для `builder_specialities`.
+8. Регион: `RussianRegionNormalizer::normalizeOrKeep` по полю из ответа ИИ или `api_channels.region`.
+9. **`CatalogPublicationGate`** (см. §7.8) выставляет `status` создаваемого `Builder` (`Active` или `InModeration`, если нет ни одной сопоставленной специализации при включённой политике).
+10. `Builder::create(...)`, пост → `Complete`, расширенный лог в `ai_debug`.
 
 #### 7.4.2. Specialists (`AiSpecialistPosts`)
 
@@ -1036,6 +1084,37 @@ MoonShine уведомления используются для модерац�
 - для `ApiAIOllama`:
   - `host` и `model` могут быть в `options` (fallback берётся из `config('services.ollama.*')`)
 
+Builder two-pass pipeline для Ollama/Qwen настраивается отдельно:
+
+- fallback-конфиг: `config/builder_ai_pipeline.php`
+- env fallback: `BUILDER_AI_TWO_PASS_OLLAMA_ENABLED=true|false`
+- runtime (рекомендуется, без деплоя): MoonShine → «Настройки» (`configurations`)
+  - `builder_two_pass_ollama_enabled`
+  - `builder_pass1_prompt`
+  - `builder_pass2_default_prompt`
+
+#### Операционная памятка (Builder two-pass, Ollama/Qwen)
+
+1. **Включение/rollback без деплоя кода**
+   - MoonShine → `Настройки` → `builder_two_pass_ollama_enabled`.
+   - `1` = two-pass, `0` = быстрый возврат на one-pass.
+2. **Редактирование Pass 1 prompt**
+   - Ключ: `builder_pass1_prompt`.
+   - Контракт обязателен: ответ только `{"type":"предложение услуги"}` или `{"type":"мусор"}` без дополнительных ключей.
+3. **Редактирование Pass 2 fallback prompt**
+   - Ключ: `builder_pass2_default_prompt`.
+   - Используется только если у конкретного источника пустой `api_channels.ai_promt`.
+4. **Приоритет промптов Pass 2**
+   - сначала `api_channels.ai_promt`;
+   - если пусто — `builder_pass2_default_prompt`;
+   - затем инъекция списка специализаций через `BuilderAiPromptInjector`.
+5. **Что проверить после изменения настроек**
+   - в логах есть `builder_pass1`;
+   - доля `DontMatch` по найму/шуму выросла ожидаемо;
+   - нет аномального роста `Error`.
+6. **Эксплуатационный нюанс**
+   - runtime-ключи pipeline кэшируются в памяти процесса команды; для долгоживущих воркеров/процессов перезапустите процесс после изменения настроек.
+
 Точка расширения: чтобы добавить новый AI-провайдер:
 
 1. Добавить новый кейс в `ApiAiSourceEnum`
@@ -1187,5 +1266,3 @@ flowchart TD
   - `user_tariffs.count_contacts_left`
   - `users.free_contacts`
 - факт открытия фиксируется в `user_open_contacts`
-
-

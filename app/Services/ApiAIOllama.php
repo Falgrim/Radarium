@@ -22,6 +22,10 @@ class ApiAIOllama
 
     protected string $logPrefix = '[Ollama/Qwen]';
 
+    protected float $temperature = 0.3;
+
+    protected ?int $maxTokens = null;
+
     public function __construct()
     {
         $this->aiDebug = config('services.ai.debug');
@@ -115,6 +119,12 @@ class ApiAIOllama
         $this->text = $text;
     }
 
+    public function setGenerationOptions(?float $temperature = null, ?int $maxTokens = null): void
+    {
+        $this->temperature = $temperature ?? 0.3;
+        $this->maxTokens = $maxTokens;
+    }
+
     protected function getUrl(): string
     {
         return rtrim($this->host, '/') . '/v1/chat/completions';
@@ -122,7 +132,7 @@ class ApiAIOllama
 
     protected function generateJson(): array
     {
-        return [
+        $payload = [
             'model' => $this->model,
             'messages' => [
                 [
@@ -134,8 +144,24 @@ class ApiAIOllama
                     'content' => $this->text,
                 ],
             ],
-            'temperature' => 0.3,
+            'temperature' => $this->temperature,
             'stream' => false,
+        ];
+
+        if ($this->maxTokens !== null) {
+            $payload['max_tokens'] = $this->maxTokens;
+        }
+
+        return $payload;
+    }
+
+    public function getDecodedJsonResult(): array
+    {
+        $result = $this->sendRequest();
+
+        return [
+            'origin' => $result['choices'][0]['message']['content'],
+            'json' => $this->parseResponse($result),
         ];
     }
 
