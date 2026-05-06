@@ -44,7 +44,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class SpecialistResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = Specialist::class;
 

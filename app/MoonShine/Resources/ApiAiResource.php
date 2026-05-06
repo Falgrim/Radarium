@@ -32,7 +32,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class ApiAiResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = ApiAi::class;
 

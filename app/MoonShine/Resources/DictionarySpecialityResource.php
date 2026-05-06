@@ -38,7 +38,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class DictionarySpecialityResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = DictionarySpeciality::class;
 

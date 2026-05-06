@@ -42,7 +42,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class BuilderResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = \App\Models\Builder::class;
 

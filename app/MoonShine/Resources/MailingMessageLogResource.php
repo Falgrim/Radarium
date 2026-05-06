@@ -27,7 +27,7 @@ use MoonShine\Fields\Field;
  */
 class MailingMessageLogResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = MailingMessageLog::class;
 

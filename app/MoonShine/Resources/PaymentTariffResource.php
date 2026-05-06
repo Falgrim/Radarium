@@ -32,7 +32,7 @@ use MoonShine\Fields\Field;
  */
 class PaymentTariffResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = PaymentTariff::class;
 

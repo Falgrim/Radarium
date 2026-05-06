@@ -59,7 +59,7 @@ class ApiChannelPostResource extends ModelResource
 
     protected bool $columnSelection = true;
 
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     public function query(): Builder
     {

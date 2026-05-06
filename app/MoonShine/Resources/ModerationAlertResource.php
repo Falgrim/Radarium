@@ -39,7 +39,7 @@ use MoonShine\Resources\ModelResource;
  */
 class ModerationAlertResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = ModerationAlert::class;
 

@@ -35,7 +35,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class CompanyJobResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = CompanyJob::class;
 

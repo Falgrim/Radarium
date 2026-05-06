@@ -36,7 +36,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class BuilderReviewResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = BuilderReview::class;
 

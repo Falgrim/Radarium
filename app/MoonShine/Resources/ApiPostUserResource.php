@@ -39,7 +39,7 @@ use MoonShine\Pages\Page;
  */
 class ApiPostUserResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = ApiPostUser::class;
 

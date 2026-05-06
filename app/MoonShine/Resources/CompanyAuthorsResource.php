@@ -48,7 +48,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class CompanyAuthorsResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = ApiPostUser::class;
 

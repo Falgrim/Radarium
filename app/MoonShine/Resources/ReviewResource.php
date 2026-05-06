@@ -35,7 +35,7 @@ use MoonShine\Components\MoonShineComponent;
  */
 class ReviewResource extends ModelResource
 {
-    protected bool $saveFilterState = false;
+    protected bool $saveFilterState = true;
 
     protected string $model = Review::class;
 
