@@ -114,6 +114,9 @@ class ModerationAlertResource extends ModelResource
 
         app(ModerationAuthorPostCatalogService::class)->requeueForAi($post);
 
+        $alert->status = ModerationAlertStatusEnum::AiReprocessing;
+        $alert->save();
+
         return MoonShineJsonResponse::make()
             ->toast('Карточки сняты с публикации, сообщение поставлено в очередь ИИ', ToastType::SUCCESS)
             ->redirect($this->formPageUrl($alert));
@@ -146,6 +149,9 @@ class ModerationAlertResource extends ModelResource
         }
 
         app(ModerationAuthorPostCatalogService::class)->removeFromCatalog($post);
+
+        $alert->status = ModerationAlertStatusEnum::RemovedFromCatalog;
+        $alert->save();
 
         return MoonShineJsonResponse::make()
             ->toast('Карточки по сообщению сняты с публикации (без очереди ИИ)', ToastType::SUCCESS)
