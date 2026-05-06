@@ -116,7 +116,8 @@ class ConfigurationResource extends ModelResource
                 ->options(unserialize($this->item->getAttribute('options')))
                 ->multiple();
         } elseif ($type == 'textarea') {
-            $fields[] = Textarea::make('Значение', 'value');
+            $fields[] = Textarea::make('Значение', 'value')
+                ->customAttributes(['rows' => '20']);
         } elseif ($type == 'checkbox') {
             $fields[] = Switcher::make('Да/Включено', 'value');
         } else {
