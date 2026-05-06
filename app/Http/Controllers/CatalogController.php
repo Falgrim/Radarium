@@ -129,10 +129,14 @@ class CatalogController extends Controller
      */
     private function specialistsMatchingCatalogScope(array $validated): Builder
     {
-        return Specialist::query()
-            ->when($this->onlyActive, function (Builder $q) {
+        $query = Specialist::query()
+            ->when($this->onlyActive, function (Builder $q): void {
                 $q->where('status', '=', ApiPostAiStatusEnum::Active);
-            })
+            });
+
+        $this->restrictSpecialistCardsToCompleteSourcePosts($query);
+
+        return $query
             ->when(! empty($validated['key_word_tags']), function (Builder $query) use ($validated) {
                 $query->whereHas('post', function (Builder $postQuery) use ($validated) {
                     $postQuery->where(function (Builder $inner) use ($validated) {
@@ -165,6 +169,26 @@ class CatalogController extends Controller
                         ->orWhere('username', '<>', '');
                 });
             });
+    }
+
+    /**
+     * Каталог специалистов: только карточки по сообщениям с завершённой ИИ-обработкой (как у строителей).
+     */
+    private function restrictSpecialistCardsToCompleteSourcePosts(Builder $specialistQuery): void
+    {
+        $specialistQuery->whereHas('post', function (Builder $postQuery): void {
+            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+        });
+    }
+
+    /**
+     * Каталог вакансий: только записи по сообщениям с завершённой ИИ-обработкой.
+     */
+    private function restrictCompanyJobCardsToCompleteSourcePosts(Builder $companyJobQuery): void
+    {
+        $companyJobQuery->whereHas('post', function (Builder $postQuery): void {
+            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+        });
     }
 
     public function authorsAsSpecialists(Request $request)
@@ -240,6 +264,7 @@ class CatalogController extends Controller
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
+            $this->restrictSpecialistCardsToCompleteSourcePosts($query);
 
             if (!empty($validated['region'])) {
                 if ($validated['region'] === 'none') {
@@ -292,6 +317,9 @@ class CatalogController extends Controller
             ->with([
                 'specialists' => static function ($query): void {
                     $query->where('status', ApiPostAiStatusEnum::Active)
+                        ->whereHas('post', function (Builder $postQuery): void {
+                            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+                        })
                         ->with(['specialities.dictionarySpeciality']);
                 },
             ])
@@ -344,6 +372,8 @@ class CatalogController extends Controller
             $specialists = $specialists->where('status', '=', ApiPostAiStatusEnum::Active);
         }
 
+        $this->restrictSpecialistCardsToCompleteSourcePosts($specialists);
+
         if (!empty($validated['key_word'])) {
             $specialists = $specialists->whereHas('post', function (Builder $query) use ($validated) {
                 $query->where('post', 'like', '%'.$validated['key_word'].'%');
@@ -385,6 +415,12 @@ class CatalogController extends Controller
         $validated = $validator->validateWithBag('specialist');
 
         $author = ApiPostUser::where('id', $validated['id'])
+            ->whereHas('specialists', function (Builder $query): void {
+                if ($this->onlyActive) {
+                    $query->where('status', '=', ApiPostAiStatusEnum::Active);
+                }
+                $this->restrictSpecialistCardsToCompleteSourcePosts($query);
+            })
             ->with(['specialists', 'postsComplete', 'specialistReviews'])
             ->withAvg(['specialistReviews' => function ($query) {
                 $query->where('rating', '>', 0);
@@ -418,11 +454,6 @@ class CatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(Specialist::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
-                    if ($this->onlyActive) {
-                        $query->where('status', ApiPostAiStatusEnum::Active);
-                    }
-                }),
             ],
         ]);
 
@@ -432,7 +463,16 @@ class CatalogController extends Controller
 
         $validated = $validator->validateWithBag('specialist');
 
-        $specialist = Specialist::where('id', $validated['id'])->with('post')->firstOrFail();
+        $specialist = Specialist::query()
+            ->where('id', $validated['id'])
+            ->when($this->onlyActive, function (Builder $q): void {
+                $q->where('status', ApiPostAiStatusEnum::Active);
+            })
+            ->whereHas('post', function (Builder $postQuery): void {
+                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            })
+            ->with('post')
+            ->firstOrFail();
         $reviews = $specialist->reviews()->where('status', ReviewStatusEnum::Active)->orderBy('created_at')->get();
 
         return view('catalog.specialist_view', [
@@ -512,6 +552,13 @@ class CatalogController extends Controller
                     if ($this->onlyActive) {
                         $query->where('status', ApiPostAiStatusEnum::Active);
                     }
+                    $postsTable = (new ApiChannelPost())->getTable();
+                    $query->whereExists(function (\Illuminate\Database\Query\Builder $sub) use ($postsTable): void {
+                        $sub->selectRaw('1')
+                            ->from($postsTable)
+                            ->whereColumn($postsTable.'.id', Specialist::table().'.api_channel_post_id')
+                            ->where($postsTable.'.ai_parse_status', ApiChannelPostStatusEnum::Complete->value);
+                    });
                 }),
             ],
         ]);
@@ -649,6 +696,8 @@ class CatalogController extends Controller
             $companyJobs = $companyJobs->where('status', '=', CompanyJobStatusEnum::Active);
         }
 
+        $this->restrictCompanyJobCardsToCompleteSourcePosts($companyJobs);
+
         $companyJobs = $companyJobs
             ->orderByDesc('created_at')
             ->paginate($this->onPage)
@@ -667,15 +716,18 @@ class CatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(CompanyJob::table(), 'id')->where(function (\Illuminate\Database\Query\Builder $query) {
-                    if ($this->onlyActive) {
-                        $query->where('status', CompanyJobStatusEnum::Active);
-                    }
-                }),
             ],
-        ])->validated();
+        ])->validate();
 
-        $companyJob = CompanyJob::where('id', $validated['id'])->firstOrFail();
+        $companyJob = CompanyJob::query()
+            ->where('id', $validated['id'])
+            ->when($this->onlyActive, function (Builder $q): void {
+                $q->where('status', CompanyJobStatusEnum::Active);
+            })
+            ->whereHas('post', function (Builder $postQuery): void {
+                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            })
+            ->firstOrFail();
 
         return view('catalog.companyjob_view', [
             'request'          => $request,

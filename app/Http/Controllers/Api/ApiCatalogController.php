@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\CompanyJob;
 use App\Models\Specialist;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -44,6 +45,10 @@ class ApiCatalogController extends Controller
             $specialists = $specialists->where('status', '=', ApiPostAiStatusEnum::Active);
         }
 
+        $specialists = $specialists->whereHas('post', function (EloquentBuilder $postQuery): void {
+            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+        });
+
         if (!empty($validated['key_word'])) {
             $specialists = $specialists->whereAny(['experience', 'about'], 'like', '%'.$validated['key_word'].'%');
         }
@@ -67,11 +72,6 @@ class ApiCatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(Specialist::table(), 'id')->where(function (Builder $query) {
-                    if ($this->onlyActive) {
-                        $query->where('status', ApiPostAiStatusEnum::Active);
-                    }
-                }),
             ],
         ]);
 
@@ -81,7 +81,15 @@ class ApiCatalogController extends Controller
 
         $validated = $validator->validateWithBag('specialist');
 
-        $specialist = Specialist::where('id', $validated['id'])->firstOrFail();
+        $specialist = Specialist::query()
+            ->where('id', $validated['id'])
+            ->when($this->onlyActive, function (EloquentBuilder $q): void {
+                $q->where('status', ApiPostAiStatusEnum::Active);
+            })
+            ->whereHas('post', function (EloquentBuilder $postQuery): void {
+                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            })
+            ->firstOrFail();
         //$reviews = $specialist->reviews()->orderBy('created_at')->get();
 
         return $specialist;
@@ -94,6 +102,10 @@ class ApiCatalogController extends Controller
         if ($this->onlyActive) {
             $companyJobs = $companyJobs->where('status', '=', CompanyJobStatusEnum::Active);
         }
+
+        $companyJobs = $companyJobs->whereHas('post', function (EloquentBuilder $postQuery): void {
+            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+        });
 
         $companyJobs = $companyJobs
             ->orderByDesc('created_at')
@@ -110,15 +122,18 @@ class ApiCatalogController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                Rule::exists(CompanyJob::table(), 'id')->where(function (Builder $query) {
-                    if ($this->onlyActive) {
-                        $query->where('status', CompanyJobStatusEnum::Active);
-                    }
-                }),
             ],
-        ])->validated();
+        ])->validate();
 
-        $companyJob = CompanyJob::where('id', $validated['id'])->firstOrFail();
+        $companyJob = CompanyJob::query()
+            ->where('id', $validated['id'])
+            ->when($this->onlyActive, function (EloquentBuilder $q): void {
+                $q->where('status', CompanyJobStatusEnum::Active);
+            })
+            ->whereHas('post', function (EloquentBuilder $postQuery): void {
+                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            })
+            ->firstOrFail();
 
         return $companyJob;
     }

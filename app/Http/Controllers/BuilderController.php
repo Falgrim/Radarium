@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\ReviewCanEditEnum;
@@ -112,6 +113,7 @@ class BuilderController extends Controller
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
+            $this->restrictBuilderCardsToCompleteSourcePosts($query);
 
             if (! empty($validated['region'])) {
                 if ($validated['region'] === 'none') {
@@ -146,7 +148,10 @@ class BuilderController extends Controller
             }
         })
             ->whereDoesntHave('specialists', function (Builder $query) {
-                $query->where('status', ApiPostAiStatusEnum::Active);
+                $query->where('status', ApiPostAiStatusEnum::Active)
+                    ->whereHas('post', function (Builder $postQuery): void {
+                        $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+                    });
             });
 
         if (! empty($validated['open_contacts']) && Auth::check()) {
@@ -205,6 +210,13 @@ class BuilderController extends Controller
         $validated = $validator->validateWithBag('specialist');
 
         $author = ApiPostUser::where('id', $validated['id'])
+            ->whereHas('builders', function (Builder $query): void {
+                $query->whereNotNull('api_channel_post_id')->where('api_channel_post_id', '>', 0);
+                if ($this->onlyActive) {
+                    $query->where('status', '=', ApiPostAiStatusEnum::Active);
+                }
+                $this->restrictBuilderCardsToCompleteSourcePosts($query);
+            })
             ->with(['builders', 'postsComplete', 'builderReviews']);
 
         $author = $author->where(function (Builder $query) {
@@ -453,12 +465,16 @@ class BuilderController extends Controller
      */
     private function buildersMatchingCatalogScope(array $validated, array $specialityFilterIds): Builder
     {
-        return \App\Models\Builder::query()
+        $query = \App\Models\Builder::query()
             ->whereNotNull('api_channel_post_id')
             ->where('api_channel_post_id', '>', 0)
-            ->when($this->onlyActive, function (Builder $query) {
-                $query->where('status', '=', ApiPostAiStatusEnum::Active);
-            })
+            ->when($this->onlyActive, function (Builder $q): void {
+                $q->where('status', '=', ApiPostAiStatusEnum::Active);
+            });
+
+        $this->restrictBuilderCardsToCompleteSourcePosts($query);
+
+        return $query
             ->when(! empty($validated['key_word_tags']), function (Builder $query) use ($validated) {
                 $query->whereHas('post', function (Builder $postQuery) use ($validated) {
                     $postQuery->where(function (Builder $inner) use ($validated) {
@@ -480,7 +496,10 @@ class BuilderController extends Controller
             })
             ->whereHas('user', function (Builder $userQuery) use ($validated) {
                 $userQuery->whereDoesntHave('specialists', function (Builder $specialistQuery) {
-                    $specialistQuery->where('status', ApiPostAiStatusEnum::Active);
+                    $specialistQuery->where('status', ApiPostAiStatusEnum::Active)
+                        ->whereHas('post', function (Builder $postQuery): void {
+                            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+                        });
                 });
                 if (! empty($validated['open_contacts']) && Auth::check()) {
                     $userQuery->whereIn('id', function ($sub) {
@@ -494,5 +513,16 @@ class BuilderController extends Controller
                         ->orWhere('username', '<>', '');
                 });
             });
+    }
+
+    /**
+     * В публичном каталоге учитываются только карточки по сообщениям со статусом «Обработка завершена».
+     * Пока сообщение в очереди ИИ (InQueue) или на перепроверке — автор не попадает в выдачу.
+     */
+    private function restrictBuilderCardsToCompleteSourcePosts(Builder $builderQuery): void
+    {
+        $builderQuery->whereHas('post', function (Builder $postQuery): void {
+            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+        });
     }
 }

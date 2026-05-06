@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\PaymentTariffStatusEnum;
 use App\Infrastructures\Facades\Repositories;
@@ -17,6 +18,9 @@ class IndexController extends Controller
     {
         $contactSum = ApiPostUser::whereHas('specialists', function (Builder $query) {
             $query->where('status', '=', ApiPostAiStatusEnum::Active);
+            $query->whereHas('post', function (Builder $postQuery): void {
+                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            });
         });
 
         $contactSum = $contactSum->where(function (Builder $query) {
@@ -28,9 +32,15 @@ class IndexController extends Controller
 
         $builderContactSum = ApiPostUser::whereHas('builders', function (Builder $query) {
             $query->where('status', '=', ApiPostAiStatusEnum::Active);
+            $query->whereHas('post', function (Builder $postQuery): void {
+                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            });
         })
             ->whereDoesntHave('specialists', function (Builder $query) {
-                $query->where('status', ApiPostAiStatusEnum::Active);
+                $query->where('status', ApiPostAiStatusEnum::Active)
+                    ->whereHas('post', function (Builder $postQuery): void {
+                        $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+                    });
             })
             ->where(function (Builder $query) {
                 $query->whereNotNull('phone')
@@ -42,6 +52,9 @@ class IndexController extends Controller
         $contactTodaySum = Cache::remember('contact_today_sum', 3600, function () {
             $contactTodaySum = ApiPostUser::whereHas('specialists', function (Builder $query) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
+                $query->whereHas('post', function (Builder $postQuery): void {
+                    $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+                });
                 $query->where('created_at', '>=', Carbon::now()->startOfDay());
             });
 
@@ -61,10 +74,16 @@ class IndexController extends Controller
         $builderContactTodaySum = Cache::remember('builder_contact_today_sum', 3600, function () {
             $sum = ApiPostUser::whereHas('builders', function (Builder $query) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
+                $query->whereHas('post', function (Builder $postQuery): void {
+                    $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+                });
                 $query->where('created_at', '>=', Carbon::now()->startOfDay());
             })
                 ->whereDoesntHave('specialists', function (Builder $query) {
-                    $query->where('status', ApiPostAiStatusEnum::Active);
+                    $query->where('status', ApiPostAiStatusEnum::Active)
+                        ->whereHas('post', function (Builder $postQuery): void {
+                            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+                        });
                 })
                 ->where(function (Builder $query) {
                     $query->whereNotNull('phone')

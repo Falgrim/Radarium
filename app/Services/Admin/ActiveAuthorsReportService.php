@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Enum\ActiveAuthorsReportTypeEnum;
+use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Models\ApiChannelPost;
@@ -171,6 +172,7 @@ final class ActiveAuthorsReportService
         $t = $query->getModel()->getTable();
         $postTable = (new ApiChannelPost)->getTable();
         $query->join($postTable, "{$postTable}.id", '=', "{$t}.api_channel_post_id");
+        $query->where("{$postTable}.ai_parse_status", ApiChannelPostStatusEnum::Complete->value);
         $userConstraints($query);
         $query->when($dateFrom, static fn (EloquentBuilder $q) => $q->where("{$postTable}.post_date", '>=', $dateFrom));
         $query->when($dateTo, static fn (EloquentBuilder $q) => $q->where("{$postTable}.post_date", '<=', $dateTo->copy()->endOfDay()));
@@ -196,6 +198,7 @@ final class ActiveAuthorsReportService
 
         return Builder::query()
             ->join($postTable, "{$postTable}.id", '=', "{$domainTable}.api_channel_post_id")
+            ->where("{$postTable}.ai_parse_status", ApiChannelPostStatusEnum::Complete->value)
             ->where("{$domainTable}.status", ApiPostAiStatusEnum::Active)
             ->whereNotNull("{$domainTable}.api_channel_post_id")
             ->where("{$domainTable}.api_channel_post_id", '>', 0)
@@ -212,6 +215,7 @@ final class ActiveAuthorsReportService
 
         return Specialist::query()
             ->join($postTable, "{$postTable}.id", '=', "{$domainTable}.api_channel_post_id")
+            ->where("{$postTable}.ai_parse_status", ApiChannelPostStatusEnum::Complete->value)
             ->where("{$domainTable}.status", ApiPostAiStatusEnum::Active)
             ->whereNotNull("{$domainTable}.api_channel_post_id")
             ->where("{$domainTable}.api_channel_post_id", '>', 0)
@@ -228,6 +232,7 @@ final class ActiveAuthorsReportService
 
         return CompanyJob::query()
             ->join($postTable, "{$postTable}.id", '=', "{$domainTable}.api_channel_post_id")
+            ->where("{$postTable}.ai_parse_status", ApiChannelPostStatusEnum::Complete->value)
             ->where("{$domainTable}.status", CompanyJobStatusEnum::Active)
             ->whereNotNull("{$domainTable}.api_channel_post_id")
             ->where("{$domainTable}.api_channel_post_id", '>', 0)
