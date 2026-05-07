@@ -4,7 +4,9 @@ namespace App\Observers;
 
 use App\Models\ModerationAlert;
 use App\MoonShine\Resources\ModerationAlertResource;
+use Illuminate\Support\Facades\Log;
 use MoonShine\Notifications\MoonShineNotification;
+use Throwable;
 
 class ModerationAlertObserver
 {
@@ -13,18 +15,26 @@ class ModerationAlertObserver
      */
     public function created(ModerationAlert $moderationAlert): void
     {
-        $page = (new ModerationAlertResource())->detailPageUrl($moderationAlert->id);
+        try {
+            $page = (new ModerationAlertResource())->detailPageUrl($moderationAlert->id);
 
-        MoonShineNotification::send(
-            message: 'Новая модерация',
-            // Необязательная кнопка
-            button: [
-                'link' => $page,
-                'label' => 'Открыть'
-            ],
-            // Необязательный цвет иконки (purple, pink, blue, green, yellow, red, gray)
-            color: 'yellow'
-        );
+            MoonShineNotification::send(
+                message: 'Новая модерация',
+                // Необязательная кнопка
+                button: [
+                    'link' => $page,
+                    'label' => 'Открыть'
+                ],
+                // Необязательный цвет иконки (purple, pink, blue, green, yellow, red, gray)
+                color: 'yellow'
+            );
+        } catch (Throwable $e) {
+            Log::warning('ModerationAlert: уведомление MoonShine не отправлено', [
+                'moderation_alert_id' => $moderationAlert->id,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

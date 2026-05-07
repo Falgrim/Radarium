@@ -13,6 +13,7 @@ use App\Models\ModerationAlert;
 use App\Models\Specialist;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class ModerationAlertController extends Controller
 {
@@ -59,15 +60,20 @@ class ModerationAlertController extends Controller
             ], 403);
         }
 
-        ModerationAlert::create([
+        $payload = [
             'user_id' => Auth::user()->id,
             'is_system' => ModerationAlertSystemEnum::User,
             'table_name' => $tableName,
             'table_row_id' => $rowId,
-            'api_channel_post_id' => $apiChannelPostId,
             'description' => $data['description'] ?? null,
             'status' => ModerationAlertStatusEnum::New,
-        ]);
+        ];
+
+        if (Schema::hasColumn((new ModerationAlert)->getTable(), 'api_channel_post_id')) {
+            $payload['api_channel_post_id'] = $apiChannelPostId;
+        }
+
+        ModerationAlert::create($payload);
 
         return response()->json([
             'code' => 200,
