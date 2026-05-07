@@ -170,7 +170,7 @@ final class CatalogPublicationGateTest extends TestCase
         $this->assertSame([], $out['reasons']);
     }
 
-    public function test_specialist_not_affected_by_builder_heuristics(): void
+    public function test_builder_need_to_produce_customer_order_goes_to_moderation(): void
     {
         config([
             'catalog_publication_gate.enabled' => true,
@@ -179,9 +179,66 @@ final class CatalogPublicationGateTest extends TestCase
         ]);
 
         $gate = new CatalogPublicationGate;
-        $post = 'Требуются: Моляры. Бригада 10-15 человек.';
+        $post = 'Добрый день! Нужно произвести укладку тротуарной плитки, около 10м2, на пескоцемент, всё на месте, оплата 10000р';
 
-        $out = $gate->decide(ApiDataTypeEnum::Specialist, $post, [101]);
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertContains('post_text_customer_request_without_offer', $out['reasons']);
+    }
+
+    public function test_builder_facade_package_hiring_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Есть проживание, инструмент выдается, выплаты два раза в месяц, аванс на 3 день. Объем фасада 1000м2.';
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertContains('post_text_hiring_or_staffing_signal', $out['reasons']);
+    }
+
+    public function test_builder_gig_spec_bundle_payment_volume_place_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = <<<'TXT'
+1200р/м²
+шпаклевка, покраска
+Объем 800м²
+Сестрорецк
+ОПЛАТА ПО ФАКТУ СДЕЛАННОГО
+TXT;
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertContains('post_text_gig_payment_volume_place_or_date', $out['reasons']);
+    }
+
+    public function test_builder_price_and_volume_without_place_or_date_stays_active(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $gate = new CatalogPublicationGate;
+        $post = 'Делаем отделку, цена 900 руб/м², типовые объекты от 50 м², качество, звоните.';
+
+        $out = $gate->decide(ApiDataTypeEnum::Builder, $post, [101]);
 
         $this->assertSame(ApiPostAiStatusEnum::Active, $out['status']);
         $this->assertSame([], $out['reasons']);

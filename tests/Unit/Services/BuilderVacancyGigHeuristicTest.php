@@ -28,4 +28,42 @@ TXT;
 
         $this->assertFalse(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
     }
+
+    public function test_helper_hourly_part_time_is_vacancy_heuristic(): void
+    {
+        $text = <<<'TXT'
+Всем привет.
+Требуется помощник - строитель (самостоятельный и без выхлопа)
+Оплата из расчета 500 руб./час.
+Работа по 4 часа 3 раза в неделю.
+TXT;
+
+        $this->assertTrue(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
+    }
+
+    public function test_ls_and_two_people_is_vacancy_heuristic(): void
+    {
+        $text = <<<'TXT'
+Еще одного
+С завтрашнего дня
+К 9:00
+2 человека (трезвые , РФ)
+Сбивать штукатурку перфоратором
+Инструмент предоставляется
+Оплата 100р с квадрата
+Писать в лс
+TXT;
+
+        $this->assertTrue(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
+    }
+
+    public function test_housing_tools_biweekly_is_vacancy_heuristic(): void
+    {
+        $text = <<<'TXT'
+Есть проживание, инструмент выдается, аванс на 3 день работы, выплаты два раза в месяц.
+Начальный объем 1000м².
+TXT;
+
+        $this->assertTrue(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
+    }
 }

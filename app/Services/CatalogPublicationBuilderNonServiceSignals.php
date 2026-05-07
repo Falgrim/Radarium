@@ -7,6 +7,9 @@ namespace App\Services;
 /**
  * Консервативные текстовые эвристики для строителей (Builder):
  * снижают авто-публикацию в каталог, если пост похож на найм или короткий заказ без самопрезентации исполнителя.
+ *
+ * Дополнительно: «контракт объявления о подработке» — одновременно упоминание условий оплаты,
+ * числового объёма работ и места или срока (типичный заказ/смена, не карточка исполнителя).
  */
 final class CatalogPublicationBuilderNonServiceSignals
 {
@@ -14,12 +17,14 @@ final class CatalogPublicationBuilderNonServiceSignals
 
     public const REASON_CUSTOMER_SHORT = 'post_text_customer_request_without_offer';
 
+    public const REASON_GIG_SPECIFICATION_BUNDLE = 'post_text_gig_payment_volume_place_or_date';
+
     /**
      * @return list<string> коды причин (пусто — эвристики не сработали)
      */
     public function reasons(string $postText): array
     {
-        $text = mb_strtolower(trim($postText));
+        $text = $this->normalizeForMatch(mb_strtolower(trim($postText)));
         if ($text === '') {
             return [];
         }
@@ -32,7 +37,25 @@ final class CatalogPublicationBuilderNonServiceSignals
             return [self::REASON_CUSTOMER_SHORT];
         }
 
+        if ($this->matchesGigSpecificationBundle($text)) {
+            return [self::REASON_GIG_SPECIFICATION_BUNDLE];
+        }
+
         return [];
+    }
+
+    /**
+     * Приводим типографские символы и невидимые пробелы — иначе \b и якоря могут не сработать.
+     */
+    private function normalizeForMatch(string $lowercased): string
+    {
+        $t = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $lowercased) ?? $lowercased;
+
+        return str_replace(
+            ['：', '－', '—', '–', '«', '»', '„', '“'],
+            [':', '-', '-', '-', '«', '»', '"', '"'],
+            $t
+        );
     }
 
     private function matchesHiringOrStaffing(string $lower): bool
@@ -40,7 +63,7 @@ final class CatalogPublicationBuilderNonServiceSignals
         $patterns = [
             '/\bтребуются\b/u',
             '/\bтребуется\s+помощник/u',
-            '/\bтребуется\s+(мастер|бригада|человек|люди|рабоч|монтажник|сварщик|маляр|гипсокартонщик)/u',
+            '/\bтребуется\s+(мастер|бригада|человек|люди|рабоч|монтажник|сварщик|маляр|гипсокартонщик|строител)/u',
             '/\bнужны\s+\d+\s*(человек|рабоч|мастер|специалист|cпециалист|бригада|маляр|гипсокартонщик)/u',
             '/\bнужны\s+(люди|рабоч)/u',
             '/\bнужен\s+(мастер|человек|рабоч|помощник|монтажник|сварщик)/u',
@@ -56,6 +79,22 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\bкто\s+свободен/u',
             '/\bесть\s+кто\s+(?:на\s+)?(?:объект|смену)/u',
             '/\bаванс\s+на\s+\d/u',
+            // Найм: выдача инструмента, жильё на объекте, сдельные выплаты «как вакансии»
+            '/\bинструмент\s+выда(?:ётся|ется|ют|ем|ёте|ете)\b/u',
+            '/\bвыда(?:ёт|ет|ём|ем)(?:ся)?\s+инструмент/u',
+            '/\bесть\s+проживание\b/u',
+            '/\bвыплат(?:ы|а)\s+два\s+раза\s+в\s+месяц/u',
+            '/\bвыплат(?:ы|а)\s+каждый\s+этаж/u',
+            '/\bоплат[ау]\s+из\s+расч[её]та\b/u',
+            '/\bработ[аы]\s+по\s+\d+\s*час/u',
+            '/\b\d+\s+раз[аы]?\s+в\s+неделю\b/u',
+            // «Ещё одного», набор на короткий выход
+            '/\bещ[её]\s+одног[оа]\b/u',
+            // Требования к кандидатам
+            '/\bтрезвые\b/u',
+            '/\bпатент\s*\(\s*если\s+не/u',
+            // Сдельная оплата за физ. объём как в объявлениях о подработке
+            '/\bоплат[ауио].{0,32}с\s+квадрат/u',
         ];
 
         foreach ($patterns as $re) {
@@ -68,11 +107,158 @@ final class CatalogPublicationBuilderNonServiceSignals
     }
 
     /**
-     * Короткое сообщение-заказ («нужно смонтировать… в лс») без маркеров исполнителя.
+     * Подработка/разовый заказ: одновременно есть и размер/условия оплаты (в т.ч. аванс, «по факту»),
+     * и числовой объём работ, и геолокация/адрес или конкретные дата/время выхода.
+     */
+    private function matchesGigSpecificationBundle(string $lower): bool
+    {
+        if (! $this->hasGigPaymentTerms($lower)) {
+            return false;
+        }
+
+        if (! $this->hasConcreteWorkVolume($lower)) {
+            return false;
+        }
+
+        if (! $this->hasPlaceOrTimeConstraint($lower)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function hasGigPaymentTerms(string $t): bool
+    {
+        if (preg_match('/оплат[аио]\s+по\s+факту|по\s+факту\s+(?:выполн|сделан|сделанн)/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bаванс\b/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match(
+            '/\d+(?:[\s,.]\d+)?\s*(?:тыс\.?|тысячи?)?\s*(?:₽|руб|руб\.|р\.)\b'.
+            '|\d+\s*[₽руб]\b|\d+\s*руб\.?\s*\/\s*(?:м|м\s*[²2]|час|ч\.)\b'.
+            '|\d+\s*р\.?\s*\/\s*(?:м|ч)/u',
+            $t
+        ) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bцена\s*[:.]?\s*\d/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bоплат[аио].{0,40}\d.{0,6}(?:руб|₽|р\.|тыс)/u', $t) === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function hasConcreteWorkVolume(string $t): bool
+    {
+        if (preg_match('/\d+(?:[\s,.]\d+)?\s*(?:м²|м2|м\s*²|кв\.?\s*м|м\.?\s*кв)/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bоб[ъь][её]м[аея]?\s*[:.]?\s*\d+/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match('/начальн.{0,16}об[ъь][её]м.{0,20}\d+/u', $t) === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function hasPlaceOrTimeConstraint(string $lower): bool
+    {
+        if (preg_match(
+            '/\b(?:ул\.|улиц|наб\.|набережн|просп\.|проспект|переул|пр\.|шоссе|ш\.)\s/u',
+            $lower
+        ) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bд\.?\s*\d+/u', $lower) === 1 || preg_match('/\bдом\s+\d+/u', $lower) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\b(?:метро|м\.)\s*[а-яёa-z0-9«»\-]{1,40}/u', $lower) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bг\.?\s+[а-яё\-]{2,30}\b/u', $lower) === 1) {
+            return true;
+        }
+
+        if (preg_match(
+            '/\b[а-яё]{4,22}\s+[-–]\s+[а-яё]{4,22}\b/u',
+            $lower
+        ) === 1) {
+            return true;
+        }
+
+        if (preg_match(
+            '#\d{1,2}[./]\d{1,2}[./]\d{2,4}|\d{1,2}\s+(?:январ|феврал|марта|апрел|ма[йя]|июн|июл|август|сентябр|октябр|ноябр|декабр)#u',
+            $lower
+        ) === 1) {
+            return true;
+        }
+
+        if (preg_match(
+            '/\b(?:завтра|послезавтра|с\s+завтрашн|на\s+завтра|сегодня\s+к|к\s+\d{1,2}[:.]\d{0,2}|смена\s+к)\b/u',
+            $lower
+        ) === 1) {
+            return true;
+        }
+
+        if ($this->matchesSingleWordNonJobLocationLine($lower)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Одно слово в строке похоже на топоним (г. без «г.»), не заголовок работ.
+     */
+    private function matchesSingleWordNonJobLocationLine(string $lower): bool
+    {
+        foreach (preg_split("/\r\n|\n|\r/", $lower) as $line) {
+            $line = trim($line);
+            if (mb_strlen($line) < 5 || mb_strlen($line) > 42) {
+                continue;
+            }
+            if (str_contains($line, ' ')) {
+                continue;
+            }
+            if (! preg_match('/^[а-яёіґ\-]+$/u', $line)) {
+                continue;
+            }
+            if (preg_match(
+                '/работ|штукатур|маляр|потол|покрас|срочно|требу|нужн|заделка|слой|шпакл|грунт|шлифов|' .
+                'покраск|аквапанель|сапфир|стеклохолст|шпаклев|безвоздушн|укладк|демонтаж|монтаж|электрик/u',
+                $line
+            )) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Короткое сообщение-заказ («нужно смонтировать…», «нужно произвести укладку…») без маркеров исполнителя.
      */
     private function matchesShortCustomerRequestWithoutPerformer(string $original, string $lower): bool
     {
-        if (mb_strlen($original) > 220) {
+        if (mb_strlen($original) > 420) {
             return false;
         }
 
@@ -80,7 +266,7 @@ final class CatalogPublicationBuilderNonServiceSignals
             return false;
         }
 
-        $order = '/(?:^|[\s,.;:!?—\-])(?:нужно|надо|срочно\s+нужно)\s+(?:смонтировать|установить|сделать|снять|демонтировать|провести|починить|построить|заменить)\b/u';
+        $order = '/(?:^|[\s,.;:!?—\-])(?:нужно|надо|срочно\s+нужно)\s+(?:смонтировать|установить|сделать|снять|демонтировать|провести|починить|построить|заменить|произвести|выполнить)\b/u';
 
         return preg_match($order, $lower) === 1;
     }

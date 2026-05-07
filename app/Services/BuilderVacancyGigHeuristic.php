@@ -33,6 +33,18 @@ final class BuilderVacancyGigHeuristic
             return true;
         }
 
+        if (self::lsRecruitmentWithHeadcount($t)) {
+            return true;
+        }
+
+        if (self::partTimeHourlyAssistantSchedule($t)) {
+            return true;
+        }
+
+        if (self::employerHousingToolsOrPayroll($t)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -113,13 +125,13 @@ final class BuilderVacancyGigHeuristic
     private static function explicitHeadcountOrShiftHire(string $t): bool
     {
         $people = (bool) preg_match(
-            '/\b\d+\s*челов\b|\b\d+\s*рабоч|'.
-                'пару человек|два человека|один человек|нужн(а|ы|о)?\s+\d+\s*челов/u',
+            '/\b\d+\s*[-–—]\s*\d+\s*человек\b|\b\d+\s*челов\b|\b\d+\s*рабоч|'.
+                'пару человек|два человека|один человек|нужн(а|ы|о)?\s+\d+\s*челов|ещ[её]\s+одног/u',
             $t
         );
 
         $timeMeet = (bool) preg_match(
-            '/(\b|^)на\s+завтра|\bзавтра\s+к\s+\d{1,2}|к\s*\d{1,2}[.:]\d{2}|сбор\s+(в\s+)?\d{1,2}/u',
+            '/(\b|^)на\s+завтра|с\s+завтрашн|завтрашн|\bзавтра\s+к\s+\d{1,2}|к\s*\d{1,2}[.:]\d{0,2}\b|сбор\s+(в\s+)?\d{1,2}/u',
             $t
         );
 
@@ -129,5 +141,47 @@ final class BuilderVacancyGigHeuristic
         );
 
         return $people && ($timeMeet || $meetRoute);
+    }
+
+    /**
+     * «Пишать в лс» + численность / «ещё одного» — типичный короткий набор на объект.
+     */
+    private static function lsRecruitmentWithHeadcount(string $t): bool
+    {
+        if (! preg_match('/писать\s+в\s+лс|пишите\s+в\s+лс|пишем\s+в\s+лс/u', $t)) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\b\d+\s+человек[а]?\b|\bещ[её]\s+одног|два\s+человека/u',
+            $t
+        );
+    }
+
+    /**
+     * Почасовая ставка + фиксированные часы смены + недельный график (помощник, не прайс бригады).
+     */
+    private static function partTimeHourlyAssistantSchedule(string $t): bool
+    {
+        if (! preg_match('/\d+\s*руб\.?\s*\/\s*час/u', $t)) {
+            return false;
+        }
+        if (! preg_match('/работ[аы]\s+по\s+\d+\s*час/u', $t)) {
+            return false;
+        }
+
+        return (bool) preg_match('/\d+\s+раз[аы]?\s+в\s+неделю/u', $t);
+    }
+
+    /**
+     * Пакет «как у работодателя»: жильё на объекте + выдача инструмента или выплаты два раза в месяц.
+     */
+    private static function employerHousingToolsOrPayroll(string $t): bool
+    {
+        $housing = (bool) preg_match('/\bесть\s+проживание\b/u', $t);
+        $tools = (bool) preg_match('/\bинструмент\s+выда(?:ётся|ется|ют|ем)|\bвыда(?:ёт|ет)(?:ся)?\s+инструмент/u', $t);
+        $biweeklyPay = (bool) preg_match('/\bвыплат(?:ы|а)\s+два\s+раза\s+в\s+месяц/u', $t);
+
+        return $housing && ($tools || $biweeklyPay);
     }
 }
