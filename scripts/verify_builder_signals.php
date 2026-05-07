@@ -40,4 +40,33 @@ foreach ($vacancySamples as $name => $text) {
     echo $name.': '.$v.PHP_EOL;
 }
 
+$userSamples = [
+    'u1_фасад_долгопрудный' => <<<'TXT'
+м.Долгопрудная
+Начальный обьем 1000м².
+Есть проживание, инструмент выдается, аванс на 3 день работы, выплаты два раза в месяц
+TXT
+    ,
+    'u2_демонтаж_tme' => <<<'TXT'
+Еще одного
+2 человека (трезвые , РФ)
+Каменный остров
+Сбивать штукатурку перфоратором до кирпича
+Инструмент предоставляется
+Оплата 100р с квадрата
+Писать в лс
+
+https://t.me/mobilepersonnel
+TXT
+    ,
+];
+
+echo "\n=== Примеры из тикета ===\n";
+foreach ($userSamples as $name => $text) {
+    $reasons = $svc->reasons($text);
+    echo $name.': '.(count($reasons) ? implode(', ', $reasons) : '(нет сигналов)').PHP_EOL;
+    $v = BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text) ? 'да' : 'нет';
+    echo '  vacancy override: '.$v.PHP_EOL;
+}
+
 echo PHP_EOL.'OK'.PHP_EOL;

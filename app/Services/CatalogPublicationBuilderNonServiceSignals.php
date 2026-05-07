@@ -51,15 +51,23 @@ final class CatalogPublicationBuilderNonServiceSignals
     {
         $t = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $lowercased) ?? $lowercased;
 
-        return str_replace(
+        $t = str_replace(
             ['：', '－', '—', '–', '«', '»', '„', '“'],
             [':', '-', '-', '-', '«', '»', '"', '"'],
             $t
         );
+
+        $t = str_replace(["\xC2\xA0", "\xE2\x80\xAF"], ' ', $t);
+
+        return str_replace('ё', 'е', $t);
     }
 
     private function matchesHiringOrStaffing(string $lower): bool
     {
+        if ($this->matchesTelegramJobLinkWithManualLaborSignals($lower)) {
+            return true;
+        }
+
         $patterns = [
             '/\bтребуются\b/u',
             '/\bтребуется\s+помощник/u',
@@ -81,6 +89,8 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\bаванс\s+на\s+\d/u',
             // Найм: выдача инструмента, жильё на объекте, сдельные выплаты «как вакансии»
             '/\bинструмент\s+выда(?:ётся|ется|ют|ем|ёте|ете)\b/u',
+            '/\bинструмент\s+предоставляется\b/u',
+            '/\bпредоставляется\s+инструмент/u',
             '/\bвыда(?:ёт|ет|ём|ем)(?:ся)?\s+инструмент/u',
             '/\bесть\s+проживание\b/u',
             '/\bвыплат(?:ы|а)\s+два\s+раза\s+в\s+месяц/u',
@@ -104,6 +114,22 @@ final class CatalogPublicationBuilderNonServiceSignals
         }
 
         return false;
+    }
+
+    /**
+     * Рекрутинговые каналы / «объявления о работе»: t.me/... вместе с явными признаками найма полевых бригад.
+     */
+    private function matchesTelegramJobLinkWithManualLaborSignals(string $lower): bool
+    {
+        if (preg_match('/(?:^|[\s,.;:!?])(?:https?:\/\/)?(?:t|т)\.me\//iu', $lower) !== 1) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\d+\s*человек|ещ[её]\s+одног|писать\s+в\s+лс|пишите\s+в\s+лс|трезвые|'.
+                'перфоратор|сбивать\s+штукатур|на\s+этаж|руб\.?\s*\/\s*квадра|\bр\.\s*с\s+квадра/u',
+            $lower
+        );
     }
 
     /**
@@ -159,7 +185,10 @@ final class CatalogPublicationBuilderNonServiceSignals
 
     private function hasConcreteWorkVolume(string $t): bool
     {
-        if (preg_match('/\d+(?:[\s,.]\d+)?\s*(?:м²|м2|м\s*²|кв\.?\s*м|м\.?\s*кв)/u', $t) === 1) {
+        if (preg_match(
+            '/\d+(?:[\s,.]\d+)?\s*(?:м²|м2|м\s*²|м\s*2|кв\.?\s*м|м\.?\s*кв|[mм]2)\b/iu',
+            $t
+        ) === 1) {
             return true;
         }
 
@@ -187,7 +216,11 @@ final class CatalogPublicationBuilderNonServiceSignals
             return true;
         }
 
-        if (preg_match('/\b(?:метро|м\.)\s*[а-яёa-z0-9«»\-]{1,40}/u', $lower) === 1) {
+        if (preg_match('/\b(?:метро|[мm]\.)\s*[а-яёa-z0-9«»\-]{1,40}/ui', $lower) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bкаменн[а-яё]*\s+остров[а-яё]*\b/u', $lower) === 1) {
             return true;
         }
 

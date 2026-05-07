@@ -45,14 +45,34 @@ final class BuilderVacancyGigHeuristic
             return true;
         }
 
+        if (self::telegramJobLinkWithFieldWork($t)) {
+            return true;
+        }
+
         return false;
     }
 
     private static function normalize(string $postText): string
     {
         $t = mb_strtolower(trim($postText));
+        $t = str_replace(["\xC2\xA0", "\xE2\x80\xAF"], ' ', $t);
 
         return str_replace('ё', 'е', $t);
+    }
+
+    /**
+     * В тексте ссылка на tg-канал и сдельные/полевые работы (не карточка подрядчика).
+     */
+    private static function telegramJobLinkWithFieldWork(string $t): bool
+    {
+        if (preg_match('/(?:^|[\s,.;:!?])(?:https?:\/\/)?(?:t|т)\.me\//iu', $t) !== 1) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\d+\s*человек|ещ[её]\s+одног|писать\s+в\s+лс|пишите\s+в\s+лс|трезвые|перфоратор|сбивать\s+штукатур/u',
+            $t
+        );
     }
 
     /**
@@ -179,7 +199,11 @@ final class BuilderVacancyGigHeuristic
     private static function employerHousingToolsOrPayroll(string $t): bool
     {
         $housing = (bool) preg_match('/\bесть\s+проживание\b/u', $t);
-        $tools = (bool) preg_match('/\bинструмент\s+выда(?:ётся|ется|ют|ем)|\bвыда(?:ёт|ет)(?:ся)?\s+инструмент/u', $t);
+        $tools = (bool) preg_match(
+            '/\bинструмент\s+выда(?:ётся|ется|ют|ем)|\bинструмент\s+предоставляется|'.
+                '\bпредоставляется\s+инструмент|\bвыда(?:ёт|ет)(?:ся)?\s+инструмент/u',
+            $t
+        );
         $biweeklyPay = (bool) preg_match('/\bвыплат(?:ы|а)\s+два\s+раза\s+в\s+месяц/u', $t);
 
         return $housing && ($tools || $biweeklyPay);

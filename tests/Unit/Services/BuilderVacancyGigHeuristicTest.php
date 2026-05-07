@@ -66,4 +66,16 @@ TXT;
 
         $this->assertTrue(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
     }
+
+    public function test_telegram_job_link_with_field_work_is_vacancy(): void
+    {
+        $text = <<<'TXT'
+2 человека
+Перфоратор
+Писать в лс
+https://t.me/mobilepersonnel
+TXT;
+
+        $this->assertTrue(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
+    }
 }

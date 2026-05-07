@@ -243,4 +243,86 @@ TXT;
         $this->assertSame(ApiPostAiStatusEnum::Active, $out['status']);
         $this->assertSame([], $out['reasons']);
     }
+
+    public function test_builder_user_sample_facade_hiring_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $post = <<<'TXT'
+м.Долгопрудная
+Максимальная высота 4 этаж.
+Кронштейны 400р
+Утеплитель 550 2 слоя
+Направляющие 400
+Композитные кассеты 1500 ( небольшие)
+Керамогранитная плитка 1100
+Откосы оцинковка 400 р/м.п.
+Отливы 250р/м.п.
+Начальный обьем 1000м².
+Основная работа с кассетой и керамогранитом,большая часть подсистемы сделана
+Есть проживание, инструмент выдается, аванс на 3 день работы, выплаты два раза в месяц
+TXT;
+
+        $out = (new CatalogPublicationGate)->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertNotEmpty($out['reasons']);
+    }
+
+    public function test_builder_user_sample_helper_murino_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $post = <<<'TXT'
+Всем привет.
+Мурино - Девяткино.
+Возможно предложить будет интересно соседям по району.
+Требуется помощник - строитель (самостоятельный и без выхлопа)
+Оплата из расчета 500 руб./час.
+Работа по 4 часа 3 раза в неделю.
+TXT;
+
+        $out = (new CatalogPublicationGate)->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertNotEmpty($out['reasons']);
+    }
+
+    public function test_builder_user_sample_demolition_telegram_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $post = <<<'TXT'
+Еще одного
+С завтрашнего дня
+К 9:00
+2 человека (трезвые , РФ)
+Каменный остров
+Сбивать штукатурку перфоратором до кирпича(только сбивать, собирать не нужно)
+Инструмент предоставляется
+Оплата 100р с квадрата
+Выплаты каждый этаж (300кв примерно на этаже )
+Работы на неделю-две
+Писать в лс
+
+https://t.me/mobilepersonnel
+TXT;
+
+        $out = (new CatalogPublicationGate)->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertNotEmpty($out['reasons']);
+    }
 }
