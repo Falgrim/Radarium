@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Amp\CancelledException;
 use Amp\Ipc\Sync\ChannelException;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiPostUserMailingStatusEnum;
@@ -114,7 +115,7 @@ class ReadTelegramChats
         $this->setInfoMsg('Выборка с даты: '.date('H:i:s d.m.Y', $params['offset_date']));
 
         try {
-            $messages = $MadelineProto->messages->getHistory($params);
+            $messages = $this->getHistoryWithCancelledRetries($MadelineProto, $params);
         } catch (ChannelException $e) {
             $this->setErrorMsg('ChannelException ['.$e::class.']: '.$e->getMessage());
             unset($MadelineProto);
@@ -420,6 +421,37 @@ class ReadTelegramChats
     public function getErrorMsg(): array
     {
         return $this->messages['error'];
+    }
+
+    /**
+     * messages.getHistory часто бросает Amp\CancelledException при кратком обрыве связи с DC или таймауте.
+     *
+     * @return array<string, mixed> ответ MTProto (в т.ч. ключ 'messages')
+     */
+    private function getHistoryWithCancelledRetries(\danog\MadelineProto\API $api, array $params): array
+    {
+        $maxAttempts = max(1, min(5, (int) config('services.madeline_proto.get_history_max_attempts', 3)));
+        $last = null;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return $api->messages->getHistory($params);
+            } catch (CancelledException $e) {
+                $last = $e;
+                if ($attempt >= $maxAttempts) {
+                    throw $e;
+                }
+
+                Log::channel('post_parser')->notice('ReadTelegramChats getHistory CancelledException, retry', [
+                    'channel_id' => $this->apiChannel->id,
+                    'attempt' => $attempt,
+                    'max_attempts' => $maxAttempts,
+                ]);
+                sleep(min(2 * $attempt, 8));
+            }
+        }
+
+        throw $last ?? new \RuntimeException('getHistory: no attempts executed');
     }
 
     public function downloadUserPhoto($MadelineProto, ApiPostUser $user, array $photos)
