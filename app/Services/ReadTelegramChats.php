@@ -116,11 +116,16 @@ class ReadTelegramChats
         try {
             $messages = $MadelineProto->messages->getHistory($params);
         } catch (ChannelException $e) {
-            $this->setErrorMsg('ChannelException: ' . $e->getMessage());
+            $this->setErrorMsg('ChannelException ['.$e::class.']: '.$e->getMessage());
             unset($MadelineProto);
             return [];
-        } catch (\Exception $e) {
-            $this->setErrorMsg('Exception: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
+            Log::channel('post_parser')->warning('ReadTelegramChats getHistory', [
+                'channel_id' => $this->apiChannel->id,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
             unset($MadelineProto);
             return [];
         }
