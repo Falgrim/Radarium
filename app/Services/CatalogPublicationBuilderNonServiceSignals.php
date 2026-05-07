@@ -105,6 +105,9 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\bпатент\s*\(\s*если\s+не/u',
             // Сдельная оплата за физ. объём как в объявлениях о подработке
             '/\bоплат[ауио].{0,32}с\s+квадрат/u',
+            // Объёмные телесные заказы со стройлесами
+            '/\bтуры\s+есть\b/u',
+            '/\bесть\s+\d+\s+колонн\b/u',
         ];
 
         foreach ($patterns as $re) {
@@ -192,6 +195,24 @@ final class CatalogPublicationBuilderNonServiceSignals
             return true;
         }
 
+        // «по 9-10 квадратов», «40 квадратов каждая» — объём без м² в явном виде
+        if (preg_match('/\d+\s*[-–]\s*\d+\s+квадрат/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\b\d+\s+квадрат(?:ов|а|ы)\b/u', $t) === 1) {
+            return true;
+        }
+
+        // Типичный заказ отделки: N колонн (леса/архитектурные тела под штукатурку)
+        if (preg_match('/\b\d+\s+колонн\b/u', $t) === 1 || preg_match('/\bесть\s+\d+\s+колонн\b/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bвысот[аеы]\s+\d+\s*метр/u', $t) === 1) {
+            return true;
+        }
+
         if (preg_match('/\bоб[ъь][её]м[аея]?\s*[:.]?\s*\d+/u', $t) === 1) {
             return true;
         }
@@ -205,6 +226,10 @@ final class CatalogPublicationBuilderNonServiceSignals
 
     private function hasPlaceOrTimeConstraint(string $lower): bool
     {
+        if ($this->matchesCommaSeparatedLocationLine($lower)) {
+            return true;
+        }
+
         if (preg_match(
             '/\b(?:ул\.|улиц|наб\.|набережн|просп\.|проспект|переул|пр\.|шоссе|ш\.)\s/u',
             $lower
@@ -254,6 +279,64 @@ final class CatalogPublicationBuilderNonServiceSignals
         }
 
         return false;
+    }
+
+    /**
+     * Шапка «Санкт-Петербург, Сестрорецк» в начале (одна строка или с продолжением текста через пробел).
+     */
+    private function matchesCommaSeparatedLocationLine(string $lower): bool
+    {
+        $m = [];
+        if (preg_match('/^([\p{Cyrillic}\s\-]{5,52}),\s*([\p{Cyrillic}\-]{4,38})\s+/u', $lower, $m) !== 1) {
+            if (preg_match('/^([\p{Cyrillic}\s\-]{5,52}),\s*([\p{Cyrillic}\-]{4,38})$/u', $lower, $m) !== 1) {
+                $m = [];
+                foreach (preg_split("/\r\n|\n|\r/", $lower) as $line) {
+                    $line = trim($line);
+                    if ($line === '') {
+                        continue;
+                    }
+                    if (preg_match('/^([\p{Cyrillic}\s\-]{5,52}),\s*([\p{Cyrillic}\-]{4,38})$/u', $line, $m) === 1) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ($m === []) {
+            return false;
+        }
+
+        $a = trim($m[1]);
+        $b = trim($m[2]);
+
+        if (preg_match('/\d/u', $a) || preg_match('/\d/u', $b)) {
+            return false;
+        }
+
+        if (preg_match(
+            '/делаем|выполня|оказыва|ищем\s+заказ|ищу\s+заказ|бригада|звоните|пишите|мастер/u',
+            $a
+        )) {
+            return false;
+        }
+
+        if (preg_match(
+            '/цена|руб|₽|р\\/|м²|м2|кв\\.?\\s*м|работ|шпакл|покрас|звон|пишит|телефон|оплат|слои?|слоя/u',
+            $a
+        )) {
+            return false;
+        }
+
+        $bNorm = mb_strtolower($b);
+        if (in_array($bNorm, ['привет', 'коллеги', 'друзья', 'всем', 'добрый', 'день', 'цена', 'оплата'], true)) {
+            return false;
+        }
+
+        if (! preg_match('/^[\p{Cyrillic}\s\-]+$/u', $a) || ! preg_match('/^[\p{Cyrillic}\-]+$/u', $b)) {
+            return false;
+        }
+
+        return str_contains($a, '-') || str_contains($a, ' ') || mb_strlen($a) >= 5;
     }
 
     /**

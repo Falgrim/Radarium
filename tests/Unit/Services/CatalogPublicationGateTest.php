@@ -227,6 +227,28 @@ TXT;
         $this->assertContains('post_text_gig_payment_volume_place_or_date', $out['reasons']);
     }
 
+    public function test_builder_column_finish_order_city_comma_place_goes_to_moderation(): void
+    {
+        config([
+            'catalog_publication_gate.enabled' => true,
+            'catalog_publication_gate.require_matched_speciality' => true,
+            'catalog_publication_gate.builder_non_service_heuristics' => true,
+        ]);
+
+        $post = <<<'TXT'
+Санкт-петербург, Сестрорецк
+Есть 60 колонн обшитые гипсокартоном,по 9-10 квадратов каждая, высота 4 метра. Шпаклёвка 2слоя с стеклохолстом и без воздушной покраской. Туры есть.
+Цена 1350р/м²
+89816860001
+Герман
+TXT;
+
+        $out = (new CatalogPublicationGate)->decide(ApiDataTypeEnum::Builder, $post, [101]);
+
+        $this->assertSame(ApiPostAiStatusEnum::InModeration, $out['status']);
+        $this->assertNotEmpty($out['reasons']);
+    }
+
     public function test_builder_price_and_volume_without_place_or_date_stays_active(): void
     {
         config([

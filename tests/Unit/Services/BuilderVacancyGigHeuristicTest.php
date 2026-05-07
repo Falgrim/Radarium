@@ -78,4 +78,17 @@ TXT;
 
         $this->assertTrue(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
     }
+
+    public function test_columns_tours_square_rate_order_is_vacancy_heuristic(): void
+    {
+        $text = <<<'TXT'
+Санкт-петербург, Сестрорецк
+Есть 60 колонн обшитые гипсокартоном,по 9-10 квадратов каждая, высота 4 метра. Шпаклёвка 2слоя с стеклохолстом и без воздушной покраской. Туры есть.
+Цена 1350р/м²
+89816860001
+Герман
+TXT;
+
+        $this->assertTrue(BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy($text));
+    }
 }

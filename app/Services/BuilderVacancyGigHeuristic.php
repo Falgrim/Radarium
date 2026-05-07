@@ -49,7 +49,30 @@ final class BuilderVacancyGigHeuristic
             return true;
         }
 
+        if (self::structuralVolumeOrderWithSquareRate($t)) {
+            return true;
+        }
+
         return false;
+    }
+
+    /**
+     * Объёмные ТЗ на отделку (колонны, туры) + ставка за м² — не оффер частного мастера без контекста найма.
+     */
+    private static function structuralVolumeOrderWithSquareRate(string $t): bool
+    {
+        $structural = (bool) preg_match(
+            '/\b(?:есть\s+)?\d+\s+колонн\b|\bтуры\s+есть\b|\b\d+\s*[-–]\s*\d+\s+квадрат(?:ов|а|ы)\b/u',
+            $t
+        );
+        if (! $structural) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\bцена\s*\d|оплат[ауио]?.{0,20}\d|\d+\s*р\s*\/?\s*м/u',
+            $t
+        );
     }
 
     private static function normalize(string $postText): string
