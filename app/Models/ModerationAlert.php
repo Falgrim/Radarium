@@ -21,6 +21,7 @@ class ModerationAlert extends Model
         'is_system',
         'table_name',
         'table_row_id',
+        'api_channel_post_id',
         'description',
         'comment',
         'status',
@@ -59,6 +60,43 @@ class ModerationAlert extends Model
         $data = $object::where('id', $this->table_row_id)->first();
 
         return $data ? $data->toArray() : null;
+    }
+
+    /**
+     * Пост канала, к которому относится обращение: явно сохранённый ID или вывод по карточке каталога.
+     */
+    public function resolveApiChannelPostId(): ?int
+    {
+        if ($this->api_channel_post_id !== null) {
+            return (int) $this->api_channel_post_id;
+        }
+
+        return match ($this->table_name) {
+            ModerationAlertTableNameEnum::Builder => Builder::query()
+                ->whereKey($this->table_row_id)
+                ->value('api_channel_post_id'),
+            ModerationAlertTableNameEnum::Specialist => Specialist::query()
+                ->whereKey($this->table_row_id)
+                ->value('api_channel_post_id'),
+            ModerationAlertTableNameEnum::CompanyJob => CompanyJob::query()
+                ->whereKey($this->table_row_id)
+                ->value('api_channel_post_id'),
+            default => null,
+        };
+    }
+
+    public function allowsApiChannelPost(ApiChannelPost $post): bool
+    {
+        $resolved = $this->resolveApiChannelPostId();
+        if ($resolved !== null) {
+            return (int) $post->id === (int) $resolved;
+        }
+
+        if ($this->table_name === ModerationAlertTableNameEnum::Author) {
+            return (int) $post->api_post_user_id === (int) $this->table_row_id;
+        }
+
+        return false;
     }
 
     public function user(): belongsTo

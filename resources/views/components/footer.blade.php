@@ -27,12 +27,25 @@
         $(document).on('click', '.moderation-alert', function () {
             $('#moderationAlert_type').val($(this).data('type'));
             $('#moderationAlert_row_id').val($(this).data('id'));
+            var postId = $(this).data('api-channel-post-id');
+            $('#moderationAlert_api_channel_post_id').val(postId !== undefined && postId !== null ? postId : '');
         });
 
         $(document).on('click', '.moderation-alert-save', function(e) {
             e.preventDefault();
 
             $('#moderationAlert').modal('hide');
+
+            var payload = {
+                    '_token': "{{ csrf_token() }}",
+                    'type': $('#moderationAlert input[name=type]').val(),
+                    'row_id': $('#moderationAlert input[name=row_id]').val(),
+                    'description': $('#moderationAlert textarea[name=description]').val()
+            };
+            var postField = $('#moderationAlert input[name=api_channel_post_id]').val();
+            if (postField !== undefined && postField !== null && String(postField).trim() !== '') {
+                payload.api_channel_post_id = postField;
+            }
 
             $.ajax({
                 url: "{{ route('moderationAlert.new') }}",
@@ -42,12 +55,7 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
-                data: {
-                    '_token': "{{ csrf_token() }}",
-                    'type': $('#moderationAlert input[name=type]').val(),
-                    'row_id': $('#moderationAlert input[name=row_id]').val(),
-                    'description': $('#moderationAlert textarea[name=description]').val()
-                },
+                data: payload,
                 success:function(response){
                     $('#moderationAlertResult .modal-body p').html('Спасибо! В ближайшее время наша команда рассмотрит ваш запрос.')
                     $('#moderationAlertResult').modal('show');

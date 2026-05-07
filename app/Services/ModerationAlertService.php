@@ -16,14 +16,15 @@ class ModerationAlertService
         ModerationAlertSystemEnum $isSystem,
         ModerationAlertTableNameEnum $tableName,
         int $tableRowId,
-        ?string $description
-    )
-    {
+        ?string $description,
+        ?int $apiChannelPostId = null,
+    ) {
         ModerationAlert::create([
             'user_id' => $userId,
             'is_system' => $isSystem,
             'table_name' => $tableName,
             'table_row_id' => $tableRowId,
+            'api_channel_post_id' => $apiChannelPostId,
             'description' => $description,
             'status' => ModerationAlertStatusEnum::New,
         ]);

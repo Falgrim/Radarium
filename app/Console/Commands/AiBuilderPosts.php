@@ -314,7 +314,8 @@ class AiBuilderPosts extends Command
                             ModerationAlertSystemEnum::System,
                             ModerationAlertTableNameEnum::Builder,
                             $builder->id,
-                            ''
+                            '',
+                            $post->id,
                         );
                     }
                 } else {

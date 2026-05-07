@@ -30,6 +30,7 @@ class ModerationAlertPostRequest extends FormRequest
         return [
             'type' => [Rule::enum(ModerationAlertTableNameEnum::class)],
             'row_id' => ['required', 'integer', 'min:1', 'max:1000000'],
+            'api_channel_post_id' => ['nullable', 'integer', 'exists:api_channel_posts,id'],
             'description' => ['nullable', 'string', 'min:5', 'max:255'],
         ];
     }

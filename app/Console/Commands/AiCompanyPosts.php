@@ -153,7 +153,8 @@ class AiCompanyPosts extends Command
                             ModerationAlertSystemEnum::System,
                             ModerationAlertTableNameEnum::CompanyJob,
                             $companyJob->id,
-                            ''
+                            '',
+                            $post->id,
                         );
                     } else {
                         $this->info('Данный пост не является типом вакансии');

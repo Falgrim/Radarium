@@ -97,19 +97,31 @@ class ModerationAlertResource extends ModelResource
         }
 
         $alert = $this->getItem();
-        if (! $alert instanceof ModerationAlert || $alert->table_name !== ModerationAlertTableNameEnum::Author) {
+        if (! $alert instanceof ModerationAlert || ! $this->moderationCatalogActionsCanSeeForAlert($alert)) {
             return MoonShineJsonResponse::make()
-                ->toast('Доступно только для обращений по автору сообщений', ToastType::ERROR);
+                ->toast('Для этого обращения действие недоступно', ToastType::ERROR);
         }
 
         $validated = $request->validate([
-            'api_channel_post_id' => ['required', 'integer', 'exists:api_channel_posts,id'],
+            'api_channel_post_id' => ['nullable', 'integer', 'exists:api_channel_posts,id'],
         ]);
 
-        $post = ApiChannelPost::query()->findOrFail($validated['api_channel_post_id']);
-        if ((int) $post->api_post_user_id !== (int) $alert->table_row_id) {
+        $postId = $validated['api_channel_post_id'] ?? null;
+        if ($postId === null) {
+            $postId = $alert->resolveApiChannelPostId();
+        } else {
+            $postId = (int) $postId;
+        }
+
+        if ($postId === null) {
             return MoonShineJsonResponse::make()
-                ->toast('Сообщение не принадлежит автору из этого обращения', ToastType::ERROR);
+                ->toast('Не удалось определить сообщение: выберите пост в списке или укажите связь с карточкой каталога.', ToastType::ERROR);
+        }
+
+        $post = ApiChannelPost::query()->findOrFail($postId);
+        if (! $alert->allowsApiChannelPost($post)) {
+            return MoonShineJsonResponse::make()
+                ->toast('Сообщение не соответствует этому обращению модерации', ToastType::ERROR);
         }
 
         app(ModerationAuthorPostCatalogService::class)->requeueForAi($post);
@@ -133,19 +145,31 @@ class ModerationAlertResource extends ModelResource
         }
 
         $alert = $this->getItem();
-        if (! $alert instanceof ModerationAlert || $alert->table_name !== ModerationAlertTableNameEnum::Author) {
+        if (! $alert instanceof ModerationAlert || ! $this->moderationCatalogActionsCanSeeForAlert($alert)) {
             return MoonShineJsonResponse::make()
-                ->toast('Доступно только для обращений по автору сообщений', ToastType::ERROR);
+                ->toast('Для этого обращения действие недоступно', ToastType::ERROR);
         }
 
         $validated = $request->validate([
-            'api_channel_post_id' => ['required', 'integer', 'exists:api_channel_posts,id'],
+            'api_channel_post_id' => ['nullable', 'integer', 'exists:api_channel_posts,id'],
         ]);
 
-        $post = ApiChannelPost::query()->findOrFail($validated['api_channel_post_id']);
-        if ((int) $post->api_post_user_id !== (int) $alert->table_row_id) {
+        $postId = $validated['api_channel_post_id'] ?? null;
+        if ($postId === null) {
+            $postId = $alert->resolveApiChannelPostId();
+        } else {
+            $postId = (int) $postId;
+        }
+
+        if ($postId === null) {
             return MoonShineJsonResponse::make()
-                ->toast('Сообщение не принадлежит автору из этого обращения', ToastType::ERROR);
+                ->toast('Не удалось определить сообщение: выберите пост в списке или укажите связь с карточкой каталога.', ToastType::ERROR);
+        }
+
+        $post = ApiChannelPost::query()->findOrFail($postId);
+        if (! $alert->allowsApiChannelPost($post)) {
+            return MoonShineJsonResponse::make()
+                ->toast('Сообщение не соответствует этому обращению модерации', ToastType::ERROR);
         }
 
         app(ModerationAuthorPostCatalogService::class)->removeFromCatalog($post);
@@ -156,6 +180,114 @@ class ModerationAlertResource extends ModelResource
         return MoonShineJsonResponse::make()
             ->toast('Карточки по сообщению сняты с публикации (без очереди ИИ)', ToastType::SUCCESS)
             ->redirect($this->formPageUrl($alert));
+    }
+
+    private function moderationCatalogActionsCanSeeForAlert(ModerationAlert $alert): bool
+    {
+        if ($alert->resolveApiChannelPostId() !== null) {
+            return true;
+        }
+
+        return $alert->table_name === ModerationAlertTableNameEnum::Author
+            && ApiChannelPost::query()
+                ->where('api_post_user_id', $alert->table_row_id)
+                ->exists();
+    }
+
+    private function moderationCatalogActionsCanSee(): bool
+    {
+        if (! $this->can('update')) {
+            return false;
+        }
+        $item = $this->getItem();
+
+        return $item instanceof ModerationAlert && $this->moderationCatalogActionsCanSeeForAlert($item);
+    }
+
+    /**
+     * @return list<Field>
+     */
+    private function requeueAiFormFields(): array
+    {
+        $item = $this->getItem();
+        if (! $item instanceof ModerationAlert) {
+            return [];
+        }
+
+        $hint = '<p class="text-sm text-gray-600 dark:text-gray-400">Для выбранного сообщения: все связанные карточки каталога получают статус «Отключено», у сообщения — «В очереди» (очередь парсинга ИИ). Пока ИИ не обработает снова, запись не в публичном каталоге и не в отчёте активных авторов.</p>';
+
+        $resolved = $item->resolveApiChannelPostId();
+        if ($resolved !== null) {
+            $post = ApiChannelPost::query()->find($resolved);
+            $line = $post instanceof ApiChannelPost
+                ? sprintf(
+                    '#%d — %s — %s',
+                    $post->id,
+                    $post->ai_parse_status?->toString() ?? '—',
+                    Str::limit(preg_replace('/\s+/', ' ', strip_tags((string) $post->post)), 120)
+                )
+                : 'Пост #'.$resolved;
+
+            return [
+                Preview::make('Сообщение', 'reprocess_target', fn (): string => '<div class="text-sm"><p class="font-medium mb-1">Будет обработан пост:</p><p>'.e($line).'</p><p class="mt-2 text-gray-600">Отдельно выбирать сообщение не нужно — оно привязано к этому обращению (карточка каталога или поле в тикете).</p></div>')
+                    ->rawMode(),
+                Preview::make('', 'reprocess_hint', static fn (): string => $hint)
+                    ->rawMode(),
+            ];
+        }
+
+        return [
+            Select::make('Сообщение', 'api_channel_post_id')
+                ->options($this->authorPostSelectOptions())
+                ->required()
+                ->searchable()
+                ->placeholder('Выберите сообщение (обращение по автору без привязки к посту)'),
+            Preview::make('', 'reprocess_hint', static fn (): string => $hint)
+                ->rawMode(),
+        ];
+    }
+
+    /**
+     * @return list<Field>
+     */
+    private function removeFromCatalogFormFields(): array
+    {
+        $item = $this->getItem();
+        if (! $item instanceof ModerationAlert) {
+            return [];
+        }
+
+        $hint = '<p class="text-sm text-gray-600 dark:text-gray-400">Для выбранного сообщения: связанные карточки каталога переводятся в «Отключено». Статус парсинга сообщения не меняется — повторная обработка ИИ не запускается. Автор пропадёт из каталога и отчёта по этому типу, если у него не останется других активных опубликованных карточек.</p>';
+
+        $resolved = $item->resolveApiChannelPostId();
+        if ($resolved !== null) {
+            $post = ApiChannelPost::query()->find($resolved);
+            $line = $post instanceof ApiChannelPost
+                ? sprintf(
+                    '#%d — %s — %s',
+                    $post->id,
+                    $post->ai_parse_status?->toString() ?? '—',
+                    Str::limit(preg_replace('/\s+/', ' ', strip_tags((string) $post->post)), 120)
+                )
+                : 'Пост #'.$resolved;
+
+            return [
+                Preview::make('Сообщение', 'remove_target', fn (): string => '<div class="text-sm"><p class="font-medium mb-1">Будет снято с публикации:</p><p>'.e($line).'</p><p class="mt-2 text-gray-600">Отдельно выбирать сообщение не нужно.</p></div>')
+                    ->rawMode(),
+                Preview::make('', 'remove_hint', static fn (): string => $hint)
+                    ->rawMode(),
+            ];
+        }
+
+        return [
+            Select::make('Сообщение', 'api_channel_post_id')
+                ->options($this->authorPostSelectOptions())
+                ->required()
+                ->searchable()
+                ->placeholder('Выберите сообщение (обращение по автору без привязки к посту)'),
+            Preview::make('', 'remove_hint', static fn (): string => $hint)
+                ->rawMode(),
+        ];
     }
 
     /**
@@ -181,42 +313,19 @@ class ModerationAlertResource extends ModelResource
         return $postOptions;
     }
 
-    private function authorActionCanSee(): bool
-    {
-        if (! $this->can('update')) {
-            return false;
-        }
-        $item = $this->getItem();
-        if (! $item instanceof ModerationAlert || $item->table_name !== ModerationAlertTableNameEnum::Author) {
-            return false;
-        }
-
-        return ApiChannelPost::query()
-            ->where('api_post_user_id', $item->table_row_id)
-            ->exists();
-    }
-
     protected function authorReprocessAiButton(): ActionButton
     {
         return ActionButton::make('Повторная ИИ обработка', '#')
             ->icon('heroicons.arrow-path')
             ->primary()
             ->showInLine()
-            ->canSee(fn (): bool => $this->authorActionCanSee())
+            ->canSee(fn (): bool => $this->moderationCatalogActionsCanSee())
             ->inOffCanvas(
                 fn (): string => 'Повторная ИИ обработка',
                 function (): FormBuilder {
                     return FormBuilder::make()
                         ->name('moderation-author-reprocess-ai-form')
-                        ->fields([
-                            Select::make('Сообщение', 'api_channel_post_id')
-                                ->options($this->authorPostSelectOptions())
-                                ->required()
-                                ->searchable()
-                                ->placeholder('Выберите сообщение'),
-                            Preview::make('', 'reprocess_hint', static fn (): string => '<p class="text-sm text-gray-600 dark:text-gray-400">Для выбранного сообщения: все связанные карточки каталога получают статус «Отключено», у сообщения — «В очереди» (очередь парсинга ИИ). Пока ИИ не обработает снова, запись не в публичном каталоге и не в отчёте активных авторов.</p>')
-                                ->rawMode(),
-                        ])
+                        ->fields($this->requeueAiFormFields())
                         ->asyncMethod('requeueAuthorPostForAi', resource: $this)
                         ->submit('Запустить');
                 },
@@ -230,21 +339,13 @@ class ModerationAlertResource extends ModelResource
             ->icon('heroicons.eye-slash')
             ->secondary()
             ->showInLine()
-            ->canSee(fn (): bool => $this->authorActionCanSee())
+            ->canSee(fn (): bool => $this->moderationCatalogActionsCanSee())
             ->inOffCanvas(
                 fn (): string => 'Убрать из каталога',
                 function (): FormBuilder {
                     return FormBuilder::make()
                         ->name('moderation-author-remove-catalog-form')
-                        ->fields([
-                            Select::make('Сообщение', 'api_channel_post_id')
-                                ->options($this->authorPostSelectOptions())
-                                ->required()
-                                ->searchable()
-                                ->placeholder('Выберите сообщение'),
-                            Preview::make('', 'remove_hint', static fn (): string => '<p class="text-sm text-gray-600 dark:text-gray-400">Для выбранного сообщения: связанные карточки каталога переводятся в «Отключено». Статус парсинга сообщения не меняется — повторная обработка ИИ не запускается. Автор пропадёт из каталога и отчёта по этому типу, если у него не останется других активных опубликованных карточек.</p>')
-                                ->rawMode(),
-                        ])
+                        ->fields($this->removeFromCatalogFormFields())
                         ->asyncMethod('removeAuthorPostFromCatalog', resource: $this)
                         ->submit('Убрать');
                 },

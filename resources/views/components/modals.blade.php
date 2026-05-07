@@ -226,6 +226,7 @@
                     <form method="POST" id="moderationAlertForm" name="moderationAlertForm">
                         <input type="hidden" name="type" id="moderationAlert_type" value="" />
                         <input type="hidden" name="row_id" id="moderationAlert_row_id" value="" />
+                        <input type="hidden" name="api_channel_post_id" id="moderationAlert_api_channel_post_id" value="" />
 
                         <div class="mb-3">
                             <label for="message-text" class="col-form-label">Комментарий:</label>

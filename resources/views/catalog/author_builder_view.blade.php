@@ -105,7 +105,7 @@
                                 <button class="btn btn-color btn-accent" type="button" onclick="window.location.href='https://t.me/{{ $author->username }}'">Написать в Telegram</button>
                             @endif
 
-                            <button class="btn w-100 btn-trans moderation-alert" type="button" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}">Сообщить об ошибке</button>
+                            <button class="btn w-100 btn-trans moderation-alert" type="button" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}" data-api-channel-post-id="{{ $author->lastBuilderPost()?->id }}">Сообщить об ошибке</button>
                         </div>
                     </div>
                     <div class="col">

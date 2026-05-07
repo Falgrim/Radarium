@@ -199,7 +199,8 @@ class AiSpecialistPosts extends Command
                             ModerationAlertSystemEnum::System,
                             ModerationAlertTableNameEnum::Specialist,
                             $specialist->id,
-                            ''
+                            '',
+                            $post->id,
                         );
                     } else {
                         $this->info('Данный пост не является типом специалиста');
