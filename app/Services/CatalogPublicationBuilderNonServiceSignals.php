@@ -64,10 +64,26 @@ final class CatalogPublicationBuilderNonServiceSignals
 
     private function matchesHiringOrStaffing(string $lower): bool
     {
+        if ($this->matchesUnambiguousCustomerHiring($lower)) {
+            return true;
+        }
+
+        if ($this->looksLikePerformerOfferOrJobSeeker($lower)) {
+            return false;
+        }
+
         if ($this->matchesTelegramJobLinkWithManualLaborSignals($lower)) {
             return true;
         }
 
+        return $this->matchesContextualStaffingHeuristicSignals($lower);
+    }
+
+    /**
+     * Явный найм со стороны заказчика: не отменяется маркерами «ищу работу» / «предлагаю услуги».
+     */
+    private function matchesUnambiguousCustomerHiring(string $lower): bool
+    {
         $patterns = [
             '/\bтребуются\b/u',
             '/\bтребуется\s+помощник/u',
@@ -76,9 +92,27 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\bнужны\s+(люди|рабоч)/u',
             '/\bнужен\s+(мастер|человек|рабоч|помощник|монтажник|сварщик)/u',
             '/\bнужна\s+бригада/u',
+            '/\bнужна\s+(?:на\s+)?(?:завтра\s+)?подработк/u',
             '/\bищем\s+(людей|мастер|бригад|рабоч|исполнител|подсоб)/u',
             '/\bищу\s+исполнител/u',
-            '/\bподработк/u',
+            '/\bесть\s+подработк/u',
+        ];
+
+        foreach ($patterns as $re) {
+            if (preg_match($re, $lower) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Сигналы найма/смены, которые часто встречаются и у исполнителей («ищу подработку», «бригада 10–15 человек»).
+     */
+    private function matchesContextualStaffingHeuristicSignals(string $lower): bool
+    {
+        $patterns = [
             '/\bесть\s+работа/u',
             '/\bоплат[ау]\s+за\s+смену/u',
             '/\bвыход\s+(сегодня|завтра)\b/u',
@@ -87,7 +121,6 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\bкто\s+свободен/u',
             '/\bесть\s+кто\s+(?:на\s+)?(?:объект|смену)/u',
             '/\bаванс\s+на\s+\d/u',
-            // Найм: выдача инструмента, жильё на объекте, сдельные выплаты «как вакансии»
             '/\bинструмент\s+выда(?:ётся|ется|ют|ем|ёте|ете)\b/u',
             '/\bинструмент\s+предоставляется\b/u',
             '/\bпредоставляется\s+инструмент/u',
@@ -98,16 +131,49 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\bоплат[ау]\s+из\s+расч[её]та\b/u',
             '/\bработ[аы]\s+по\s+\d+\s*час/u',
             '/\b\d+\s+раз[аы]?\s+в\s+неделю\b/u',
-            // «Ещё одного», набор на короткий выход
             '/\bещ[её]\s+одног[оа]\b/u',
-            // Требования к кандидатам
             '/\bтрезвые\b/u',
             '/\bпатент\s*\(\s*если\s+не/u',
-            // Сдельная оплата за физ. объём как в объявлениях о подработке
             '/\bоплат[ауио].{0,32}с\s+квадрат/u',
-            // Объёмные телесные заказы со стройлесами
             '/\bтуры\s+есть\b/u',
             '/\bесть\s+\d+\s+колонн\b/u',
+        ];
+
+        foreach ($patterns as $re) {
+            if (preg_match($re, $lower) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Исполнитель в каталоге: предлагает услуги, ищет заказ/работу, резюме, BIM/удалёнка.
+     */
+    private function looksLikePerformerOfferOrJobSeeker(string $lower): bool
+    {
+        if ($this->hasPerformerOfferMarkers($lower)) {
+            return true;
+        }
+
+        $patterns = [
+            '/\b(?:ищу|ишу|ищем)\s+(?:работу|подработку|шабашку|объем|объём|роботу|заказ|объект|заказчика)\b/u',
+            '/\bв\s+поиске\s+(?:работы|подработки)\b/u',
+            '/\b(?:предлага(?:ю|ем)|предоставля(?:ем|ю)|оказыва(?:ем|ю))\s+услуг/u',
+            '/\b#?резюме\b/u',
+            '/\bменя\s+зовут\b/u',
+            '/\bне\s+даю\b.{0,48}\bподработк/u',
+            '/\bкому\s+(?:требуется|нужен|нужна|нужны)\b/u',
+            '/\b#(?:ищуработу|помогу|помощник|чертежник|услуга|revit|ревит|bim|фриланс|подработка|работа|удаленн)/ui',
+            '/\b(?:revit|bim|autocad|визуализатор|чертежник|архитектор|сметчик).{0,96}\b(?:ищу|предлагаю|резюме|услуг|подработк)\b/ui',
+            '/\b(?:сварщик|маляр|электрик|электромонтажник|отделочник|монтажник|штукатур|разнорабоч|сантехник|газорезчик).{0,96}\b(?:ищ(?:у|ем)|готов(?:ы)?\s+выйти)\b/u',
+            '/\bбригад[аы].{0,80}\b(?:предлага(?:ет|ем)|выполн(?:ит|им|ят)|ищем\s+работу|ищет\s+работу|возьм(?:ет|ем|ём)|ищем\s+заказчика|ищем\s+объект)\b/u',
+            '/\b(?:готов(?:ы)?\s+(?:выйти|выскочим)|выходим|выйдем)\s+(?:на\s+)?(?:любую\s+)?(?:подработк|работ)/u',
+            '/\bработаем\s+сами\b/u',
+            '/\bуважаемые\s+заказчик/u',
+            '/\b(?:если\s+у\s+вас\s+есть\s+работа|нужны\s+рабочие\s+руки)\b/u',
+            '/\bработаем\b.{0,80}\bу\s+кого\s+есть\s+работа\b/u',
         ];
 
         foreach ($patterns as $re) {
@@ -390,7 +456,7 @@ final class CatalogPublicationBuilderNonServiceSignals
     private function hasPerformerOfferMarkers(string $lower): bool
     {
         $markers = [
-            '/\bвыполня(?:ю|им|ем)\b/u',
+            '/\bвыполня(?:ю|им|ем|ят)\b/u',
             '/\bдела(?:ю|ем)\b/u',
             '/\bоказыва(?:ю|ем)\b/u',
             '/\bмы\s+бригада/u',
@@ -403,6 +469,7 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\bвозьму\s+объ/u',
             '/\bвозьмём\b/u',
             '/\bвозьмем\b/u',
+            '/\bвозьмём\s+объ/u',
             '/\bработаем\s+по/u',
             '/\bвыезжаем\b/u',
             '/\bсвободн[ая]\s+бригада/u',
