@@ -22,6 +22,7 @@ use App\Services\BuilderAiPipelineRuntimeConfig;
 use App\Services\BuilderServiceOfferClassifier;
 use App\Services\BuilderSpecialityMatcher;
 use App\Services\BuilderVacancyGigHeuristic;
+use App\Services\CatalogPublicationBuilderNonServiceSignals;
 use App\Services\CatalogPublicationGate;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
@@ -254,6 +255,25 @@ class AiBuilderPosts extends Command
                     $result['json']['post_date'] = $post->post_date;
                     $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                     $result['json']['api_channel_post_id'] = $post->id;
+
+                    $hiringReasons = (new CatalogPublicationBuilderNonServiceSignals)->reasons((string) $post->post);
+                    if (in_array(CatalogPublicationBuilderNonServiceSignals::REASON_HIRING, $hiringReasons, true)) {
+                        $post->ai_result = json_encode([
+                            'hiring_text_blocked' => true,
+                            'reasons' => $hiringReasons,
+                            'route' => 'dont_match_hiring_heuristic',
+                        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        $post->ai_date = now();
+                        $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+                        $post->save();
+                        $this->warn(sprintf(
+                            'Текст по эвристике найма → DontMatch (карточка не создаётся), post_id=%d, reasons=%s',
+                            $post->id,
+                            implode(', ', $hiringReasons)
+                        ));
+
+                        continue;
+                    }
 
                     $gateDecision = app(CatalogPublicationGate::class)->decide(
                         ApiDataTypeEnum::Builder,
