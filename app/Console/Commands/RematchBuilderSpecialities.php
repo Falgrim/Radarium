@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Enum\DictionaryEnum;
 use App\Models\Builder;
+use App\Services\AuthorCatalogSpecialitiesSync;
 use App\Services\BuilderSpecialityMatcher;
 use App\Services\Dictionary;
 use Illuminate\Console\Command;
@@ -41,6 +42,7 @@ class RematchBuilderSpecialities extends Command
         $processed = 0;
         $changed = 0;
         $idsSum = 0;
+        $touchedUserIds = [];
 
         foreach ($query->lazyById($chunk) as $builder) {
             ++$processed;
@@ -53,7 +55,7 @@ class RematchBuilderSpecialities extends Command
             $text = (string) ($post->post ?? '');
             $aiList = $this->extractAiSpecialitiesFromPost($post->ai_result);
 
-            $resolved = $matcher->resolve($text, $aiList);
+            $resolved = $matcher->resolve($text, $aiList, AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR);
             $newIds = $resolved['ids'];
             sort($newIds);
 
@@ -72,6 +74,14 @@ class RematchBuilderSpecialities extends Command
             }
 
             $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', (int) $builder->id, $newIds);
+            $touchedUserIds[] = (int) $builder->api_post_user_id;
+        }
+
+        if (! $dryRun && $touchedUserIds !== []) {
+            $sync = app(AuthorCatalogSpecialitiesSync::class);
+            foreach (array_values(array_unique($touchedUserIds)) as $userId) {
+                $sync->syncBuildersForUser($userId, AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR, false);
+            }
         }
 
         $this->info("Обработано: {$processed}, изменено: {$changed}".($dryRun ? ' (dry-run)' : ''));

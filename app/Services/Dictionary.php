@@ -107,6 +107,54 @@ class Dictionary
         return array_unique($matchIds);
     }
 
+    /**
+     * Подсчёт вхождений ключевых слов справочника (домен специалистов) в тексте — для отбора топ-N специализаций.
+     *
+     * @param  \Illuminate\Support\Collection<int, \App\Models\DictionarySpeciality>  $list
+     * @return array<int, int> dictionary_speciality_id => число совпадений
+     */
+    public function scoreSpecialistMatchesByList(string $text, Collection $list): array
+    {
+        $scores = [];
+        foreach ($list as $item) {
+            $keywords = $item['key_words'] ?? null;
+            if (! is_array($keywords) || $keywords === []) {
+                continue;
+            }
+            $safe = array_values(array_filter($keywords, static fn ($k) => is_string($k) && $k !== ''));
+            if ($safe === []) {
+                continue;
+            }
+            $pattern = '/\b(?:'.implode('|', array_map('preg_quote', $safe)).')\b(?:-[а-яa-z]*)?/iu';
+            preg_match_all($pattern, $text, $matches);
+            $c = isset($matches[0]) ? count($matches[0]) : 0;
+            if ($c > 0) {
+                $scores[(int) $item->id] = $c;
+            }
+        }
+
+        return $scores;
+    }
+
+    /**
+     * @param  array<int, int>  $scores
+     * @return list<int>
+     */
+    public function pickTopSpecialityIdsFromScores(array $scores, int $max): array
+    {
+        if ($scores === [] || $max <= 0) {
+            return [];
+        }
+
+        uksort($scores, function ($a, $b) use ($scores): int {
+            $cmp = $scores[$b] <=> $scores[$a];
+
+            return $cmp !== 0 ? $cmp : ((int) $b <=> (int) $a);
+        });
+
+        return array_slice(array_map('intval', array_keys($scores)), 0, $max);
+    }
+
     public function updateRelations(DictionaryEnum $dictionary, string $model, int $rowId, array $dictionaryIds): void
     {
         $rowIdName = '';

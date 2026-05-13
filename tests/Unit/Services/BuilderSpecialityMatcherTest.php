@@ -81,6 +81,21 @@ final class BuilderSpecialityMatcherTest extends TestCase
         $this->assertContains(40, $r['ids']);
     }
 
+    public function test_resolve_respects_max_speciality_cap(): void
+    {
+        $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
+        $unlimited = $matcher->resolve('Штукатурка короед, обои, покраска', null);
+        $this->assertGreaterThanOrEqual(3, count($unlimited['ids']));
+
+        $max = 3;
+        $limited = $matcher->resolve('Штукатурка короед, обои, покраска', null, $max);
+        $this->assertLessThanOrEqual($max, count($limited['ids']));
+        $this->assertSame(min($max, count($unlimited['ids'])), count($limited['ids']));
+        foreach ($limited['ids'] as $id) {
+            $this->assertContains($id, $unlimited['ids']);
+        }
+    }
+
     public function test_project_phrase_no_false_speciality(): void
     {
         $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());

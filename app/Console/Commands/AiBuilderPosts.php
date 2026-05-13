@@ -14,6 +14,7 @@ use App\Enum\ModerationAlertTableNameEnum;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\Builder;
+use App\Services\AuthorCatalogSpecialitiesSync;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
 use App\Services\BuilderAiPromptInjector;
@@ -241,7 +242,8 @@ class AiBuilderPosts extends Command
                     $aiSpecialities = array_values(array_unique(array_filter(array_map('strval', $aiSpecialities))));
 
                     $matcher = app(BuilderSpecialityMatcher::class);
-                    $resolved = $matcher->resolve((string) $post->post, $aiSpecialities);
+                    $maxSpec = AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR;
+                    $resolved = $matcher->resolve((string) $post->post, $aiSpecialities, $maxSpec);
                     $mergedSpecialities = $resolved['ids'];
                     $fromText = $resolved['log']['text_match_ids'] ?? [];
                     $fromAi = $resolved['log']['ai_match_ids'] ?? [];
@@ -308,6 +310,8 @@ class AiBuilderPosts extends Command
                             array_values($mergedSpecialities)
                         );
                     }
+
+                    app(AuthorCatalogSpecialitiesSync::class)->syncAfterBuilderImport((int) $post->apiPostUser->id);
 
                     Log::channel('ai_debug')->info('[Builder] post_id='.$post->id, [
                         'raw_type' => $rawType,

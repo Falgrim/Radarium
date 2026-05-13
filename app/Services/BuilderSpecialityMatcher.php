@@ -29,7 +29,7 @@ final class BuilderSpecialityMatcher
      * @param  list<string>|null  $aiSpecialities  Значения как в JSON specialities (title из справочника).
      * @return array{ids: list<int>, log: array<string, mixed>}
      */
-    public function resolve(string $text, ?array $aiSpecialities): array
+    public function resolve(string $text, ?array $aiSpecialities, ?int $maxSpecialityIds = null): array
     {
         $dict = $this->dictionary();
         $normalized = $this->normalizeText($text);
@@ -40,6 +40,20 @@ final class BuilderSpecialityMatcher
         $merged = array_values(array_unique(array_merge($fromText, $fromAi)));
         $expanded = $this->expandWithParents($merged, $dict);
         $final = array_values(array_unique($expanded));
+
+        if ($maxSpecialityIds !== null && $maxSpecialityIds > 0 && count($final) > $maxSpecialityIds) {
+            $aiFirstIndexById = $this->aiMatchFirstIndexById($aiSpecialities ?? [], $dict);
+            $scores = [];
+            foreach ($final as $id) {
+                $scores[(int) $id] = $this->scoreBuilderSpecialityId(
+                    (int) $id,
+                    $normalized,
+                    $aiFirstIndexById[(int) $id] ?? null,
+                    $dict
+                );
+            }
+            $final = $this->pickTopIdsByScore($scores, $maxSpecialityIds, $final);
+        }
 
         return [
             'ids' => $final,
@@ -108,6 +122,92 @@ final class BuilderSpecialityMatcher
         }
 
         return array_values(array_unique($matchIds));
+    }
+
+    /**
+     * Индекс строки в списке ИИ → первое совпавшее id (для приоритета при отборе топ-N).
+     *
+     * @param  list<string>  $aiSpecialities
+     * @return array<int, int>
+     */
+    private function aiMatchFirstIndexById(array $aiSpecialities, Collection $dict): array
+    {
+        $map = [];
+        foreach (array_values($aiSpecialities) as $idx => $aiValue) {
+            $aiLower = mb_strtolower(trim((string) $aiValue));
+            if ($aiLower === '') {
+                continue;
+            }
+
+            $aiNorm = $this->normalizeFragment($aiLower);
+
+            foreach ($dict as $item) {
+                if ($this->aiMatchesRow($aiNorm, $item)) {
+                    $id = (int) $item->id;
+                    if (! array_key_exists($id, $map)) {
+                        $map[$id] = $idx;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array<int, float>  $scores
+     * @param  list<int>  $fallbackOrder
+     * @return list<int>
+     */
+    private function pickTopIdsByScore(array $scores, int $max, array $fallbackOrder): array
+    {
+        if ($scores === []) {
+            return array_slice(array_values(array_unique(array_map('intval', $fallbackOrder))), 0, $max);
+        }
+
+        uksort($scores, function (int|string $a, int|string $b) use ($scores): int {
+            $va = $scores[$a];
+            $vb = $scores[$b];
+            if ($va === $vb) {
+                return (int) $b <=> (int) $a;
+            }
+
+            return $vb <=> $va;
+        });
+
+        return array_slice(array_map('intval', array_keys($scores)), 0, $max);
+    }
+
+    private function scoreBuilderSpecialityId(int $id, string $normalizedText, ?int $firstAiListIndex, Collection $dict): float
+    {
+        $row = $dict->firstWhere('id', $id);
+        if ($row === null) {
+            return 0.0;
+        }
+
+        $score = 0.0;
+        $titleNorm = $this->normalizeFragment((string) ($row->title ?? ''));
+        if ($titleNorm !== '' && $this->textContainsPhrase($normalizedText, $titleNorm)) {
+            $score += 75.0;
+        }
+
+        $keywords = is_array($row->key_words) ? $row->key_words : [];
+        foreach ($keywords as $kw) {
+            $kwNorm = $this->normalizeFragment((string) $kw);
+            if ($kwNorm === '') {
+                continue;
+            }
+            if ($this->keywordMatches($normalizedText, $kwNorm)) {
+                $score += max(8.0, min(55.0, (float) mb_strlen($kwNorm)));
+            }
+        }
+
+        if ($firstAiListIndex !== null) {
+            $score += 30.0 - min(29.0, (float) $firstAiListIndex * 4.0);
+        }
+
+        return $score;
     }
 
     /**

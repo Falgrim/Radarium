@@ -16,6 +16,7 @@ use App\Models\Specialist;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
 use App\Services\BuilderVacancyGigHeuristic;
+use App\Services\AuthorCatalogSpecialitiesSync;
 use App\Services\CatalogPublicationGate;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
@@ -187,6 +188,8 @@ class AiSpecialistPosts extends Command
                             $specialistSpecialties
                         );
                     }
+
+                    app(AuthorCatalogSpecialitiesSync::class)->syncAfterSpecialistImport((int) $specialist->api_post_user_id);
 
                     $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                     $post->save();
