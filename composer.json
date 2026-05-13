@@ -43,6 +43,7 @@
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php scripts/patch-madelineproto-connection.php",
+            "@php scripts/patch-madelineproto-exitfailure.php",
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
