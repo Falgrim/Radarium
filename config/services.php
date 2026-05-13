@@ -55,5 +55,7 @@ return [
     */
     'madeline_proto' => [
         'get_history_max_attempts' => (int) env('MPROTO_GETHISTORY_MAX_ATTEMPTS', 3),
+        /** Доп. попытки после «The endpoint does not exist!» (пересоздание API + finalize) */
+        'ipc_reconnect_attempts' => max(0, min(5, (int) env('MPROTO_IPC_RECONNECT_ATTEMPTS', 2))),
     ],
 ];

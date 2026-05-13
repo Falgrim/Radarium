@@ -86,7 +86,7 @@ class ReadTelegramChats
 
                 foreach ($group as $channel) {
                     $this->unsetMessages();
-                    $this->readChannelWithMadeline($MadelineProto, $channel);
+                    $this->readChannelWithMadelineRecoveringIpc($MadelineProto, $sessionName, $settings, $channel);
                     $afterEachChannel($this);
                 }
             } finally {
@@ -119,7 +119,7 @@ class ReadTelegramChats
                 $MadelineProto->start();
             }
 
-            return $this->readChannelWithMadeline($MadelineProto, $this->apiChannel);
+            return $this->readChannelWithMadelineRecoveringIpc($MadelineProto, $sessionName, $settings, $this->apiChannel);
         } finally {
             $this->shutdownMadelineClient($MadelineProto);
         }
@@ -201,6 +201,75 @@ class ReadTelegramChats
     }
 
     /**
+     * Обрыв IPC (нет сокета воркера) — пересоздаём клиент, сессия и авторизация Telegram не меняются.
+     *
+     * @return array{readed: int, filtered: int, lastId: mixed, lastDate: mixed}
+     */
+    private function readChannelWithMadelineRecoveringIpc(
+        ?\danog\MadelineProto\API &$MadelineProto,
+        string $sessionName,
+        Settings $settings,
+        ApiChannel $channel,
+    ): array {
+        $extra = max(0, min(5, (int) config('services.madeline_proto.ipc_reconnect_attempts', 2)));
+        $maxPass = $extra + 1;
+
+        for ($pass = 0; $pass < $maxPass; $pass++) {
+            if ($pass > 0) {
+                Log::channel('post_parser')->notice('ReadTelegramChats IPC reconnect', [
+                    'channel_id' => $channel->id,
+                    'pass' => $pass,
+                    'session' => $sessionName,
+                ]);
+                $this->shutdownMadelineClient($MadelineProto);
+                sleep(min(2 * $pass, 8));
+                $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
+                if (!$MadelineProto->getSelf()) {
+                    $MadelineProto->start();
+                }
+            }
+
+            try {
+                return $this->readChannelWithMadeline($MadelineProto, $channel);
+            } catch (\Throwable $e) {
+                if (!$this->isIpcEndpointLost($e)) {
+                    $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
+                    Log::channel('post_parser')->warning('ReadTelegramChats getHistory', [
+                        'channel_id' => $channel->id,
+                        'exception' => $e::class,
+                        'message' => $e->getMessage(),
+                    ]);
+
+                    return [];
+                }
+                if ($pass === $maxPass - 1) {
+                    $this->setErrorMsg('getHistory: обрыв IPC (The endpoint does not exist) после '.$maxPass.' попыток');
+                    Log::channel('post_parser')->error('ReadTelegramChats IPC exhausted', [
+                        'channel_id' => $channel->id,
+                        'exception' => $e::class,
+                        'message' => $e->getMessage(),
+                    ]);
+
+                    return [];
+                }
+            }
+        }
+
+        return [];
+    }
+
+    private function isIpcEndpointLost(\Throwable $e): bool
+    {
+        for ($t = $e; $t !== null; $t = $t->getPrevious()) {
+            if (str_contains($t->getMessage(), 'The endpoint does not exist')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return array{readed: int, filtered: int, lastId: mixed, lastDate: mixed}
      */
     private function readChannelWithMadeline(\danog\MadelineProto\API $MadelineProto, ApiChannel $apiChannel): array
@@ -228,6 +297,9 @@ class ReadTelegramChats
 
             return [];
         } catch (\Throwable $e) {
+            if ($this->isIpcEndpointLost($e)) {
+                throw $e;
+            }
             $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
             Log::channel('post_parser')->warning('ReadTelegramChats getHistory', [
                 'channel_id' => $this->apiChannel->id,
