@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Amp\CancelledException;
 use Amp\Ipc\Sync\ChannelException;
+use Amp\SignalException;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Infrastructures\Facades\Repositories;
@@ -86,11 +87,12 @@ class ReadTelegramChats
 
                 foreach ($group as $channel) {
                     $this->unsetMessages();
-                    $this->readChannelWithMadelineRecoveringIpc($MadelineProto, $sessionName, $settings, $channel);
+                    $this->readChannelWithMadeline($MadelineProto, $channel);
                     $afterEachChannel($this);
                 }
             } finally {
-                $this->shutdownMadelineClient($MadelineProto);
+                $this->releaseMadelineClient($MadelineProto);
+                $this->finalizeMadelineProcess();
             }
         }
     }
@@ -119,9 +121,10 @@ class ReadTelegramChats
                 $MadelineProto->start();
             }
 
-            return $this->readChannelWithMadelineRecoveringIpc($MadelineProto, $sessionName, $settings, $this->apiChannel);
+            return $this->readChannelWithMadeline($MadelineProto, $this->apiChannel);
         } finally {
-            $this->shutdownMadelineClient($MadelineProto);
+            $this->releaseMadelineClient($MadelineProto);
+            $this->finalizeMadelineProcess();
         }
     }
 
@@ -171,10 +174,9 @@ class ReadTelegramChats
     }
 
     /**
-     * Корректное завершение IPC-воркера: unset + ожидание async-деструкторов MadelineProto.
-     * Не вызывать gc_collect_cycles() сразу после unset — ломает Amp Future и оставляет зомби-процессы.
+     * Отпустить ссылку на клиент MadelineProto (без API::finalize — его один раз в конце прогона).
      */
-    private function shutdownMadelineClient(?\danog\MadelineProto\API &$MadelineProto): void
+    private function releaseMadelineClient(?\danog\MadelineProto\API &$MadelineProto): void
     {
         if ($MadelineProto === null) {
             return;
@@ -190,7 +192,13 @@ class ReadTelegramChats
                 'message' => $e->getMessage(),
             ]);
         }
+    }
 
+    /**
+     * Один раз после завершения работы с сессией: дождаться async-деструкторов (иначе зомби worker).
+     */
+    private function finalizeMadelineProcess(): void
+    {
         try {
             \danog\MadelineProto\API::finalize();
         } catch (\Throwable $e) {
@@ -200,68 +208,13 @@ class ReadTelegramChats
         }
     }
 
-    /**
-     * Обрыв IPC (нет сокета воркера) — пересоздаём клиент, сессия и авторизация Telegram не меняются.
-     *
-     * @return array{readed: int, filtered: int, lastId: mixed, lastDate: mixed}
-     */
-    private function readChannelWithMadelineRecoveringIpc(
-        ?\danog\MadelineProto\API &$MadelineProto,
-        string $sessionName,
-        Settings $settings,
-        ApiChannel $channel,
-    ): array {
-        $extra = max(0, min(5, (int) config('services.madeline_proto.ipc_reconnect_attempts', 2)));
-        $maxPass = $extra + 1;
-
-        for ($pass = 0; $pass < $maxPass; $pass++) {
-            if ($pass > 0) {
-                Log::channel('post_parser')->notice('ReadTelegramChats IPC reconnect', [
-                    'channel_id' => $channel->id,
-                    'pass' => $pass,
-                    'session' => $sessionName,
-                ]);
-                $this->shutdownMadelineClient($MadelineProto);
-                sleep(min(2 * $pass, 8));
-                $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
-                if (!$MadelineProto->getSelf()) {
-                    $MadelineProto->start();
-                }
-            }
-
-            try {
-                return $this->readChannelWithMadeline($MadelineProto, $channel);
-            } catch (\Throwable $e) {
-                if (!$this->isIpcEndpointLost($e)) {
-                    $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
-                    Log::channel('post_parser')->warning('ReadTelegramChats getHistory', [
-                        'channel_id' => $channel->id,
-                        'exception' => $e::class,
-                        'message' => $e->getMessage(),
-                    ]);
-
-                    return [];
-                }
-                if ($pass === $maxPass - 1) {
-                    $this->setErrorMsg('getHistory: обрыв IPC (The endpoint does not exist) после '.$maxPass.' попыток');
-                    Log::channel('post_parser')->error('ReadTelegramChats IPC exhausted', [
-                        'channel_id' => $channel->id,
-                        'exception' => $e::class,
-                        'message' => $e->getMessage(),
-                    ]);
-
-                    return [];
-                }
-            }
-        }
-
-        return [];
-    }
-
-    private function isIpcEndpointLost(\Throwable $e): bool
+    private function isInterruptSignal(\Throwable $e): bool
     {
         for ($t = $e; $t !== null; $t = $t->getPrevious()) {
-            if (str_contains($t->getMessage(), 'The endpoint does not exist')) {
+            if ($t instanceof SignalException) {
+                return true;
+            }
+            if (str_contains($t->getMessage(), 'SIGINT')) {
                 return true;
             }
         }
@@ -297,8 +250,13 @@ class ReadTelegramChats
 
             return [];
         } catch (\Throwable $e) {
-            if ($this->isIpcEndpointLost($e)) {
-                throw $e;
+            if ($this->isInterruptSignal($e)) {
+                $this->setWarnMsg('Прервано (Ctrl+C / SIGINT)');
+                Log::channel('post_parser')->notice('ReadTelegramChats getHistory interrupted', [
+                    'channel_id' => $this->apiChannel->id,
+                ]);
+
+                return [];
             }
             $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
             Log::channel('post_parser')->warning('ReadTelegramChats getHistory', [
