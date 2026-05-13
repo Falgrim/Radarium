@@ -13,6 +13,7 @@ use App\Models\ApiPostUser;
 use danog\MadelineProto\PeerNotInDbException;
 use danog\MadelineProto\Settings;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -48,30 +49,104 @@ class ReadTelegramChats
         ];
     }
 
+    /**
+     * Несколько каналов с одним api_id: один экземпляр MadelineProto на сессию, чтобы не открывать IPC заново
+     * на каждый канал (гонка «The endpoint does not exist!» с параллельным cron).
+     *
+     * @param  Collection<int, ApiChannel>  $channels
+     * @param  callable(self): void  $afterEachChannel  вывод сообщений команды после каждого канала
+     */
+    public function readTelegramChannelsWithSharedSession(Collection $channels, callable $afterEachChannel): void
+    {
+        $this->truncateMadelineLogIfNeeded();
+
+        $invalid = $channels->filter(fn (ApiChannel $ch) => ! $this->channelHasTelegramCredentials($ch));
+        $valid = $channels->filter(fn (ApiChannel $ch) => $this->channelHasTelegramCredentials($ch));
+
+        foreach ($invalid as $channel) {
+            $this->unsetMessages();
+            $this->apiChannel = $channel;
+            $this->setWarnMsg('Канал ID'.$channel->id.': нет api_id и/или api_hash');
+            $afterEachChannel($this);
+        }
+
+        foreach ($valid->groupBy(fn (ApiChannel $ch) => (int) $ch->options['api_id']) as $apiId => $group) {
+            $first = $group->first();
+            $settings = $this->buildMadelineSettings($first);
+            $sessionName = 'session.madeline.' . $apiId;
+
+            $MadelineProto = null;
+
+            try {
+                $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
+
+                if (!$MadelineProto->getSelf()) {
+                    $MadelineProto->start();
+                }
+
+                foreach ($group as $channel) {
+                    $this->unsetMessages();
+                    $this->readChannelWithMadeline($MadelineProto, $channel);
+                    $afterEachChannel($this);
+                }
+            } finally {
+                $this->shutdownMadelineClient($MadelineProto);
+            }
+        }
+    }
+
     public function read(ApiChannel $apiChannel): array
     {
         $this->unsetMessages();
+        $this->truncateMadelineLogIfNeeded();
         $this->apiChannel = $apiChannel;
-        
-               // --- Лимитируем размер лог-файла MadelineProto ---
-        $logPath = storage_path('logs/MadelineProto.log');
-        $maxLogSize = 10 * 1024 * 1024; // 10 МБ
-        if (file_exists($logPath) && filesize($logPath) > $maxLogSize) {
-            file_put_contents($logPath, ''); // очищаем файл
-        }
-        // --- END ---
 
-
-        if (!count($this->apiChannel->options) OR !isset($this->apiChannel->options['api_id']) OR !isset($this->apiChannel->options['api_hash'])) {
+        if (!$this->channelHasTelegramCredentials($this->apiChannel)) {
             $this->setWarnMsg('Канал ID'.$this->apiChannel->id.': нет api_id и/или api_hash');
+
             return [];
         }
 
+        $settings = $this->buildMadelineSettings($this->apiChannel);
+        $sessionName = 'session.madeline.' . (int) $this->apiChannel->options['api_id'];
+
+        $MadelineProto = null;
+
+        try {
+            $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
+
+            if (!$MadelineProto->getSelf()) {
+                $MadelineProto->start();
+            }
+
+            return $this->readChannelWithMadeline($MadelineProto, $this->apiChannel);
+        } finally {
+            $this->shutdownMadelineClient($MadelineProto);
+        }
+    }
+
+    private function channelHasTelegramCredentials(ApiChannel $channel): bool
+    {
+        return count($channel->options)
+            && isset($channel->options['api_id'], $channel->options['api_hash']);
+    }
+
+    private function truncateMadelineLogIfNeeded(): void
+    {
+        $logPath = storage_path('logs/MadelineProto.log');
+        $maxLogSize = 10 * 1024 * 1024;
+        if (file_exists($logPath) && filesize($logPath) > $maxLogSize) {
+            file_put_contents($logPath, '');
+        }
+    }
+
+    private function buildMadelineSettings(ApiChannel $channel): Settings
+    {
         $settings = new Settings;
         $settings->setAppInfo(
             (new \danog\MadelineProto\Settings\AppInfo)
-                ->setApiId($this->apiChannel->options['api_id'])
-                ->setApiHash($this->apiChannel->options['api_hash'])
+                ->setApiId($channel->options['api_id'])
+                ->setApiHash($channel->options['api_hash'])
                 ->setLangCode('RU')
         );
 
@@ -92,14 +167,45 @@ class ReadTelegramChats
 
         MadelineConnectionConfigurator::apply($settings);
 
-        $sessionName = 'session.madeline.' . (int) $this->apiChannel->options['api_id'];
-        $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
-        // Не вызывать updateSettings сразу после конструктора: API уже ставит в очередь merge
-        // полного $settings при подключении IPC; лишний sync-вызов даёт гонку (MTProto::$logger до init).
+        return $settings;
+    }
 
-        if (!$MadelineProto->getSelf()) {
-            $MadelineProto->start();
+    /**
+     * Корректное завершение IPC-воркера: unset + ожидание async-деструкторов MadelineProto.
+     * Не вызывать gc_collect_cycles() сразу после unset — ломает Amp Future и оставляет зомби-процессы.
+     */
+    private function shutdownMadelineClient(?\danog\MadelineProto\API &$MadelineProto): void
+    {
+        if ($MadelineProto === null) {
+            return;
         }
+
+        $client = $MadelineProto;
+        $MadelineProto = null;
+
+        try {
+            unset($client);
+        } catch (\Throwable $e) {
+            Log::channel('post_parser')->warning('ReadTelegramChats MadelineProto unset', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            \danog\MadelineProto\API::finalize();
+        } catch (\Throwable $e) {
+            Log::channel('post_parser')->warning('ReadTelegramChats API::finalize', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @return array{readed: int, filtered: int, lastId: mixed, lastDate: mixed}
+     */
+    private function readChannelWithMadeline(\danog\MadelineProto\API $MadelineProto, ApiChannel $apiChannel): array
+    {
+        $this->apiChannel = $apiChannel;
 
         if (!$this->apiChannel->last_date_check) {
             $offsetDate = $this->apiChannel->post_from_date ? $this->apiChannel->post_from_date : '2025-01-01 00:00:00';
@@ -108,9 +214,9 @@ class ReadTelegramChats
         }
 
         $params = [
-            'peer'          => $this->apiChannel->link,
-            'limit'         => $this->cronCountPosts?->value ?? 100,
-            'offset_date'   => strtotime($offsetDate),
+            'peer' => $this->apiChannel->link,
+            'limit' => $this->cronCountPosts?->value ?? 100,
+            'offset_date' => strtotime($offsetDate),
         ];
 
         $this->setInfoMsg('Выборка с даты: '.date('H:i:s d.m.Y', $params['offset_date']));
@@ -119,7 +225,7 @@ class ReadTelegramChats
             $messages = $this->getHistoryWithCancelledRetries($MadelineProto, $params);
         } catch (ChannelException $e) {
             $this->setErrorMsg('ChannelException ['.$e::class.']: '.$e->getMessage());
-            unset($MadelineProto);
+
             return [];
         } catch (\Throwable $e) {
             $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
@@ -128,33 +234,20 @@ class ReadTelegramChats
                 'exception' => $e::class,
                 'message' => $e->getMessage(),
             ]);
-            unset($MadelineProto);
+
             return [];
         }
 
-        /* Сообщения, сортировка по дате (новые сверху) */
         $messages = array_reverse($messages['messages']);
 
-        // Структура для reply_to https://docs.madelineproto.xyz/API_docs/constructors/messageReplyHeader.html
         $messagesOrigin = $messages;
         $countMsg = count($messages);
-
-        // Для дебага
-        /*foreach ($messages as $key => $message) {
-            if ($this->apiChannel->last_post_id AND $this->apiChannel->last_post_id >= $message['id']) {
-                continue;
-            }
-
-            if (isset($message['media'])) {
-                unset($message['media']);
-            }
-            echo (new \DateTime())->setTimestamp($message['date'])->format("Y-m-d H:i:s").PHP_EOL;
-        }*/
 
         $this->checkReplyTo($messages);
         $this->checkMinLength($messages);
 
         $addedCount = 0;
+        $countMsgFiltered = 0;
 
         if ($countMsgFiltered = count($messages)) {
             foreach ($messages as $message) {
@@ -172,6 +265,7 @@ class ReadTelegramChats
                     $this->setWarnMsg('Дубликат: '.$message['id'].' (БД '.$postCheck->id.')');
                 }
 
+                $userInfo = null;
                 try {
                     $this->setInfoMsg('Add ID: ' . $message['id']);
                     $userInfo = $MadelineProto->getInfo($message['from_id']);
@@ -182,20 +276,19 @@ class ReadTelegramChats
                 $userData = [];
                 if (isset($userInfo['User'])) {
                     $userData = [
-                        'first_name'    => $userInfo['User']['first_name'] ?? null,
-                        'last_name'     => $userInfo['User']['last_name'] ?? null,
-                        'username'      => $userInfo['User']['username'] ?? '',
-                        'user_id'       => $userInfo['user_id'],
-                        'user_type'     => $userInfo['type'],
-                        'phone'         => $userInfo['User']['phone'] ?? null,
-                        'last_online'   => isset($userInfo['User']['status']['was_online']) ? (new \DateTime())->setTimestamp($userInfo['User']['status']['was_online'])->format("Y-m-d H:i:s") : null,
+                        'first_name' => $userInfo['User']['first_name'] ?? null,
+                        'last_name' => $userInfo['User']['last_name'] ?? null,
+                        'username' => $userInfo['User']['username'] ?? '',
+                        'user_id' => $userInfo['user_id'],
+                        'user_type' => $userInfo['type'],
+                        'phone' => $userInfo['User']['phone'] ?? null,
+                        'last_online' => isset($userInfo['User']['status']['was_online']) ? (new \DateTime())->setTimestamp($userInfo['User']['status']['was_online'])->format('Y-m-d H:i:s') : null,
                     ];
                 } else {
                     $this->setWarnMsg('Не получена информация по пользователю');
                 }
 
                 if (count($userData)) {
-
                     $user = ApiPostUser::where('user_id', $message['from_id'])
                         ->where('channel_source', $this->apiChannel->channel_source)
                         ->first();
@@ -222,7 +315,7 @@ class ReadTelegramChats
 
                         $user->save();
 
-                        $this->setInfoMsg('Обновлен пользователь: ' . $user->id);
+                        $this->setInfoMsg('Обновлен пользователь: '.$user->id);
                     }
 
                     if (isset($userInfo['User']['photo'])) {
@@ -239,35 +332,34 @@ class ReadTelegramChats
                                 ApiPostUser::where('id', $user->id)->update(['photo' => $photoPath]);
                             }
                         } catch (\Exception $e) {
-                            $this->setWarnMsg('Не удалось скачать фото профиля ID' . $user->id.': '.$e->getMessage());
+                            $this->setWarnMsg('Не удалось скачать фото профиля ID'.$user->id.': '.$e->getMessage());
                         }
                     }
                 }
 
                 $post = ApiChannelPost::updateOrCreate([
                     'api_channel_id' => $this->apiChannel->id,
-                    'post_id' => $message['id']
+                    'post_id' => $message['id'],
                 ], [
-                    'api_post_user_id'  => $user?->id ?? 0,
-                    'api_channel_id'    => $this->apiChannel->id,
-                    'user_login'        => $userData['username'] ?? '',
-                    'user_login_id'     => $message['from_id'],
-                    'post_id'           => $message['id'],
-                    'post_date'         => Carbon::createFromTimestamp($message['date'])->toDateTimeString(),
-                    'post'              => trim($message['message']),
-                    'ai_parse_status'   => is_null($postCheck) ? ApiChannelPostStatusEnum::InQueue : ApiChannelPostStatusEnum::Duplicate,
+                    'api_post_user_id' => $user?->id ?? 0,
+                    'api_channel_id' => $this->apiChannel->id,
+                    'user_login' => $userData['username'] ?? '',
+                    'user_login_id' => $message['from_id'],
+                    'post_id' => $message['id'],
+                    'post_date' => Carbon::createFromTimestamp($message['date'])->toDateTimeString(),
+                    'post' => trim($message['message']),
+                    'ai_parse_status' => is_null($postCheck) ? ApiChannelPostStatusEnum::InQueue : ApiChannelPostStatusEnum::Duplicate,
                 ]);
 
                 if ($post->wasRecentlyCreated === true) {
-                    $addedCount ++;
-                    $this->setInfoMsg('Создан новый пост: ' . $post->id);
+                    $addedCount++;
+                    $this->setInfoMsg('Создан новый пост: '.$post->id);
                 } else {
-                    $this->setInfoMsg('Обновлен пост: ' . $post->id);
+                    $this->setInfoMsg('Обновлен пост: '.$post->id);
                 }
             }
         }
 
-        // Если есть хоть какие-то сообщения - обновляем дату сканирования
         if (count($messagesOrigin)) {
             $lastPostId = last($messagesOrigin)['id'] ?? null;
             $lastDate = last($messagesOrigin)['date'] ?? null;
@@ -277,10 +369,10 @@ class ReadTelegramChats
                     $this->apiChannel->last_post_id = $lastPostId;
                 }
 
-                $lastDate = (new \DateTime())->setTimestamp($lastDate)->format("Y-m-d H:i:s");
+                $lastDate = (new \DateTime())->setTimestamp($lastDate)->format('Y-m-d H:i:s');
                 if (!$this->apiChannel->last_date_check) {
                     $this->apiChannel->last_date_check = $lastDate;
-                } elseif($this->apiChannel->last_date_check->lessThan($lastDate)) {
+                } elseif ($this->apiChannel->last_date_check->lessThan($lastDate)) {
                     $this->apiChannel->last_date_check = $lastDate;
                 } else {
                     $lastDate = $this->apiChannel->last_date_check->addDays(3);
@@ -295,7 +387,7 @@ class ReadTelegramChats
                     $this->apiChannel->save();
                 }
             }
-        } elseif (!$this->apiChannel->last_date_check OR !$this->apiChannel->last_post_id) {
+        } elseif (!$this->apiChannel->last_date_check || !$this->apiChannel->last_post_id) {
             $this->apiChannel->last_date_check = Carbon::parse($offsetDate)->addDays(3);
             $this->apiChannel->save();
         }
@@ -305,21 +397,11 @@ class ReadTelegramChats
         $this->setInfoMsg('Последний ID: '.$this->apiChannel->last_post_id);
         $this->setInfoMsg('Последняя дата: '.$this->apiChannel->last_date_check);
 
-        if ($MadelineProto) {
-            try {
-                unset($MadelineProto);
-            } catch (\Throwable $e) {
-                $this->setErrorMsg('Shutdown error: ' . $e->getMessage());
-            }
-        }
-
-        gc_collect_cycles();
-
         return [
-            'readed'    => $countMsg,
-            'filtered'  => $countMsgFiltered,
-            'lastId'    => $this->apiChannel->last_post_id,
-            'lastDate'  => $this->apiChannel->last_date_check,
+            'readed' => $countMsg,
+            'filtered' => $countMsgFiltered,
+            'lastId' => $this->apiChannel->last_post_id,
+            'lastDate' => $this->apiChannel->last_date_check,
         ];
     }
 

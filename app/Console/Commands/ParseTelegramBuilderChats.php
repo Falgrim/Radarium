@@ -2,19 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Enum\ApiDataTypeEnum;
-use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiChannel;
-use App\Models\ApiChannelPost;
-use App\Models\ApiPostUser;
 use App\Services\ReadTelegramChats;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class ParseTelegramBuilderChats extends Command
 {
@@ -47,31 +40,20 @@ class ParseTelegramBuilderChats extends Command
             return 0;
         }
 
-        foreach ($channels as $channel) {
-            $readTelegramChats->read($channel);
-
-            $infoMsg = $readTelegramChats->getInfoMsg();
-            $warnMsg = $readTelegramChats->getWarnMsg();
-            $errorMsg = $readTelegramChats->getErrorMsg();
-
-            if (count($infoMsg)) {
-                foreach ($infoMsg as $item) {
+        $readTelegramChats->readTelegramChannelsWithSharedSession(
+            collect($channels),
+            function (ReadTelegramChats $svc) {
+                foreach ($svc->getInfoMsg() as $item) {
                     $this->info($item);
                 }
-            }
-
-            if (count($warnMsg)) {
-                foreach ($warnMsg as $item) {
+                foreach ($svc->getWarnMsg() as $item) {
                     $this->warn($item);
                 }
-            }
-
-            if (count($errorMsg)) {
-                foreach ($errorMsg as $item) {
+                foreach ($svc->getErrorMsg() as $item) {
                     $this->error($item);
                 }
             }
-        }
+        );
 
         $this->info('Завершено');
     }
