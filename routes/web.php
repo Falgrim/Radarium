@@ -49,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::get('/dashboard', function () {
-    return redirect(route('catalog.specialists'));
+    return redirect(route('catalog.builders'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/tariff/{id}', [TariffController::class, 'buy'])->name('tariff.buy');

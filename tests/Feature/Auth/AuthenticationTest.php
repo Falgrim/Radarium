@@ -27,7 +27,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('catalog.builders', absolute: false));
     }
 
     public function test_last_login_at_is_set_after_successful_login(): void

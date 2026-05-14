@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerate();
 
             $redirectAuth = $request->session()->pull('redirect_auth');
-            $defaultUrl = $redirectAuth ?: route('catalog.specialists', absolute: false);
+            $defaultUrl = $redirectAuth ?: route('catalog.builders', absolute: false);
 
             return redirect()->intended($defaultUrl);
         } else {
@@ -42,7 +42,7 @@ class AuthenticatedSessionController extends Controller
                 $request->session()->regenerate();
 
                 $redirectAuth = $request->session()->pull('redirect_auth');
-                $defaultUrl = $redirectAuth ?: route('catalog.specialists', absolute: false);
+                $defaultUrl = $redirectAuth ?: route('catalog.builders', absolute: false);
                 $redirectUrl = $request->session()->pull('url.intended', $defaultUrl);
 
                 return response()->json([
