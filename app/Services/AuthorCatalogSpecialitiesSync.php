@@ -108,6 +108,12 @@ final class AuthorCatalogSpecialitiesSync
             ->get();
 
         if ($builders->isEmpty()) {
+            Log::channel('ai_debug')->info('[AuthorCatalogSpecialitiesSync] syncBuildersForUser: skip (no active builders with Complete post)', [
+                'api_post_user_id' => $apiPostUserId,
+                'max_specialities' => $maxSpecialities,
+                'dry_run' => $dryRun,
+            ]);
+
             return ['changed' => false, 'specialist_ids' => [], 'builder_ids' => [], 'top_speciality_ids' => []];
         }
 
@@ -139,6 +145,7 @@ final class AuthorCatalogSpecialitiesSync
 
         $builderIds = [];
         $changed = false;
+        $perBuilder = [];
         foreach ($builders as $builder) {
             $builderIds[] = (int) $builder->id;
             $old = $builder->specialities()->pluck('dictionary_speciality_id')->map('intval')->sort()->values()->all();
@@ -155,7 +162,30 @@ final class AuthorCatalogSpecialitiesSync
                     $new
                 );
             }
+            $perBuilder[] = [
+                'builder_id' => (int) $builder->id,
+                'api_channel_post_id' => (int) ($builder->api_channel_post_id ?? 0),
+                'old_dictionary_speciality_ids' => $old,
+                'new_dictionary_speciality_ids' => $new,
+                'row_changed' => $old !== $new,
+            ];
         }
+
+        Log::channel('ai_debug')->info('[AuthorCatalogSpecialitiesSync] syncBuildersForUser', [
+            'api_post_user_id' => $apiPostUserId,
+            'dry_run' => $dryRun,
+            'max_specialities' => $maxSpecialities,
+            'active_builders_with_complete_post' => count($builderIds),
+            'builder_ids' => $builderIds,
+            'combined_text_char_length' => mb_strlen($combined),
+            'ai_speciality_strings_merged' => $aiMerged,
+            'ai_speciality_strings_count' => count($aiMerged),
+            'resolved_top_dictionary_speciality_ids' => $top,
+            'resolved_top_count' => count($top),
+            'matcher_log' => $resolved['log'] ?? [],
+            'any_builder_row_changed' => $changed,
+            'per_builder' => $perBuilder,
+        ]);
 
         return [
             'changed' => $changed,
@@ -185,6 +215,7 @@ final class AuthorCatalogSpecialitiesSync
             Log::channel('ai_debug')->warning('[AuthorCatalogSpecialitiesSync] builder sync failed', [
                 'api_post_user_id' => $apiPostUserId,
                 'message' => $e->getMessage(),
+                'exception_class' => $e::class,
             ]);
         }
     }

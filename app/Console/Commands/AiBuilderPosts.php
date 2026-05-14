@@ -313,9 +313,34 @@ class AiBuilderPosts extends Command
 
                     app(AuthorCatalogSpecialitiesSync::class)->syncAfterBuilderImport((int) $post->apiPostUser->id);
 
+                    $builder->refresh();
+                    $pivotSpecialityIds = $builder->specialities()
+                        ->pluck('dictionary_speciality_id')
+                        ->map(static fn ($id): int => (int) $id)
+                        ->values()
+                        ->all();
+
+                    if (count($mergedSpecialities) > $maxSpec) {
+                        Log::channel('ai_debug')->warning('[Builder] first-pass speciality count exceeds max', [
+                            'post_id' => $post->id,
+                            'builder_id' => $builder->id,
+                            'api_post_user_id' => (int) $post->apiPostUser->id,
+                            'max_specialities' => $maxSpec,
+                            'merged_dictionary_speciality_ids' => array_values($mergedSpecialities),
+                            'matcher_log' => $resolved['log'] ?? [],
+                        ]);
+                    }
+
                     Log::channel('ai_debug')->info('[Builder] post_id='.$post->id, [
                         'raw_type' => $rawType,
                         'normalized_type' => $builderType->value,
+                        'builder_id' => $builder->id,
+                        'api_post_user_id' => (int) $post->apiPostUser->id,
+                        'max_specialities_for_author' => $maxSpec,
+                        'first_pass_dictionary_speciality_ids' => array_values($mergedSpecialities),
+                        'first_pass_speciality_count' => count($mergedSpecialities),
+                        'pivot_dictionary_speciality_ids_after_sync' => $pivotSpecialityIds,
+                        'pivot_speciality_count_after_sync' => count($pivotSpecialityIds),
                         'specialities_total' => count($mergedSpecialities),
                         'catalog_status' => $gateDecision['status']->value,
                         'catalog_gate_reasons' => $gateDecision['reasons'],

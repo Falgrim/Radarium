@@ -13,9 +13,11 @@ use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use App\Models\Builder;
 use App\Models\DictionarySpeciality;
+use App\Services\AuthorCatalogSpecialitiesSync;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use MoonShine\Fields\Checkbox;
 use MoonShine\Fields\Date;
 use MoonShine\Fields\DateRange;
@@ -101,7 +103,20 @@ class BuilderResource extends ModelResource
      */
     public function rules(Model $item): array
     {
-        return [];
+        $allowedIds = DictionarySpeciality::query()
+            ->where('api_data_type_id', ApiDataTypeEnum::Builder)
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+
+        return [
+            'specialitiesForMoonshine' => [
+                'nullable',
+                'array',
+                'max:'.AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR,
+            ],
+            'specialitiesForMoonshine.*' => ['integer', Rule::in($allowedIds)],
+        ];
     }
 
     public function search(): array
