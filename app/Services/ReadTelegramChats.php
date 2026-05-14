@@ -28,6 +28,9 @@ class ReadTelegramChats
     protected $cronCountPosts;
     protected $minLengthPost;
 
+    /** Флаг: последний обработанный канал упал из-за «The endpoint does not exist» (IPC worker мёртв). */
+    private bool $lastChannelHadIpcLoss = false;
+
     protected array $messages = [
         'info' => [],
         'warn' => [],
@@ -48,6 +51,18 @@ class ReadTelegramChats
             'warn' => [],
             'error' => [],
         ];
+        $this->lastChannelHadIpcLoss = false;
+    }
+
+    private function isIpcEndpointLost(\Throwable $e): bool
+    {
+        for ($t = $e; $t !== null; $t = $t->getPrevious()) {
+            if (str_contains($t->getMessage(), 'The endpoint does not exist')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -85,10 +100,27 @@ class ReadTelegramChats
                     $MadelineProto->start();
                 }
 
-                foreach ($group as $channel) {
+                $remaining = $group->values();
+                foreach ($remaining as $idx => $channel) {
                     $this->unsetMessages();
                     $this->readChannelWithMadeline($MadelineProto, $channel);
                     $afterEachChannel($this);
+
+                    if ($this->lastChannelHadIpcLoss) {
+                        $skipped = $remaining->slice($idx + 1);
+                        if ($skipped->isNotEmpty()) {
+                            $this->unsetMessages();
+                            $ids = $skipped->map(fn (ApiChannel $c) => $c->id)->implode(', ');
+                            $msg = 'Сессия '.$sessionName.': IPC недоступен (worker MadelineProto не подключился к Telegram DC). Пропущено каналов: '.$skipped->count().' [ID: '.$ids.']';
+                            $this->setErrorMsg($msg);
+                            Log::channel('post_parser')->error('ReadTelegramChats abort group on IPC loss', [
+                                'session' => $sessionName,
+                                'skipped_channel_ids' => $skipped->pluck('id')->all(),
+                            ]);
+                            $afterEachChannel($this);
+                        }
+                        break;
+                    }
                 }
             } finally {
                 $this->releaseMadelineClient($MadelineProto);
@@ -257,6 +289,9 @@ class ReadTelegramChats
                 ]);
 
                 return [];
+            }
+            if ($this->isIpcEndpointLost($e)) {
+                $this->lastChannelHadIpcLoss = true;
             }
             $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
             Log::channel('post_parser')->warning('ReadTelegramChats getHistory', [

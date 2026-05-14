@@ -40,6 +40,8 @@ class ParseTelegramCompanyChats extends Command
             return 0;
         }
 
+        $this->info('Подключение к Telegram…');
+
         $readTelegramChats->readTelegramChannelsWithSharedSession(
             collect($channels),
             function (ReadTelegramChats $svc) {
