@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Models\Configuration;
 
-final class BuilderAiPipelineRuntimeConfig
+class BuilderAiPipelineRuntimeConfig
 {
     /** @var array<string, string>|null */
     private ?array $settingsCache = null;

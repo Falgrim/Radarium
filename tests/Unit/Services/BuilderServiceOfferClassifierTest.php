@@ -46,6 +46,20 @@ final class BuilderServiceOfferClassifierTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_hard_rejects_tilesetter_with_leading_emoji_without_llm(): void
+    {
+        Http::fake();
+
+        $result = $this->classifier->classify(
+            $this->ollama,
+            "🍫Требуется плиточник! Устройство плитки пол 20м2. Москва."
+        );
+
+        $this->assertSame(BuilderServiceOfferClassifier::TYPE_JUNK, $result['type']);
+        $this->assertSame('heuristic', $result['source']);
+        Http::assertNothingSent();
+    }
+
     public function test_accepts_compact_service_offer_json(): void
     {
         Http::fake([
