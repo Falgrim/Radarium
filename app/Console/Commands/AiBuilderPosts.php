@@ -258,20 +258,25 @@ class AiBuilderPosts extends Command
                     $result['json']['api_post_user_id'] = $post->apiPostUser->id;
                     $result['json']['api_channel_post_id'] = $post->id;
 
-                    $hiringReasons = (new CatalogPublicationBuilderNonServiceSignals)->reasons((string) $post->post);
-                    if (in_array(CatalogPublicationBuilderNonServiceSignals::REASON_HIRING, $hiringReasons, true)) {
+                    $heuristicReasons = (new CatalogPublicationBuilderNonServiceSignals)->reasons((string) $post->post);
+                    $blocking = array_values(array_intersect(
+                        $heuristicReasons,
+                        CatalogPublicationBuilderNonServiceSignals::pipelineHardBlockReasonCodes()
+                    ));
+                    if ($blocking !== []) {
                         $post->ai_result = json_encode([
-                            'hiring_text_blocked' => true,
-                            'reasons' => $hiringReasons,
-                            'route' => 'dont_match_hiring_heuristic',
+                            'heuristic_pipeline_blocked' => true,
+                            'reasons' => $heuristicReasons,
+                            'blocking_reasons' => $blocking,
+                            'route' => 'dont_match_heuristic_pipeline',
                         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                         $post->ai_date = now();
                         $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
                         $post->save();
                         $this->warn(sprintf(
-                            'Текст по эвристике найма → DontMatch (карточка не создаётся), post_id=%d, reasons=%s',
+                            'Эвристика пайплайна → DontMatch (карточка не создаётся), post_id=%d, blocking=%s',
                             $post->id,
-                            implode(', ', $hiringReasons)
+                            implode(', ', $blocking)
                         ));
 
                         continue;

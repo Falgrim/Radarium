@@ -10,6 +10,9 @@ namespace App\Services;
  *
  * Дополнительно: «контракт объявления о подработке» — одновременно упоминание условий оплаты,
  * числового объёма работ и места или срока (типичный заказ/смена, не карточка исполнителя).
+ *
+ * Плюс жёсткий отсев «визуального мусора»: эмодзи-стены, почти нет кириллицы, латинский клавиатурный мусор —
+ * в одной логике с Pass 1 / Pass 2 промптами (см. config/builder_ai_pipeline.php).
  */
 final class CatalogPublicationBuilderNonServiceSignals
 {
@@ -19,6 +22,22 @@ final class CatalogPublicationBuilderNonServiceSignals
 
     public const REASON_GIG_SPECIFICATION_BUNDLE = 'post_text_gig_payment_volume_place_or_date';
 
+    /** Спам, эмодзи-флуд или недостаточно русских букв для карточки исполнителя. */
+    public const REASON_SPAM_OR_LOW_LEXICAL_SIGNAL = 'post_text_spam_or_low_lexical_signal';
+
+    /**
+     * Причины, при которых пайплайн обрывается до создания Builder (как при найме).
+     *
+     * @return list<string>
+     */
+    public static function pipelineHardBlockReasonCodes(): array
+    {
+        return [
+            self::REASON_HIRING,
+            self::REASON_SPAM_OR_LOW_LEXICAL_SIGNAL,
+        ];
+    }
+
     /**
      * @return list<string> коды причин (пусто — эвристики не сработали)
      */
@@ -27,6 +46,10 @@ final class CatalogPublicationBuilderNonServiceSignals
         $text = $this->normalizeForMatch(mb_strtolower(trim($postText)));
         if ($text === '') {
             return [];
+        }
+
+        if ($this->matchesSpamOrLowLexicalSignal($postText)) {
+            return [self::REASON_SPAM_OR_LOW_LEXICAL_SIGNAL];
         }
 
         if ($this->matchesHiringOrStaffing($text)) {
@@ -69,6 +92,63 @@ final class CatalogPublicationBuilderNonServiceSignals
         $t = preg_replace('/\h+/u', ' ', $t) ?? $t;
 
         return trim($t);
+    }
+
+    /**
+     * Согласовано с промптами Pass 1/2: нет связного русскоязычного предложения услуг.
+     */
+    private function matchesSpamOrLowLexicalSignal(string $original): bool
+    {
+        $trimmed = trim($original);
+        $len = mb_strlen($trimmed);
+        if ($len < 16) {
+            return false;
+        }
+
+        $withoutUrls = preg_replace('#https?://[^\s]+#iu', ' ', $trimmed);
+        $withoutUrls = preg_replace('/\s+/u', ' ', (string) $withoutUrls);
+        $withoutUrls = trim($withoutUrls);
+
+        $cyr = $this->countCyrillicLetters($withoutUrls);
+        $emojiSym = $this->countEmojiAndOrnamentalSymbols($withoutUrls);
+        $latin = $this->countLatinLetters($withoutUrls);
+
+        if ($len >= 22 && $cyr === 0) {
+            return true;
+        }
+
+        if ($len >= 36 && $cyr < 10) {
+            return true;
+        }
+
+        if ($len >= 28 && $emojiSym >= 14 && $cyr < 12) {
+            return true;
+        }
+
+        if ($len >= 24 && $emojiSym >= 8 && $cyr < 6) {
+            return true;
+        }
+
+        if ($len >= 45 && $latin >= 48 && $cyr < 5) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function countCyrillicLetters(string $s): int
+    {
+        return preg_match_all('/\p{Cyrillic}/u', $s) ?: 0;
+    }
+
+    private function countLatinLetters(string $s): int
+    {
+        return preg_match_all('/\p{Latin}/u', $s) ?: 0;
+    }
+
+    private function countEmojiAndOrnamentalSymbols(string $s): int
+    {
+        return preg_match_all('/[\p{So}\p{Sk}]/u', $s) ?: 0;
     }
 
     private function matchesHiringOrStaffing(string $lower): bool
@@ -477,7 +557,7 @@ final class CatalogPublicationBuilderNonServiceSignals
                 continue;
             }
             if (preg_match(
-                '/работ|штукатур|маляр|потол|покрас|срочно|требу|нужн|заделка|слой|шпакл|грунт|шлифов|' .
+                '/работ|штукатур|маляр|потол|покрас|срочно|требу|нужн|заделка|слой|шпакл|грунт|шлифов|'.
                 'покраск|аквапанель|сапфир|стеклохолст|шпаклев|безвоздушн|укладк|демонтаж|монтаж|электрик/u',
                 $line
             )) {

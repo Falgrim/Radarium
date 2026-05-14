@@ -42,6 +42,40 @@ final class CatalogPublicationBuilderNonServiceSignalsTest extends TestCase
         );
     }
 
+    #[DataProvider('spamOrLowLexicalSamples')]
+    public function test_spam_or_low_lexical_detected(string $text): void
+    {
+        $reasons = $this->signals->reasons($text);
+
+        $this->assertContains(
+            CatalogPublicationBuilderNonServiceSignals::REASON_SPAM_OR_LOW_LEXICAL_SIGNAL,
+            $reasons,
+            'Должно считаться спамом/низким сигналом: '.$text
+        );
+    }
+
+    #[DataProvider('performerOfferOrJobSeekerSamples')]
+    public function test_performer_samples_not_flagged_as_spam(string $text): void
+    {
+        $reasons = $this->signals->reasons($text);
+
+        $this->assertNotContains(
+            CatalogPublicationBuilderNonServiceSignals::REASON_SPAM_OR_LOW_LEXICAL_SIGNAL,
+            $reasons,
+            'Ложное срабатывание спама на примере исполнителя: '.mb_substr($text, 0, 80)
+        );
+    }
+
+    public static function spamOrLowLexicalSamples(): array
+    {
+        $emojiWall = str_repeat('🤍', 18).' '.str_repeat('💫', 12).' https://t.me/stroitel_arhitector';
+
+        return [
+            'emoji_wall_with_link' => [$emojiWall],
+            'latin_keyboard_mash' => ['mghtuyguuiiu iuhuklikklkjjkyh hiuhoiho kiioioo gfhjgdfjdfgjhd df dgj dgh jgd jg jgdjdghf jdgfh jdgf j'],
+        ];
+    }
+
     public static function performerOfferOrJobSeekerSamples(): array
     {
         return [
