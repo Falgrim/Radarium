@@ -29,6 +29,11 @@ Route::middleware(['web', MoonShineAuthenticate::class])
 Route::get('/', [IndexController::class, 'index'])->name('index');
 Route::get('/tech', [IndexController::class, 'tech'])->name('tech');
 
+/** Актуальный CSRF для форм после истечения сессии (без перезагрузки страницы). */
+Route::get('/session/csrf', function () {
+    return response()->json(['token' => csrf_token()]);
+})->name('session.csrf');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/specialists', [CatalogController::class, 'authorsAsSpecialists'])->name('catalog.specialists');
     Route::get('/specialists/specialist/{id}', [CatalogController::class, 'authorAsSpecialistView'])->name('catalog.specialist.view');

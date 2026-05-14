@@ -399,6 +399,34 @@
 
 
 <script>
+    var rdSessionCsrfUrl = @json(route('session.csrf'));
+
+    function rdRefreshAuthCsrf(done, fail) {
+        $.ajax({
+            url: rdSessionCsrfUrl,
+            type: 'GET',
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            success: function (data) {
+                if (data && data.token) {
+                    $('meta[name="csrf-token"]').attr('content', data.token);
+                    $('form input[name="_token"]').val(data.token);
+                }
+                if (typeof done === 'function') {
+                    done();
+                }
+            },
+            error: function () {
+                if (typeof fail === 'function') {
+                    fail();
+                }
+            },
+        });
+    }
+
     function rdModalGet(id) {
         var el = document.getElementById(id);
         if (!el || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
@@ -473,7 +501,8 @@
 
         $btn.prop('disabled', true);
 
-        $.ajax({
+        rdRefreshAuthCsrf(function () {
+            $.ajax({
             url: $(form_id).attr('action'),
             type: 'POST',
             data: $(form_id).serialize(),
@@ -505,6 +534,17 @@
                 }
             },
             error: function(xhr) {
+                if (xhr.status === 419) {
+                    rdRefreshAuthCsrf(function () {
+                        $(form_id + '-message').html(
+                            '<div class="alert alert-warning mb-0">Сессия устарела. Нажмите кнопку отправки ещё раз.</div>'
+                        );
+                    }, function () {
+                        window.location.reload();
+                    });
+                    return;
+                }
+
                 rdModalShow('errorModal');
                 $('#errorModal .modal-title').html('Ошибка!');
 
@@ -529,6 +569,13 @@
                     }
                 }
             }
+        });
+        }, function () {
+            $btn.prop('disabled', false);
+            if (isLoginForm && $btn.data('auth-label-saved')) {
+                $btn.html($btn.data('auth-label-saved'));
+            }
+            window.location.reload();
         });
     }
     
