@@ -79,6 +79,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </div>
 </header>
 
+@include('components.session-flash-banner')
+
 {{ $slot }}
 
 <footer>
@@ -118,6 +120,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="{{ asset('v2/js/script.js') }}?v=1.12"></script>
 
 @stack('scripts')
+
+<x-session-idle-timeout />
 
 </body>
 </html>

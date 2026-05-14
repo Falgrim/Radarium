@@ -24,5 +24,6 @@
         <x-footer />
 
         @stack('scripts')
+        <x-session-idle-timeout />
     </body>
 </html>

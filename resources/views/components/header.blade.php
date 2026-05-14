@@ -3,6 +3,7 @@
 @endphp
 
 <header>
+    @include('components.session-flash-banner')
     <div class="container">
         <nav class="navbar navbar-expand-xl client-in">
             <div class="container">

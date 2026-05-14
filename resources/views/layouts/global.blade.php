@@ -49,6 +49,7 @@
         <script src="{{ asset('v2/js/star-script.js') }}?v=1.12"></script>
 
         @stack('scripts')
+        <x-session-idle-timeout />
         <script>
             window.addEventListener('pageshow', function(event) {
                 if (event.persisted) {

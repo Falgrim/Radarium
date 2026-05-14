@@ -5,6 +5,8 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,7 +17,18 @@ return Application::configure(basePath: dirname(__DIR__))
     )->withMiddleware(function (Middleware $middleware) {
         //
     })->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->renderable(function (TokenMismatchException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Сессия устарела. Обновите страницу и войдите снова.',
+                ], 419);
+            }
+
+            return redirect('/')->with(
+                'csrf_alert',
+                'Сессия истекла или устарела защита формы. Вы можете снова войти в систему.'
+            );
+        });
     })->withSchedule(function (Schedule $schedule) {
 
         try {
