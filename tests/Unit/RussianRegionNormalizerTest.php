@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\RussianRegionNormalizer;
+use App\Support\CatalogRegionOptions;
 use PHPUnit\Framework\TestCase;
 
 class RussianRegionNormalizerTest extends TestCase
@@ -53,5 +54,44 @@ class RussianRegionNormalizerTest extends TestCase
     {
         $n = $this->sampleNormalizer();
         $this->assertSame('Деревня Неизвестная 123', $n->normalizeOrKeep('Деревня Неизвестная 123'));
+    }
+
+    public function test_suburb_alias_khimki_to_moscow(): void
+    {
+        $n = RussianRegionNormalizer::forTesting(
+            [
+                'federal_subjects' => ['Москва'],
+                'aliases' => ['химки' => 'Москва'],
+            ],
+            []
+        );
+        $this->assertSame('Москва', $n->normalize('Химки'));
+    }
+
+    public function test_catalog_canonical_dropdown_merges_synonyms(): void
+    {
+        $normalizer = RussianRegionNormalizer::forTesting(
+            [
+                'federal_subjects' => ['Москва', 'Московская область'],
+                'aliases' => [
+                    'мо' => 'Московская область',
+                    'сао' => 'Москва',
+                ],
+            ],
+            []
+        );
+        $whitelist = [
+            'Москва' => 'Москва',
+            'Московская область' => 'Московская область',
+        ];
+        $out = CatalogRegionOptions::catalogCanonicalChoicesFromDistinctRaw(
+            $normalizer,
+            ['МО', 'Московская область', 'САО', 'null'],
+            $whitelist
+        );
+        $this->assertSame([
+            'Москва' => 'Москва',
+            'Московская область' => 'Московская область',
+        ], $out);
     }
 }

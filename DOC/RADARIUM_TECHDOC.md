@@ -606,7 +606,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 5. Тип приводится к `BuilderTypeEnum` через `BuilderNormalizer::normalizeType(...)`. Для каталога «строительные услуги» допускается в итоге только **`BuilderTypeEnum::Service`**; иначе пост получает `DontMatch` и `Builder` не создаётся.
 6. Нормализуются поля карточки: `performer_type`, `legal_form`, `object_types`, `equipment_skills_json` и др. (`BuilderNormalizer`, `BuilderNormalizer::cleanEquipmentSkills`).
 7. Специализации: объединение подсказок ИИ (`service_types` / `specialities` в JSON) и текстового матчинга через **`BuilderSpecialityMatcher`** (`resolve` по тексту поста + AI), затем `Dictionary::updateRelations` для `builder_specialities`.
-8. Регион: `RussianRegionNormalizer::normalizeOrKeep` по полю из ответа ИИ или `api_channels.region`.
+8. Регион: `RussianRegionNormalizer::normalize` по полю из ответа ИИ или `api_channels.region` (только канон из справочника; нераспознанное — `null`).
 9. **`CatalogPublicationGate`** (см. §7.8) выставляет `status` создаваемого `Builder` (`Active` или `InModeration`, если нет ни одной сопоставленной специализации при включённой политике).
 10. `Builder::create(...)`, пост → `Complete`, расширенный лог в `ai_debug`.
 

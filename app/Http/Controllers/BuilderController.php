@@ -13,8 +13,10 @@ use App\Models\BuilderReview;
 use App\Models\BuilderReviewCustomField;
 use App\Models\DictionarySpeciality;
 use App\Models\UserOpenContact;
+use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use App\Support\CatalogRegionOptions;
+use App\Support\PublicBuilderCatalogScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -113,7 +115,7 @@ class BuilderController extends Controller
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
-            $this->restrictBuilderCardsToCompleteSourcePosts($query);
+            PublicBuilderCatalogScope::restrictBuilderCardsToCompleteSourcePosts($query);
 
             if (! empty($validated['region'])) {
                 if ($validated['region'] === 'none') {
@@ -215,7 +217,7 @@ class BuilderController extends Controller
                 if ($this->onlyActive) {
                     $query->where('status', '=', ApiPostAiStatusEnum::Active);
                 }
-                $this->restrictBuilderCardsToCompleteSourcePosts($query);
+                PublicBuilderCatalogScope::restrictBuilderCardsToCompleteSourcePosts($query);
             })
             ->with(['builders', 'postsComplete', 'builderReviews']);
 
@@ -451,7 +453,10 @@ class BuilderController extends Controller
             ->pluck('region')
             ->all();
 
-        $regionsList = CatalogRegionOptions::choicesFromRawNames($names);
+        $regionsList = CatalogRegionOptions::catalogCanonicalChoicesFromDistinctRaw(
+            app(RussianRegionNormalizer::class),
+            $names
+        );
 
         return [$regionsList, $hasNullRegion];
     }
@@ -465,64 +470,10 @@ class BuilderController extends Controller
      */
     private function buildersMatchingCatalogScope(array $validated, array $specialityFilterIds): Builder
     {
-        $query = \App\Models\Builder::query()
-            ->whereNotNull('api_channel_post_id')
-            ->where('api_channel_post_id', '>', 0)
-            ->when($this->onlyActive, function (Builder $q): void {
-                $q->where('status', '=', ApiPostAiStatusEnum::Active);
-            });
-
-        $this->restrictBuilderCardsToCompleteSourcePosts($query);
-
-        return $query
-            ->when(! empty($validated['key_word_tags']), function (Builder $query) use ($validated) {
-                $query->whereHas('post', function (Builder $postQuery) use ($validated) {
-                    $postQuery->where(function (Builder $inner) use ($validated) {
-                        foreach ($validated['key_word_tags'] as $keyWordTag) {
-                            $inner->orWhere('post', 'like', '%'.$keyWordTag.'%');
-                        }
-                    });
-                });
-            })
-            ->when($specialityFilterIds !== [], function (Builder $query) use ($specialityFilterIds) {
-                $query->whereRelation('specialities', function (Builder $relationQuery) use ($specialityFilterIds) {
-                    $relationQuery->whereIn('dictionary_speciality_id', $specialityFilterIds);
-                });
-            })
-            ->when(! empty($validated['key_word']), function (Builder $query) use ($validated) {
-                $query->whereHas('post', function (Builder $postQuery) use ($validated) {
-                    $postQuery->where('post', 'like', '%'.$validated['key_word'].'%');
-                });
-            })
-            ->whereHas('user', function (Builder $userQuery) use ($validated) {
-                $userQuery->whereDoesntHave('specialists', function (Builder $specialistQuery) {
-                    $specialistQuery->where('status', ApiPostAiStatusEnum::Active)
-                        ->whereHas('post', function (Builder $postQuery): void {
-                            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-                        });
-                });
-                if (! empty($validated['open_contacts']) && Auth::check()) {
-                    $userQuery->whereIn('id', function ($sub) {
-                        $sub->select('api_post_user_id')
-                            ->from(with(new UserOpenContact)->getTable())
-                            ->where('user_id', Auth::user()->id);
-                    });
-                }
-                $userQuery->where(function (Builder $contact) {
-                    $contact->whereNotNull('phone')
-                        ->orWhere('username', '<>', '');
-                });
-            });
-    }
-
-    /**
-     * В публичном каталоге учитываются только карточки по сообщениям со статусом «Обработка завершена».
-     * Пока сообщение в очереди ИИ (InQueue) или на перепроверке — автор не попадает в выдачу.
-     */
-    private function restrictBuilderCardsToCompleteSourcePosts(Builder $builderQuery): void
-    {
-        $builderQuery->whereHas('post', function (Builder $postQuery): void {
-            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-        });
+        return PublicBuilderCatalogScope::buildersMatchingCatalogScope(
+            $validated,
+            $specialityFilterIds,
+            $this->onlyActive
+        );
     }
 }

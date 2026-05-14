@@ -153,7 +153,7 @@ class AiSpecialistPosts extends Command
                         ? trim((string) $result['json']['location_region'])
                         : trim((string) ($post->channel->region ?? ''));
                     $rawRegion = $rawRegion === '' ? null : $rawRegion;
-                    $result['json']['region'] = app(RussianRegionNormalizer::class)->normalizeOrKeep($rawRegion);
+                    $result['json']['region'] = app(RussianRegionNormalizer::class)->normalize($rawRegion);
 
                     unset($result['json']['location_region'], $result['json']['location_city']);
 

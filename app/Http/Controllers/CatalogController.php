@@ -17,6 +17,7 @@ use App\Models\ReviewCustomField;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Models\UserOpenContact;
+use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use App\Support\CatalogRegionOptions;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -116,7 +117,10 @@ class CatalogController extends Controller
             ->pluck('region')
             ->all();
 
-        $regionsList = CatalogRegionOptions::choicesFromRawNames($names);
+        $regionsList = CatalogRegionOptions::catalogCanonicalChoicesFromDistinctRaw(
+            app(RussianRegionNormalizer::class),
+            $names
+        );
 
         return [$regionsList, $hasNullRegion];
     }

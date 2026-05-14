@@ -252,7 +252,7 @@ class AiBuilderPosts extends Command
                         ? trim((string) $result['json']['location_region'])
                         : trim((string) ($post->channel->region ?? ''));
                     $rawRegion = $rawRegion === '' ? null : $rawRegion;
-                    $result['json']['region'] = app(RussianRegionNormalizer::class)->normalizeOrKeep($rawRegion);
+                    $result['json']['region'] = app(RussianRegionNormalizer::class)->normalize($rawRegion);
 
                     $result['json']['post_date'] = $post->post_date;
                     $result['json']['api_post_user_id'] = $post->apiPostUser->id;

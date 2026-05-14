@@ -13,7 +13,7 @@ class NormalizeStoredRegions extends Command
                             {--dry-run : Только вывести пары старое → новое}
                             {--chunk=500 : Размер чанка}';
 
-    protected $description = 'Нормализовать поле region у существующих builders и specialists по справочнику';
+    protected $description = 'Нормализовать поле region у существующих builders и specialists по справочнику (только замена на канон). Для публичного каталога строителей с обнулением нераспознанного: regions:normalize-public-catalog-builders';
 
     public function handle(RussianRegionNormalizer $normalizer): int
     {

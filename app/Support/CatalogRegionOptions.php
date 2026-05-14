@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Services\RussianRegionNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -45,6 +46,43 @@ final class CatalogRegionOptions
             }
             $out[$t] = $t;
         }
+
+        return $out;
+    }
+
+    /**
+     * Опции выпадающего списка: только канон из справочника регионов, после {@see RussianRegionNormalizer::normalize()}.
+     *
+     * @param  array<string, string>|null  $allowedRegionsWhitelist  Если null — используется config('regions').
+     * @param  list<mixed>  $rawDistinctFromDatabase
+     * @return array<string, string>
+     */
+    public static function catalogCanonicalChoicesFromDistinctRaw(
+        RussianRegionNormalizer $normalizer,
+        array $rawDistinctFromDatabase,
+        ?array $allowedRegionsWhitelist = null
+    ): array {
+        $allowedRegions = $allowedRegionsWhitelist ?? config('regions', []);
+        if (! is_array($allowedRegions) || $allowedRegions === []) {
+            return self::choicesFromRawNames($rawDistinctFromDatabase);
+        }
+
+        $out = [];
+        foreach ($rawDistinctFromDatabase as $name) {
+            if (! is_string($name)) {
+                continue;
+            }
+            $t = trim($name);
+            if (self::isJunkRegionString($t)) {
+                continue;
+            }
+            $canonical = $normalizer->normalize($t);
+            if ($canonical === null || ! array_key_exists($canonical, $allowedRegions)) {
+                continue;
+            }
+            $out[$canonical] = $canonical;
+        }
+        ksort($out, SORT_STRING);
 
         return $out;
     }
