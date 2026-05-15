@@ -22,6 +22,9 @@ final class CatalogPublicationBuilderNonServiceSignals
 
     public const REASON_GIG_SPECIFICATION_BUNDLE = 'post_text_gig_payment_volume_place_or_date';
 
+    /** Короткий заказ: вид работ + объём + ставка за м² без самопрезентации исполнителя. */
+    public const REASON_COMPACT_UNIT_PRICE_WORK_ORDER = 'post_text_compact_unit_price_work_order';
+
     /** Спам, эмодзи-флуд или недостаточно русских букв для карточки исполнителя. */
     public const REASON_SPAM_OR_LOW_LEXICAL_SIGNAL = 'post_text_spam_or_low_lexical_signal';
 
@@ -62,6 +65,10 @@ final class CatalogPublicationBuilderNonServiceSignals
 
         if ($this->matchesGigSpecificationBundle($text)) {
             return [self::REASON_GIG_SPECIFICATION_BUNDLE];
+        }
+
+        if ($this->matchesCompactUnitPriceWorkOrder($postText, $text)) {
+            return [self::REASON_COMPACT_UNIT_PRICE_WORK_ORDER];
         }
 
         return [];
@@ -380,6 +387,14 @@ final class CatalogPublicationBuilderNonServiceSignals
             return true;
         }
 
+        if (preg_match('/\bцена\s+от\s+вас\b/u', $t) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\bстоимость\s*:/u', $t) === 1) {
+            return true;
+        }
+
         if (preg_match('/\bоплат[аио].{0,40}\d.{0,6}(?:руб|₽|р\.|тыс)/u', $t) === 1) {
             return true;
         }
@@ -472,6 +487,10 @@ final class CatalogPublicationBuilderNonServiceSignals
             '/\b(?:завтра|послезавтра|с\s+завтрашн|на\s+завтра|сегодня\s+к|к\s+\d{1,2}[:.]\d{0,2}|смена\s+к)\b/u',
             $lower
         ) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\b(?:выходить|выйти)\s+нужно.{0,32}завтра/u', $lower) === 1) {
             return true;
         }
 
@@ -583,9 +602,37 @@ final class CatalogPublicationBuilderNonServiceSignals
             return false;
         }
 
-        $order = '/(?:^|[\s,.;:!?—\-])(?:нужно|надо|срочно\s+нужно)\s+(?:смонтировать|установить|сделать|снять|демонтировать|провести|починить|построить|заменить|произвести|выполнить)\b/u';
+        $order = '/(?:^|[\s,.;:!?—\-])(?:нужно|надо|срочно\s+нужно)\s+(?:под\s+)?(?:смонтировать|установить|сделать|снять|демонтировать|провести|починить|построить|заменить|произвести|выполнить|исправить|подготовить)\b/u';
+        if (preg_match($order, $lower) === 1) {
+            return true;
+        }
 
-        return preg_match($order, $lower) === 1;
+        return preg_match(
+            '/\b(?:нужно|надо|срочно\s+нужно).{0,56}(?:исправить|смонтировать|установить|сделать|выполнить|произвести)\b/u',
+            $lower
+        ) === 1;
+    }
+
+    /**
+     * Строка заказа без «мы делаем»: «Укладка газоблока … 600 м² … 650 ₽/м²».
+     */
+    private function matchesCompactUnitPriceWorkOrder(string $original, string $lower): bool
+    {
+        if (mb_strlen($original) > 220) {
+            return false;
+        }
+
+        if ($this->hasPerformerOfferMarkers($lower) || $this->looksLikePerformerOfferOrJobSeeker($lower)) {
+            return false;
+        }
+
+        return preg_match(
+            '/\b(?:укладк|монтаж|демонтаж|штукатур|покрас|кладк|отделк|шпаклев|шпатлев|гипсокартон|газоблок|пеноблок|плитк)'.
+            '.{0,96}\d+(?:[\s,.]\d+)?\s*(?:м²|м2|м\s*2|кв\.?\s*м)'.
+            '.{0,72}(?:₽|руб\.?|\d+\s*р\.?)'.
+            '.{0,24}(?:за\s*)?(?:м²|м2|м\s*2|кв\.?\s*м)\b/us',
+            $lower
+        ) === 1;
     }
 
     private function hasPerformerOfferMarkers(string $lower): bool

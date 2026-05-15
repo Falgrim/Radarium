@@ -139,4 +139,40 @@ final class CatalogPublicationBuilderNonServiceSignalsTest extends TestCase
             ],
         ];
     }
+
+    #[DataProvider('customerCompactOrderSamples')]
+    public function test_customer_compact_orders_detected(string $text, string $expectedReason): void
+    {
+        $reasons = $this->signals->reasons($text);
+
+        $this->assertContains($expectedReason, $reasons, 'Ожидался сигнал '.$expectedReason);
+    }
+
+    public static function customerCompactOrderSamples(): array
+    {
+        return [
+            'malyar_fix_layers' => [
+                <<<'TXT'
+12.05.2026
+Всем добрый вечер.
+!!СРОЧНО!!
+Мастер маляр на шпатлевку
+Нужно под покраску исправить два финишных слоя, объем 100м2.
+Стоимость: так как переделка, понимаю что это сложнее, цена от вас!
+Фото по запросу!
+Выходить нужно завтра!
+89167258199 - Леонид
+TXT,
+                CatalogPublicationBuilderNonServiceSignals::REASON_CUSTOMER_SHORT,
+            ],
+            'gazoblock_unit_price' => [
+                <<<'TXT'
+14.03.2026
+Укладка Газоблока 75 мм
+600 м 2 -650 ₽ за м 2
+TXT,
+                CatalogPublicationBuilderNonServiceSignals::REASON_COMPACT_UNIT_PRICE_WORK_ORDER,
+            ],
+        ];
+    }
 }
