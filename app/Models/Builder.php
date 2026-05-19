@@ -173,6 +173,10 @@ class Builder extends Model
         return $result;
     }
 
+    private static bool $syncAuthorSpecialitiesAfterSave = false;
+
+    private static ?int $syncAuthorSpecialitiesUserId = null;
+
     /**
      * Метод «booted» модели.
      */
@@ -187,6 +191,8 @@ class Builder extends Model
                     $specialities = is_array($builder->specialitiesForMoonshine) ? $builder->specialitiesForMoonshine : $builder->specialitiesForMoonshine->toArray();
                     $dictionary = new Dictionary;
                     $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', $builder->id, $specialities);
+                    self::$syncAuthorSpecialitiesAfterSave = true;
+                    self::$syncAuthorSpecialitiesUserId = (int) $builder->api_post_user_id;
                 }
                 unset($builder->specialitiesForMoonshine);
             }
@@ -198,16 +204,34 @@ class Builder extends Model
                     if (count($builder->specialitiesForMoonshine)) {
                         $dictionary = new Dictionary;
                         $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', $builder->id, $builder->specialitiesForMoonshine);
+                        self::$syncAuthorSpecialitiesAfterSave = true;
+                        self::$syncAuthorSpecialitiesUserId = (int) $builder->api_post_user_id;
                     }
                 } else {
                     if ($builder->specialitiesForMoonshine->count()) {
                         $specialities = new Collection($builder->specialitiesForMoonshine->toArray());
                         $dictionary = new Dictionary;
                         $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', $builder->id, $specialities->pluck('id')->toArray());
+                        self::$syncAuthorSpecialitiesAfterSave = true;
+                        self::$syncAuthorSpecialitiesUserId = (int) $builder->api_post_user_id;
                     }
                 }
 
                 unset($builder->specialitiesForMoonshine);
+            }
+        });
+
+        static::saved(function (Builder $builder): void {
+            if (! self::$syncAuthorSpecialitiesAfterSave) {
+                return;
+            }
+
+            $userId = self::$syncAuthorSpecialitiesUserId ?? (int) $builder->api_post_user_id;
+            self::$syncAuthorSpecialitiesAfterSave = false;
+            self::$syncAuthorSpecialitiesUserId = null;
+
+            if ($userId > 0) {
+                app(\App\Services\AuthorCatalogSpecialitiesSync::class)->syncAfterBuilderImport($userId);
             }
         });
     }

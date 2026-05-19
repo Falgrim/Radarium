@@ -189,10 +189,10 @@ class AiSpecialistPosts extends Command
                         );
                     }
 
-                    app(AuthorCatalogSpecialitiesSync::class)->syncAfterSpecialistImport((int) $specialist->api_post_user_id);
-
                     $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                     $post->save();
+
+                    app(AuthorCatalogSpecialitiesSync::class)->syncAfterSpecialistImport((int) $specialist->api_post_user_id);
 
                     if ($specialist->status === ApiPostAiStatusEnum::InModeration || $specialist->status === ApiPostAiStatusEnum::Active) {
                         $this->info('Создан специалист ID: '.$specialist->id);

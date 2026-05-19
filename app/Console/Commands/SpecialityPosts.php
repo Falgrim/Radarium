@@ -17,6 +17,8 @@ use App\Models\BuilderSpeciality;
 use App\Models\Specialist;
 use App\Models\SpecialistSpeciality;
 use App\Services\ApiAIYandex;
+use App\Services\AuthorCatalogSpecialitiesSync;
+use App\Services\BuilderSpecialityMatcher;
 use App\Services\Dictionary;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -119,14 +121,19 @@ class SpecialityPosts extends Command
         $this->info('В обработку постов: '.count($specialists).' из '.$specialistsAll);
 
         $dictionary = new Dictionary;
-        $specialityList = $dictionary->getAll(
-            DictionaryEnum::Speciality,
-            ApiDataTypeEnum::Builder
-        );
+        $matcher = app(BuilderSpecialityMatcher::class);
+        $authorSync = app(AuthorCatalogSpecialitiesSync::class);
+        $maxSpec = AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR;
+        $touchedUserIds = [];
 
         foreach ($specialists as $specialist) {
             try {
-                $specialistSpecialties = $dictionary->checkMatchByList($specialist->post->post, $specialityList);
+                $resolved = $matcher->resolve(
+                    (string) ($specialist->post->post ?? ''),
+                    null,
+                    $maxSpec
+                );
+                $specialistSpecialties = $resolved['ids'];
                 if (count($specialistSpecialties)) {
                     $dictionary->updateRelations(
                         DictionaryEnum::Speciality,
@@ -135,11 +142,20 @@ class SpecialityPosts extends Command
                         $specialistSpecialties
                     );
 
+                    $userId = (int) $specialist->api_post_user_id;
+                    if ($userId > 0) {
+                        $touchedUserIds[$userId] = true;
+                    }
+
                     $this->info('ID '.$specialist->id.': '.count($specialistSpecialties));
                 }
             } catch (\Exception $e) {
                 $this->error($e->getMessage());
             }
+        }
+
+        foreach (array_keys($touchedUserIds) as $userId) {
+            $authorSync->syncAfterBuilderImport($userId);
         }
 
         $this->info('Завершено');

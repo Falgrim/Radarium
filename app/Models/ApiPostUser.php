@@ -153,31 +153,52 @@ class ApiPostUser extends Model
      */
     public function builderSpecialtiesWithShortName(int $substr = 0): array
     {
-        $builderIds = $this->builders()->where('status', ApiPostAiStatusEnum::Active)->pluck('id');
+        $builderIds = $this->builders()
+            ->where('status', ApiPostAiStatusEnum::Active)
+            ->whereHas('post', function ($q): void {
+                $q->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
+            })
+            ->pluck('id');
         if ($builderIds->isEmpty()) {
             return [];
         }
 
-        $result = [];
+        $max = \App\Services\AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR;
+        $bySpecialityId = [];
         $items = BuilderSpeciality::whereIn('builder_id', $builderIds)
             ->with('dictionarySpeciality')
+            ->orderBy('dictionary_speciality_id')
             ->get();
 
         foreach ($items as $bs) {
+            $specialityId = (int) $bs->dictionary_speciality_id;
+            if (isset($bySpecialityId[$specialityId])) {
+                continue;
+            }
+
             $d = $bs->dictionarySpeciality;
-            if (!$d || (int) $d->api_data_type_id !== ApiDataTypeEnum::Builder->value) {
+            if (! $d || (int) $d->api_data_type_id !== ApiDataTypeEnum::Builder->value) {
                 continue;
             }
             $name = $d->short_name && $d->short_name != $d->title
-                ? $d->short_name . ' - ' . $d->title
+                ? $d->short_name.' - '.$d->title
                 : ($d->short_name ?: $d->title);
             if ($substr) {
                 $name = Str::limit($name, $substr);
             }
-            $result[$name] = [
+            $bySpecialityId[$specialityId] = [
                 'name' => $name,
                 'key_words' => $d->key_words,
             ];
+        }
+
+        if (count($bySpecialityId) > $max) {
+            $bySpecialityId = array_slice($bySpecialityId, 0, $max, true);
+        }
+
+        $result = [];
+        foreach ($bySpecialityId as $row) {
+            $result[$row['name']] = $row;
         }
 
         return $result;

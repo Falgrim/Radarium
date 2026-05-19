@@ -316,8 +316,6 @@ class AiBuilderPosts extends Command
                         );
                     }
 
-                    app(AuthorCatalogSpecialitiesSync::class)->syncAfterBuilderImport((int) $post->apiPostUser->id);
-
                     $builder->refresh();
                     $pivotSpecialityIds = $builder->specialities()
                         ->pluck('dictionary_speciality_id')
@@ -360,6 +358,9 @@ class AiBuilderPosts extends Command
 
                     $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
                     $post->save();
+
+                    app(AuthorCatalogSpecialitiesSync::class)->syncAfterBuilderImport((int) $post->apiPostUser->id);
+                    $builder->refresh();
 
                     if ($builder->status === ApiPostAiStatusEnum::InModeration || $builder->status === ApiPostAiStatusEnum::Active) {
                         $this->info('Создан строитель ID: '.$builder->id);
