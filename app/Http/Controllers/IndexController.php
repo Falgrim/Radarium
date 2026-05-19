@@ -8,6 +8,7 @@ use App\Enum\PaymentTariffStatusEnum;
 use App\Infrastructures\Facades\Repositories;
 use App\Models\ApiPostUser;
 use App\Models\PaymentTariff;
+use App\Support\PublicBuilderCatalogScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -30,23 +31,7 @@ class IndexController extends Controller
 
         $contactSum = $contactSum->count();
 
-        $builderContactSum = ApiPostUser::whereHas('builders', function (Builder $query) {
-            $query->where('status', '=', ApiPostAiStatusEnum::Active);
-            $query->whereHas('post', function (Builder $postQuery): void {
-                $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-            });
-        })
-            ->whereDoesntHave('specialists', function (Builder $query) {
-                $query->where('status', ApiPostAiStatusEnum::Active)
-                    ->whereHas('post', function (Builder $postQuery): void {
-                        $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-                    });
-            })
-            ->where(function (Builder $query) {
-                $query->whereNotNull('phone')
-                    ->orWhere('username', '<>', '');
-            })
-            ->count();
+        $builderContactSum = PublicBuilderCatalogScope::publicCatalogAuthorsQuery()->count();
 
         // Кэшируем вычисление contactTodaySum на 1 час
         $contactTodaySum = Cache::remember('contact_today_sum', 3600, function () {
@@ -72,22 +57,9 @@ class IndexController extends Controller
         });
 
         $builderContactTodaySum = Cache::remember('builder_contact_today_sum', 3600, function () {
-            $sum = ApiPostUser::whereHas('builders', function (Builder $query) {
-                $query->where('status', '=', ApiPostAiStatusEnum::Active);
-                $query->whereHas('post', function (Builder $postQuery): void {
-                    $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-                });
-                $query->where('created_at', '>=', Carbon::now()->startOfDay());
-            })
-                ->whereDoesntHave('specialists', function (Builder $query) {
-                    $query->where('status', ApiPostAiStatusEnum::Active)
-                        ->whereHas('post', function (Builder $postQuery): void {
-                            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-                        });
-                })
-                ->where(function (Builder $query) {
-                    $query->whereNotNull('phone')
-                        ->orWhere('username', '<>', '');
+            $sum = PublicBuilderCatalogScope::publicCatalogAuthorsQuery()
+                ->whereHas('builders', function (Builder $query) {
+                    $query->where('created_at', '>=', Carbon::now()->startOfDay());
                 })
                 ->count();
             if ($sum < 50) {

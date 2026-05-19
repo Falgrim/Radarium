@@ -9,6 +9,7 @@ use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\ApiPostUser;
 use App\Models\Builder;
+use App\Support\PublicBuilderCatalogScope;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Collection;
@@ -135,19 +136,7 @@ class AiRequeueBuilderMissingVisiblePosts extends Command
      */
     protected function catalogAuthorsMissingVisibleBuilderPostQuery(): EloquentBuilder
     {
-        return ApiPostUser::query()
-            ->whereHas('builders', function (EloquentBuilder $query) {
-                $query->whereNotNull('api_channel_post_id')
-                    ->where('api_channel_post_id', '>', 0)
-                    ->where('status', ApiPostAiStatusEnum::Active);
-            })
-            ->whereDoesntHave('specialists', function (EloquentBuilder $query) {
-                $query->where('status', ApiPostAiStatusEnum::Active);
-            })
-            ->where(function (EloquentBuilder $query) {
-                $query->whereNotNull('phone')
-                    ->orWhere('username', '<>', '');
-            })
+        return PublicBuilderCatalogScope::publicCatalogAuthorsQuery()
             ->whereDoesntHave('builders', function (EloquentBuilder $query) {
                 $query->where('status', ApiPostAiStatusEnum::Active)
                     ->whereNotNull('api_channel_post_id')

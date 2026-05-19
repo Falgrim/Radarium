@@ -9,6 +9,7 @@ use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Services\ReadTelegramChats;
+use App\Support\TelegramPostUrl;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -345,6 +346,41 @@ class ApiPostUser extends Model
             ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
             ->orderByDesc('post_date')
             ->first();
+    }
+
+    /**
+     * Телефон или @username — прямой контакт вне исходного канала/группы.
+     */
+    public function hasDirectTelegramContact(): bool
+    {
+        return trim((string) ($this->phone ?? '')) !== ''
+            || trim((string) ($this->username ?? '')) !== '';
+    }
+
+    /**
+     * Подсказка для каталога, когда прямого контакта нет (связь через ответ в источнике).
+     */
+    public function catalogIndirectContactHint(): string
+    {
+        return 'Прямой контакт (телефон или @username) недоступен. Напишите автору ответом на его сообщение в Telegram-канале или группе, откуда взято объявление.';
+    }
+
+    /**
+     * Ссылка на исходное сообщение в публичном канале/группе (если известны link канала и post_id).
+     */
+    public function lastBuilderPostTelegramUrl(): ?string
+    {
+        $post = $this->lastBuilderPost();
+        if (! $post) {
+            return null;
+        }
+
+        $post->loadMissing('channel');
+
+        return TelegramPostUrl::fromChannelLinkAndPostId(
+            $post->channel?->link,
+            $post->post_id !== null ? (int) $post->post_id : null
+        );
     }
 
     public function lastPostAnyStatus(): ?ApiChannelPost

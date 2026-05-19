@@ -26,27 +26,7 @@
                 <p>Открыть контакт</p>
             </div>
             <div class="contact-info">
-                @if($checkOpenContact)
-                    <p class="nickname">
-                    @if($author->username)
-                        <a href="https://t.me/{{ $author->username }}" target="_blank">{{ $author->username }}</a>
-                    @elseif($author->user_id)
-                        <a href="tg://user?id={{ $author->user_id }}" target="_blank">{{ $author->user_id }}</a>
-                    @else
-                        <i>Не известно</i>
-                    @endif
-                    </p>
-
-                    @if($author->first_name)
-                        <p class="name">{{ trim($author->last_name.' '.$author->first_name) }}</p>
-                    @endif
-
-                    @if($author->phone)
-                        <p class="email">{{ trim($author->phone) }}</p>
-                    @endif
-                @else
-                    <i>Скрыто</i>
-                @endif
+                <x-builder-catalog-contact :$author :check-open-contact="$checkOpenContact" />
             </div>
         </div>
     </td>

@@ -148,13 +148,7 @@ class BuilderController extends Controller
                     $query->where('post', 'like', '%'.$validated['key_word'].'%');
                 });
             }
-        })
-            ->whereDoesntHave('specialists', function (Builder $query) {
-                $query->where('status', ApiPostAiStatusEnum::Active)
-                    ->whereHas('post', function (Builder $postQuery): void {
-                        $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-                    });
-            });
+        });
 
         if (! empty($validated['open_contacts']) && Auth::check()) {
             $authors = $authors->whereIn('id', function ($query) {
@@ -163,11 +157,6 @@ class BuilderController extends Controller
                     ->where('user_id', Auth::user()->id);
             });
         }
-
-        $authors = $authors->where(function (Builder $query) {
-            $query->whereNotNull('phone')
-                ->orWhere('username', '<>', '');
-        });
 
         $sortField = $validated['sort'] ?? 'last_post_date';
         $sortDirection = $validated['direction'] ?? 'desc';
@@ -220,11 +209,6 @@ class BuilderController extends Controller
                 PublicBuilderCatalogScope::restrictBuilderCardsToCompleteSourcePosts($query);
             })
             ->with(['builders', 'postsComplete', 'builderReviews']);
-
-        $author = $author->where(function (Builder $query) {
-            $query->whereNotNull('phone')
-                ->orWhere('username', '<>', '');
-        });
 
         $author = $author->firstOrFail();
 

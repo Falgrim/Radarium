@@ -73,25 +73,7 @@
                                 <button class="btn btn-trans btn-link likes" type="button" hidden=""><img src="{{ asset('v2/img/icon-heart-btn.svg') }}"></button>
                             </figure>
                             <div class="pers-info">
-                                <p>
-                                    <span><strong>
-                                        @if($author->username)
-                                            {{ '@'.$author->username }}
-                                        @elseif($author->user_id)
-                                            {{ $author->user_id }}
-                                        @else
-                                            <i>Не известно</i>
-                                        @endif
-                                    </strong></span>
-                                    @if($author->first_name)
-                                        <span>{{ trim($author->last_name.' '.$author->first_name) }}</span>
-                                    @endif
-                                </p>
-                                <p>
-                                    @if($author->phone)
-                                        <span><strong><strong>{{ trim($author->phone) }}</strong></strong></span>
-                                    @endif
-                                </p>
+                                <x-builder-catalog-contact :$author :check-open-contact="true" />
                             </div>
 
                             <div class="pers-comment" hidden="">
@@ -103,6 +85,8 @@
 
                             @if($author->username)
                                 <button class="btn btn-color btn-accent" type="button" onclick="window.location.href='https://t.me/{{ $author->username }}'">Написать в Telegram</button>
+                            @elseif($postUrl = $author->lastBuilderPostTelegramUrl())
+                                <a class="btn btn-color btn-accent" role="button" href="{{ $postUrl }}" target="_blank" rel="noopener noreferrer">Перейти к сообщению в Telegram</a>
                             @endif
 
                             <button class="btn w-100 btn-trans moderation-alert" type="button" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}" data-api-channel-post-id="{{ $author->lastBuilderPost()?->id }}">Сообщить об ошибке</button>

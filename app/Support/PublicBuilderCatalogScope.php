@@ -6,6 +6,7 @@ namespace App\Support;
 
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Models\ApiPostUser;
 use App\Models\UserOpenContact;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -55,12 +56,6 @@ final class PublicBuilderCatalogScope
                 });
             })
             ->whereHas('user', function (Builder $userQuery) use ($validated) {
-                $userQuery->whereDoesntHave('specialists', function (Builder $specialistQuery) {
-                    $specialistQuery->where('status', ApiPostAiStatusEnum::Active)
-                        ->whereHas('post', function (Builder $postQuery): void {
-                            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-                        });
-                });
                 if (! empty($validated['open_contacts']) && Auth::check()) {
                     $userQuery->whereIn('id', function ($sub) {
                         $sub->select('api_post_user_id')
@@ -68,11 +63,22 @@ final class PublicBuilderCatalogScope
                             ->where('user_id', Auth::user()->id);
                     });
                 }
-                $userQuery->where(function (Builder $contact) {
-                    $contact->whereNotNull('phone')
-                        ->orWhere('username', '<>', '');
-                });
             });
+    }
+
+    /**
+     * Авторы публичного каталога строителей (без фильтров региона/специализации/ключевых слов).
+     *
+     * @return Builder<ApiPostUser>
+     */
+    public static function publicCatalogAuthorsQuery(): Builder
+    {
+        return ApiPostUser::query()->whereHas('builders', function (Builder $query): void {
+            $query->whereNotNull('api_channel_post_id')
+                ->where('api_channel_post_id', '>', 0)
+                ->where('status', '=', ApiPostAiStatusEnum::Active);
+            self::restrictBuilderCardsToCompleteSourcePosts($query);
+        });
     }
 
     public static function restrictBuilderCardsToCompleteSourcePosts(Builder $builderQuery): void
