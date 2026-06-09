@@ -4,7 +4,7 @@
 >
 > Ядро: Laravel 11 + MariaDB (по умолчанию используется в производстве) + доменная модель “посты из источников (Telegram / ВКонтакте) → AI → каталоги”.
 >
-> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на 2026-05-05 (VK-импорт, ворота публикации в каталог, двухэтапный Builder AI pipeline для Ollama/Qwen, доработки AI/UI/админки).
+> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-06-09** (см. также `DOC/CHANGE_LOG.md` с 08.04.2026): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов.
 
 ## 1. Общее описание
 
@@ -54,7 +54,10 @@ flowchart TD
 - **MariaDB**: доменные таблицы и логика статусов/очередей.
 - **Eloquent models + Observers**: синхронизация производных полей и триггеры модерации.
 - **MoonShine**: админ-панель (в т.ч. кастомные страницы системных промптов и отчётов).
-- **MadelineProto (`danog/madelineproto`)**: взаимодействие с Telegram, парсинг истории и отправка сообщений. После `composer install` выполняется патч `scripts/patch-madelineproto-connection.php` (устранение несовместимости typed property `$logger` с PHP 8.3+ в vendor `Connection.php`).
+- **MadelineProto (`danog/madelineproto`)**: взаимодействие с Telegram, парсинг истории и отправка сообщений. После `composer install` выполняются патчи:
+  - `scripts/patch-madelineproto-connection.php` — typed property `$logger` с PHP 8.3+ в vendor `Connection.php`;
+  - `scripts/patch-madelineproto-exitfailure.php` — корректный выход IPC worker (`Ipc/ExitFailure.php`).
+  Настройка сети/прокси/IPv6 — через `MadelineConnectionConfigurator` и env `MPROTO_*` (см. §6.1).
 - **HTTP client**: Laravel `Http` (YandexGPT / Ollama / Tubus / **VK API** `https://api.vk.com/method/...`).
 - **Enum**: статусы “очереди” и “активности” в домене реализованы как PHP `enum`.
 - **Robokassa SDK**: проверка статуса оплаты тарифов.
@@ -171,6 +174,7 @@ flowchart TD
 `moderation_alerts`
 
 - `table_name`, `table_row_id` (на какой объект нужна модерация)
+- `api_channel_post_id` (nullable; связанный пост из `api_channel_posts` — для действий «повторная ИИ-обработка» / «убрать из каталога» из модалки на сайте и MoonShine)
 - `user_id` (nullable; если событие не для конкретного пользователя)
 - `is_system` (system/несистемное)
 - `status`, `description`, `comment`
@@ -232,26 +236,34 @@ flowchart TD
 
 ### 6.1. Настройки MadelineProto и сессии
 
-В проекте MadelineProto используется напрямую через `danog/madelineproto`:
+В проекте MadelineProto используется напрямую через `danog/madelineproto`. Централизованная настройка — **`MadelineConnectionConfigurator`** (`app/Services/MadelineConnectionConfigurator.php`):
+
+- `apply($settings)` — таймаут (`MPROTO_CONNECTION_TIMEOUT`), IPv6 (`MPROTO_IPV6_ENABLED`), прокси SOCKS5/HTTP (`MPROTO_PROXY_ENABLED`, `MPROTO_PROXY_HOST/PORT/TYPE/USER/PASS`), интервал сериализации (`MPROTO_SERIALIZATION_INTERVAL`);
+- `applyFileLogger($settings, $level)` — файловый лог в `storage/logs/MadelineProto.log` (не в cwd), чтобы IPC-процессы не писали в корень проекта.
+
+Сессии и точки входа:
 
 - Парсинг истории Telegram:
-  - основной вход: `app/Services/ReadTelegramChats::read()`
-  - сессия: `session.madeline`
-  - объект: `new \danog\MadelineProto\API('session.madeline', $settings)`
-- Отправка сообщений контактам:
-  - основной вход: `app/Services/SendMessageTelegram::send()`
-  - сессия: `session.madeline.{apiId}` (важно при параллельных запусках)
+  - пакетное чтение: `ReadTelegramChats::readTelegramChannelsWithSharedSession()` — **один** экземпляр `API` на группу каналов с одинаковым `api_id` (меньше IPC-гонок «The endpoint does not exist»);
+  - одиночный канал: `ReadTelegramChats::read($channel)`;
+  - имя сессии: `session.madeline.{apiId}` (из `api_channels.options.api_id`).
+- Отправка сообщений: `SendMessageTelegram::send()` — `session.madeline.{apiId}`.
+- Фото профилей: `TelegramProfilesPhoto` — отдельная сессия по тому же правилу.
 
 Ключевые элементы `Settings`:
 
-- `Settings\AppInfo` задаёт `api_id`, `api_hash`, `langCode('RU')`
-- `Settings\Logger` настраивает логирование MadelineProto
-- `Settings\Database\Redis` задаётся опционально (если в `config('database.redis.default.password')` задан пароль)
-- `Settings\Connection` и `Settings\Serialization` задают таймаут и интервал сериализации
+- `Settings\AppInfo` — `api_id`, `api_hash`, `langCode('RU')`
+- `Settings\Logger` — через `MadelineConnectionConfigurator::applyFileLogger`
+- `Settings\Database\Redis` — опционально (если задан пароль Redis)
+- `Settings\Connection` / `Settings\Serialization` — через `MadelineConnectionConfigurator`
 
-Также в парсере есть логическая защита от раздувания логов:
+Дополнительно в `ReadTelegramChats`:
 
-- файл `storage/logs/MadelineProto.log` очищается, если размер превышает 10MB.
+- `getHistoryWithCancelledRetries()` — повтор при `Amp\CancelledException` (лимит из `config('services.madeline_proto.max_history_cancel_retries')`);
+- `truncateMadelineLogIfNeeded()` — очистка `MadelineProto.log` при размере > 10 MB;
+- детальное логирование ошибок чтения (тип исключения + id канала).
+
+> **Важно:** вызов `updateSettings()` сразу после конструктора `API` **не выполняется** — это устраняет гонки IPC. Настройки передаются в конструктор через `$settings`.
 
 ### 6.2. Консольные команды парсинга
 
@@ -272,8 +284,8 @@ flowchart TD
 Каждая команда:
 
 1. Выбирает активные источники (`status = Active`, `is_company` = Specialist / Builder / Company) и соответствующий `channel_source` (`telegram` или `vk`).
-2. Для каждого канала вызывает `ReadTelegramChats->read($channel)` **или** `ReadVkGroups->read($channel)`.
-3. Печатает `info/warn/error` агрегированные сервисом.
+2. Для **Telegram** группирует каналы по `api_id` и вызывает `ReadTelegramChats->readTelegramChannelsWithSharedSession(...)`; для **VK** — `ReadVkGroups->read($channel)` по одному.
+3. Печатает `info/warn/error` агрегированные сервисом (в т.ч. «Подключение к Telegram…»).
 
 ### 6.3. Парсинг истории и запись в MariaDB
 
@@ -559,7 +571,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 
 `BUILDER_AI_TWO_PASS_OLLAMA_ENABLED=true` остаётся env-fallback по умолчанию, если runtime-ключ отсутствует в `configurations`.
 
-1. **Pass 0: hard reject эвристики.** До LLM повторно используются консервативные сигналы `CatalogPublicationBuilderNonServiceSignals`: найм, подработка, короткий заказ без самопрезентации исполнителя. Если сработали — пост получает `DontMatch`, extraction не запускается.
+1. **Pass 0: hard reject эвристики.** До LLM используются консервативные сигналы **`CatalogPublicationBuilderNonServiceSignals`** и **`BuilderVacancyGigHeuristic`**: явный найм заказчиком, подработка, короткий заказ без самопрезентации исполнителя, ссылки Telegram, объёмы/оплата за единицу, низкий лексический сигнал (spam). Если сработали — пост получает `DontMatch`, extraction не запускается. Активные карточки с таким текстом можно массово перевести в модерацию командой `app:catalog:disable-active-builders-hiring-text` (`DisableActiveBuildersHiringTextCommand`, `--dry-run`).
 2. **Pass 1: ультра-компактная классификация.** `BuilderServiceOfferClassifier` отправляет в Qwen только исходный текст и короткий system prompt. Модель обязана вернуть ровно один JSON-объект:
 
 ```json
@@ -605,7 +617,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 4. **Эвристика подработки/найма:** если тип похож на услугу/резюме, но текст поста удовлетворяет `BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy()`, тип принудительно меняется на `вакансия` (логируется в канал `builder_type_override`).
 5. Тип приводится к `BuilderTypeEnum` через `BuilderNormalizer::normalizeType(...)`. Для каталога «строительные услуги» допускается в итоге только **`BuilderTypeEnum::Service`**; иначе пост получает `DontMatch` и `Builder` не создаётся.
 6. Нормализуются поля карточки: `performer_type`, `legal_form`, `object_types`, `equipment_skills_json` и др. (`BuilderNormalizer`, `BuilderNormalizer::cleanEquipmentSkills`).
-7. Специализации: объединение подсказок ИИ (`service_types` / `specialities` в JSON) и текстового матчинга через **`BuilderSpecialityMatcher`** (`resolve` по тексту поста + AI), затем `Dictionary::updateRelations` для `builder_specialities`.
+7. Специализации: объединение подсказок ИИ (`service_types` / `specialities` в JSON) и текстового матчинга через **`BuilderSpecialityMatcher`** (`resolve` по тексту поста + AI), с ограничением **`AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR` (3)** — при превышении остаются top-N по score; затем `Dictionary::updateRelations` для `builder_specialities` и **`AuthorCatalogSpecialitiesSync::syncBuildersForUser`** для согласования специализаций автора.
 8. Регион: `RussianRegionNormalizer::normalize` по полю из ответа ИИ или `api_channels.region` (только канон из справочника; нераспознанное — `null`).
 9. **`CatalogPublicationGate`** (см. §7.8) выставляет `status` создаваемого `Builder` (`Active` или `InModeration`, если нет ни одной сопоставленной специализации при включённой политике).
 10. `Builder::create(...)`, пост → `Complete`, расширенный лог в `ai_debug`.
@@ -669,7 +681,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 После успешного разбора ИИ для **builders** и **specialists** статус карточки (`ApiPostAiStatusEnum`) может быть:
 
 - **`Active`** — запись сразу считается опубликованной для каталога (при выполнении условий gate)
-- **`InModeration`** — если включён gate и не выполнено условие (по умолчанию: **нет ни одной сопоставленной специализации из словаря** после матчинга)
+- **`InModeration`** — если включён gate и не выполнено условие (по умолчанию: **нет ни одной сопоставленной специализации из словаря** после матчинга; для builders также — срабатывание эвристик hiring/короткого заказа из `CatalogPublicationBuilderNonServiceSignals`)
 
 Переключатели окружения: `CATALOG_PUBLICATION_GATE_ENABLED`, `CATALOG_PUBLICATION_GATE_REQUIRE_SPECIALITY`. Решения пишутся в лог-канал `catalog_publication_gate`.
 
@@ -681,7 +693,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 - `specialist_specialities` (`SpecialistSpeciality`)
 - `company_job_specialities` (`CompanyJobSpeciality`)
 
-Для **строителей** после ответа ИИ дополнительно используется **`BuilderSpecialityMatcher`** (`app/Services/BuilderSpecialityMatcher.php`): объединяются совпадения по тексту поста и списки специализаций из JSON модели, результат участвует в `CatalogPublicationGate` и в `Dictionary::updateRelations` для `builder`.
+Для **строителей** после ответа ИИ дополнительно используется **`BuilderSpecialityMatcher`** (`app/Services/BuilderSpecialityMatcher.php`): объединяются совпадения по тексту поста и списки специализаций из JSON модели; опциональный cap `maxSpecialityIds` (по умолчанию **3** на автора). Синхронизация агрегированных специализаций автора — **`AuthorCatalogSpecialitiesSync`**. Результат участвует в `CatalogPublicationGate` и в `Dictionary::updateRelations` для `builder`.
 
 Ключевые элементы реализации:
 
@@ -778,6 +790,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 - `is_system` — `ModerationAlertSystemEnum::System` или `User`
 - `table_name` — enum `ModerationAlertTableNameEnum` (какая сущность)
 - `table_row_id` — id объекта
+- `api_channel_post_id` — опционально id поста (для requeue/снятия с каталога)
 - `status` — `ModerationAlertStatusEnum::New`
 - `description` — опционально текст
 
@@ -813,14 +826,23 @@ AI-команды создают доменные сущности и затем
 
 Метод `store(ModerationAlertPostRequest $request)`:
 
-1. Достаёт `type` и `row_id` из запроса.
+1. Достаёт `type`, `row_id` и опционально `api_channel_post_id` из запроса.
 2. Проверяет, что текущий пользователь ещё не создавал alert по этой записи:
    - `ModerationAlert::where('user_id', ...)->where('table_name', ...)->where('table_row_id', ...)->first()`
 3. Создаёт `ModerationAlert` с:
    - `is_system = ModerationAlertSystemEnum::User`
    - `status = ModerationAlertStatusEnum::New`
 
-### 9.5. Связь между alert и доменным объектом
+### 9.5. Действия модератора в MoonShine (`ModerationAlertResource`)
+
+Помимо закрытия/отклонения alert, доступны операции над связанным постом автора:
+
+- **Повторная ИИ-обработка** (`requeueAuthorPostForAi`): пост → `InQueue`, карточка снимается, alert → `AiReprocessing`.
+- **Убрать из каталога** (`removeAuthorPostFromCatalog`): снятие публикации без постановки в очередь ИИ, alert → `RemovedFromCatalog`.
+
+Обе операции принимают `api_channel_post_id` для однозначной привязки к посту.
+
+### 9.6. Связь между alert и доменным объектом
 
 Модель: `app/Models/ModerationAlert.php`
 
@@ -892,7 +914,7 @@ AI-команды создают доменные сущности и затем
 
 > Примечание по сессии MadelineProto и параллелизму:
 >
-> Парсинг **Telegram** использует файлы `session.madeline` / `session.madeline.{apiId}`. Парсинг **VK** на них не опирается (только HTTP + токен). Запуски команд защищены `withoutOverlapping()`, но команды разных типов (specialist/builder/company) и пары TG/VK стартуют в одно cron-окно — при росте нагрузки стоит контролировать конкуренцию по session file и лимиты VK API.
+> Парсинг **Telegram** использует `session.madeline.{apiId}` с shared session на группу каналов. Парсинг **VK** на них не опирается (только HTTP + токен). Запуски команд защищены `withoutOverlapping()`, но команды разных типов (specialist/builder/company) и пары TG/VK стартуют в одно cron-окно — при росте нагрузки стоит контролировать конкуренцию по session file и лимиты VK API.
 
 ### 10.4. Короткая справка по ключевым командам
 
@@ -905,9 +927,10 @@ AI-команды создают доменные сущности и затем
   - выбирают `api_channel_posts.ai_parse_status = InQueue`
   - создают `specialists` / `builders` / `company_jobs`
   - переводят пост в `Complete`/`Error`/`DontMatch`/`Empty` (в зависимости от ветки)
-- `app:ai_parse:reset-builder-queue` (`AiResetBuilderQueue`): массовый возврат builder-постов в `InQueue` за период (по дате и провайдеру; есть `--dry-run`).
+- `app:ai_parse:reset-builder-queue` (`AiResetBuilderQueue`): массовый возврат builder-постов в `InQueue` за период (по дате и провайдеру; есть `--dry-run`; при requeue удаляются старые `Builder` с тем же `api_channel_post_id`).
 - `app:ai_parse:requeue-builder-missing-visible-posts` (`AiRequeueBuilderMissingVisiblePosts`): выборочный requeue для авторов каталога без «видимого» Complete-поста (`--dry-run` / `--apply`).
-- `app:builders:rematch_specialities` (`RematchBuilderSpecialities`): пересчёт `builder_specialities` по тексту поста и сохранённому JSON ИИ.
+- `app:builders:rematch_specialities` (`RematchBuilderSpecialities`): пересчёт `builder_specialities` по тексту поста и сохранённому JSON ИИ (с cap специализаций и `AuthorCatalogSpecialitiesSync`).
+- `app:catalog:disable-active-builders-hiring-text` (`DisableActiveBuildersHiringTextCommand`): перевод активных карточек строителей с текстом найма/не-услуги в `InModeration` по `CatalogPublicationBuilderNonServiceSignals` (`--dry-run`).
 - `app:regions:normalize_stored` (`NormalizeStoredRegions`): нормализация поля `region` у существующих builders/specialists.
 - `app:sync_channel_region_to_posts` (`SyncChannelRegionToPosts`): проставить `region` канала в карточки без региона.
 - `app:api_post_users:last_post_date` (`SetLastPostDateToUsers`): вспомогательное заполнение `last_post_date` у авторов.
@@ -940,6 +963,14 @@ AI-команды создают доменные сущности и затем
 - `GET /companyjobs` и `GET /companyjobs/companyjob/{id}`
 - `GET /builders` и `GET/POST /builders/builder/{id}`
 
+**Стартовая страница каталога после входа:** редирект на **`catalog.builders`** (строительство), не на specialists.
+
+**Сессия и CSRF:**
+
+- `SESSION_LIFETIME` по умолчанию **30** минут (`config/session.php`).
+- Компоненты `session-flash-banner`, `session-idle-timeout` в layout-ах предупреждают об истечении сессии.
+- `GET /session/csrf` (`session.csrf`) — JSON `{ "token": "..." }` для обновления CSRF без reload (AJAX-формы регистрации/модалок при HTTP 419).
+
 ### 11.2. Каталоги и управление отзывами
 
 Каталог строится вокруг доменных сущностей `specialists`, `builders`, `company_jobs` и их связи с авторами `api_post_users`.
@@ -949,9 +980,13 @@ AI-команды создают доменные сущности и затем
 - `app/Http/Controllers/CatalogController.php`
   - выдаёт список специалистов и карточку автора специалиста
   - фильтрует по `ApiPostAiStatusEnum::Active` (если `onlyActive`)
+  - учитывает только посты с **`ai_parse_status = Complete`** (через `PublicBuilderCatalogScope::restrictBuilderCardsToCompleteSourcePosts` и аналогичные условия)
   - использует словарь специализаций (`DictionarySpecialityRepository`) для UI-фильтра
 - `app/Http/Controllers/BuilderController.php`
   - аналогично для строителей (поиск/страницы/отзывы)
+  - общий scope выдачи: **`PublicBuilderCatalogScope`** (`app/Support/PublicBuilderCatalogScope.php`) — только карточки с `api_channel_post_id > 0` и связанным постом в статусе `Complete`
+
+**Регионы в UI:** выпадающий список строится через **`CatalogRegionOptions`** — канонические имена из БД, отсечение junk-значений (`null`, `undefined` и т.п.); нормализация — `RussianRegionNormalizer::normalize`.
 
 **Производительность:** для тяжёлых выборок каталога добавлены индексы (см. миграции вида `*_add_catalog_performance_indexes.php`); после деплоя выполнять `php artisan migrate`.
 
@@ -1033,12 +1068,13 @@ API маршруты в `routes/api.php` с throttling:
   - строит интерфейс с sidebar и поиском
 - Menu/Resources: `app/Providers/MoonShineServiceProvider.php`
   - описывает структуру меню и связывает её с `*Resource` классами и **страницами**:
-    - системные: `ConfigurationResource`, пользователи `UserResource`, тарифы пользователей `UserTariffResource`, роли `UserRoleResource`
-    - `ApiAiResource`, `ApiChannelResource`, `ApiChannelPostResource`, `ApiPostUserResource`
+    - системные: `ConfigurationResource`, пользователи `UserResource` (в т.ч. поле **последний логин**), тарифы пользователей `UserTariffResource`, роли `UserRoleResource`
+    - `ApiAiResource`, `ApiChannelResource`, `ApiChannelPostResource` (mass edit AI / mass delete), `ApiPostUserResource`
     - `DictionarySpecialityResource`, `ModerationAlertResource`, `PaymentTariffResource`
     - доменные ресурсы: `SpecialistResource`, `BuilderResource`, `CompanyJobResource`, отзывы `ReviewResource` / `BuilderReviewResource` / `CompanyJobReviewResource`, кастомные поля отзывов `ReviewCustomFieldResource`
     - продвижение: `MailingMessageResource`, `CompanyAuthorsResource`, лог рассылок `MailingMessageLogResource` (часть пунктов меню может быть закомментирована)
-    - кастомные страницы: **`BuilderSystemPromptPage`**, **`SpecialistSystemPromptPage`** (редактирование системных промптов ИИ), **`ActiveAuthorsReportPage`** (отчёт по активным авторам)
+    - кастомные страницы: **`BuilderSystemPromptPage`**, **`SpecialistSystemPromptPage`** (редактирование системных промптов ИИ), **`ActiveAuthorsReportPage`** (отчёт по уникальным/активным авторам с фильтрами и пагинацией)
+- Для MoonShine-ресурсов включено **`saveFilterState = true`** — состояние фильтров сохраняется между переходами.
 
 ### 12.3. События и уведомления
 
@@ -1147,9 +1183,9 @@ Builder two-pass pipeline для Ollama/Qwen настраивается отде
 
 ### 13.5. Конкурентный запуск MadelineProto (session-файлы)
 
-Telegram парсинг использует фиксированную сессию `session.madeline` в `ReadTelegramChats` и `TelegramProfilesPhoto`, а отправка сообщений — `session.madeline.{apiId}`.
+Telegram-парсинг использует **`session.madeline.{apiId}`** (группировка каналов по `api_id` в `readTelegramChannelsWithSharedSession`). Отправка сообщений — тот же шаблон имени. Настройка сети — `MadelineConnectionConfigurator` + env `MPROTO_*`.
 
-Если повысить частоту параллельных команд, могут возникнуть конфликты доступа к session-пути. Текущая защита — `withoutOverlapping()` на уровне каждой команды.
+Если повысить частоту параллельных команд, могут возникнуть конфликты доступа к session-пути. Текущая защита — `withoutOverlapping()` на уровне каждой команды и shared session внутри одного `api_id`.
 
 ### 13.6. Наблюдаемость (логирование)
 
@@ -1209,7 +1245,7 @@ flowchart LR
 - `company_jobs.status` — `CompanyJobStatusEnum`:
   - `Active` / `InModeration` / `Disabled` / `Error`
 
-После AI для builders/specialists начальный доменный статус задаётся **`CatalogPublicationGate`** (часто `Active`, иначе `InModeration`). Дальнейшая смена статуса — в админке/модерации (MoonShine).
+После AI для builders/specialists начальный доменный статус задаётся **`CatalogPublicationGate`** (часто `Active`, иначе `InModeration`). Команда `app:catalog:disable-active-builders-hiring-text` переводит уже опубликованные карточки строителей с текстом найма в **`InModeration`**. Дальнейшая смена статуса — в админке/модерации (MoonShine).
 
 ### 14.3. Модерация (`moderation_alerts.status`)
 
@@ -1218,6 +1254,8 @@ flowchart LR
 - `New` — создан
 - `Done` — закрыт
 - `Rejected` — отклонён
+- `AiReprocessing` — после «Повторная ИИ-обработка»: карточка снята, пост в очереди ИИ
+- `RemovedFromCatalog` — после «Убрать из каталога»: публикация снята без очереди ИИ
 
 Событие создания:
 
