@@ -190,32 +190,11 @@ class ReadTelegramChats
 
     private function buildMadelineSettings(ApiChannel $channel): Settings
     {
-        $settings = new Settings;
-        $settings->setAppInfo(
-            (new \danog\MadelineProto\Settings\AppInfo)
-                ->setApiId($channel->options['api_id'])
-                ->setApiHash($channel->options['api_hash'])
-                ->setLangCode('RU')
+        return MadelineConnectionConfigurator::buildSettings(
+            $channel->options['api_id'],
+            $channel->options['api_hash'],
+            Logger::ULTRA_VERBOSE
         );
-
-        MadelineConnectionConfigurator::applyFileLogger($settings, Logger::ULTRA_VERBOSE);
-
-        if (config('database.redis.default.password')) {
-            $settings->setDb(
-                (new \danog\MadelineProto\Settings\Database\Redis)
-                    ->setUri('redis://' . config('database.redis.default.host'))
-                    ->setPassword(config('database.redis.default.password'))
-            );
-        } else {
-            $settings->setDb(
-                (new \danog\MadelineProto\Settings\Database\Redis)
-                    ->setUri('redis://' . config('database.redis.default.host'))
-            );
-        }
-
-        MadelineConnectionConfigurator::apply($settings);
-
-        return $settings;
     }
 
     /**

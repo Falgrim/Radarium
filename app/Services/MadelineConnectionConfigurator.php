@@ -22,6 +22,31 @@ class MadelineConnectionConfigurator
         $settings->setLogger($loggerSettings);
     }
 
+    public static function buildSettings(int|string $apiId, string $apiHash, int $loggerLevel = Logger::LEVEL_ERROR): Settings
+    {
+        $settings = new Settings();
+        $settings->setAppInfo(
+            (new Settings\AppInfo())
+                ->setApiId($apiId)
+                ->setApiHash($apiHash)
+                ->setLangCode('RU')
+        );
+
+        self::applyFileLogger($settings, $loggerLevel);
+
+        $redis = (new Settings\Database\Redis())
+            ->setUri('redis://' . config('database.redis.default.host'));
+
+        if (config('database.redis.default.password')) {
+            $redis->setPassword(config('database.redis.default.password'));
+        }
+
+        $settings->setDb($redis);
+        self::apply($settings);
+
+        return $settings;
+    }
+
     public static function apply(Settings $settings): void
     {
         $connection = (new Settings\Connection())
