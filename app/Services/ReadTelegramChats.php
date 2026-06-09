@@ -57,7 +57,20 @@ class ReadTelegramChats
     private function isIpcEndpointLost(\Throwable $e): bool
     {
         for ($t = $e; $t !== null; $t = $t->getPrevious()) {
-            if (str_contains($t->getMessage(), 'The endpoint does not exist')) {
+            $message = $t->getMessage();
+            if (str_contains($message, 'The endpoint does not exist')
+                || str_contains($message, 'Could not connect to DC')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isTelegramDcUnreachable(\Throwable $e): bool
+    {
+        for ($t = $e; $t !== null; $t = $t->getPrevious()) {
+            if (str_contains($t->getMessage(), 'Could not connect to DC')) {
                 return true;
             }
         }
@@ -292,6 +305,12 @@ class ReadTelegramChats
             }
             if ($this->isIpcEndpointLost($e)) {
                 $this->lastChannelHadIpcLoss = true;
+            }
+            if ($this->isTelegramDcUnreachable($e)) {
+                $this->setWarnMsg(
+                    'MadelineProto не достучался до Telegram DC. Проверьте: php artisan config:clear, '
+                    .'MPROTO_PROXY_ENABLED и systemctl status xray, зависшие MadelineProto worker.'
+                );
             }
             $this->setErrorMsg('getHistory ['.$e::class.']: '.$e->getMessage());
             Log::channel('post_parser')->warning('ReadTelegramChats getHistory', [
