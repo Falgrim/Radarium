@@ -99,8 +99,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Проверка статуса новых платежей
         $schedule->command('app:payments:check')->withoutOverlapping()->everyTwoMinutes();
 
-        // Отправка текста в ТГ чаты
-        $schedule->command('app:tg_chat:send_company')->withoutOverlapping()->everyMinute();
+        // Отправка текста в ТГ чаты (отключить: SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false в .env)
+        if (filter_var(env('SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED', true), FILTER_VALIDATE_BOOLEAN)) {
+            $schedule->command('app:tg_chat:send_company')->withoutOverlapping()->everyMinute();
+        }
 
         // Удаление просроченных токенов восстановления паролей
         $schedule->command('auth:clear-resets')->withoutOverlapping()->everyFifteenMinutes();
