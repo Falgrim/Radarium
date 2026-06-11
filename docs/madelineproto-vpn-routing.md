@@ -289,3 +289,66 @@ ip route get TELEGRAM_DC_IP
 php artisan app:tg_parse:builder
 tail -n 120 storage/logs/MadelineProto.log
 ```
+
+## Восстановление сессии (runbook)
+
+См. также §6.9 в `DOC/RADARIUM_TECHDOC.md`. Краткая последовательность при сбое парсинга **без изменений кода**:
+
+### 1. Изоляция
+
+```bash
+# crontab: закомментировать schedule:run или в .env:
+# SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false
+
+pkill -f "MadelineProto worker" 2>/dev/null
+php artisan config:clear
+```
+
+### 2. Проверка прокси
+
+```bash
+curl -x socks5h://127.0.0.1:10808 -m 10 -s -o /dev/null -w '%{http_code}' https://api.telegram.org
+# 200, 301 или 302 — норма
+redis-cli ping
+```
+
+### 3. Сброс IPC (пример для api_id 22885091)
+
+```bash
+rm -f session.madeline.22885091/ipcState.php
+find session.madeline.22885091 -maxdepth 1 \( -name 'ipc' -o -name 'callback.ipc' \) -delete
+php artisan app:tg_parse:builder
+```
+
+### 4. Переавторизация (при `DC -1` или битой сессии)
+
+```bash
+php artisan app:tg_auth \
+  --api-id=22885091 \
+  --api-hash=ВАШ_HASH_ИЗ_api_channels \
+  --qr \
+  --reset
+
+php artisan app:tg_parse:builder
+php artisan config:cache
+```
+
+- **`--qr`** — вход по QR (Telegram → Устройства → Подключить устройство).
+- **`--reset`** — архивирует старую папку сессии в `*.broken.*`.
+- **`--api-hash`** обязателен, если `TG_APP_HASH` в `.env` от другого приложения (`API_ID_INVALID`).
+
+### 5. Запреты
+
+- Не подменять `safe.php` бэкапами от старой версии MadelineProto (ошибка `RedisArray::$db`).
+- Не выполнять `redis-cli FLUSHDB`.
+- Не чистить Redis-префиксы других сессий без проверки лога.
+
+### 6. Включение cron
+
+Одна строка crontab:
+
+```cron
+* * * * * exec /opt/php83/bin/php /path/to/progs.com/artisan schedule:run >> /dev/null 2>&1
+```
+
+Рассылку включать после стабилизации парсинга: `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=true`.

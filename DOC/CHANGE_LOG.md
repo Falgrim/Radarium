@@ -1,8 +1,16 @@
 # Radarium — журнал изменений
 
-> Период: **с 08.04.2026** по состояние репозитория на **09.06.2026** (HEAD: последний коммит 15.05.2026).
->
-> Формат: изменения сгруппированы по дате коммита; внутри дня — по функциональным блокам.
+> Период: **с 08.04.2026** по состояние репозитория на **10.06.2026**.
+
+---
+
+## 2026-06-10
+
+### Telegram / MadelineProto — восстановление и эксплуатация
+- **`app:tg_auth`**: опции `--api-id`, `--api-hash`, `--qr`, `--reset`; QR-вход и 2FA; `api_hash` из `api_channels` при явном `--api-id`.
+- **`MadelineConnectionConfigurator::buildSettings()`** — единые настройки для парсинга и авторизации.
+- **`SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED`** — временное отключение cron-рассылки `app:tg_chat:send_company`.
+- Документация: §6.9 runbook в `DOC/RADARIUM_TECHDOC.md`, раздел «Восстановление сессии» в `docs/madelineproto-vpn-routing.md`.
 
 ---
 

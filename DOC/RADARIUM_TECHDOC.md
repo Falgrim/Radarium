@@ -4,7 +4,7 @@
 >
 > Ядро: Laravel 11 + MariaDB (по умолчанию используется в производстве) + доменная модель “посты из источников (Telegram / ВКонтакте) → AI → каталоги”.
 >
-> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-06-09** (см. также `DOC/CHANGE_LOG.md` с 08.04.2026): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов.
+> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-06-10** (см. также `DOC/CHANGE_LOG.md`): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов, восстановление TG-сессий и `app:tg_auth --qr`.
 
 ## 1. Общее описание
 
@@ -238,8 +238,8 @@ flowchart TD
 
 В проекте MadelineProto используется напрямую через `danog/madelineproto`. Централизованная настройка — **`MadelineConnectionConfigurator`** (`app/Services/MadelineConnectionConfigurator.php`):
 
-- `apply($settings)` — таймаут (`MPROTO_CONNECTION_TIMEOUT`), IPv6 (`MPROTO_IPV6_ENABLED`), прокси SOCKS5/HTTP (`MPROTO_PROXY_ENABLED`, `MPROTO_PROXY_HOST/PORT/TYPE/USER/PASS`), интервал сериализации (`MPROTO_SERIALIZATION_INTERVAL`);
-- `applyFileLogger($settings, $level)` — файловый лог в `storage/logs/MadelineProto.log` (не в cwd), чтобы IPC-процессы не писали в корень проекта.
+- `MadelineConnectionConfigurator::buildSettings($apiId, $apiHash, $loggerLevel)` — единая сборка `Settings` (AppInfo, Redis, прокси, лог) для парсинга и `app:tg_auth`.
+- `apply($settings)` / `applyFileLogger($settings)` — прокси `MPROTO_*`, лог в `storage/logs/MadelineProto.log`.
 
 Сессии и точки входа:
 
@@ -254,7 +254,7 @@ flowchart TD
 
 - `Settings\AppInfo` — `api_id`, `api_hash`, `langCode('RU')`
 - `Settings\Logger` — через `MadelineConnectionConfigurator::applyFileLogger`
-- `Settings\Database\Redis` — опционально (если задан пароль Redis)
+- `Settings\Database\Redis` — через `buildSettings` (URI из `config/database.redis`)
 - `Settings\Connection` / `Settings\Serialization` — через `MadelineConnectionConfigurator`
 
 Дополнительно в `ReadTelegramChats`:
@@ -413,6 +413,10 @@ flowchart TD
 - в `Error`, если в процессе были ошибки
 - иначе в `Sended`
 
+**Cron:** команда планируется в `bootstrap/app.php` **каждую минуту**. Временное отключение без деплоя кода — env `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false` (см. §6.9).
+
+> **Важно:** рассылка использует **отдельный** `api_id` из настроек `mailing_tg_api_id` (обычно не совпадает с `api_id` парсинга каналов). Параллельный cron рассылки и парсинга — частая причина гонок MadelineProto IPC.
+
 #### 6.5.2. Отправка сообщений и логирование доставки
 
 В `SendMessageTelegram->send()`:
@@ -434,17 +438,36 @@ flowchart TD
    - для `is_main` → `send_welcome_msg = Sended` при успехе
 6. В конце пишет агрегат в `mailing_tg` log-channel.
 
-### 6.6. Команды Telegram для “регистрации”/входа
+### 6.6. Авторизация MadelineProto (`app:tg_auth`)
 
 Команда:
 
 - `app:tg_auth` → `app/Console/Commands/AuthTelegram.php`
 
-Используется как вспомогательная:
+Назначение: интерактивная авторизация пользовательского аккаунта Telegram в **`session.madeline.{api_id}`** с теми же настройками, что у парсера (`MadelineConnectionConfigurator::buildSettings`: прокси `MPROTO_*`, Redis, лог).
 
-- запускает `session.madeline`
-- получает `getSelf()`
-- при отсутствии `me['bot']` отправляет `/start` в `@stickeroptimizerbot` и присоединяется к каналу через `joinChannel`.
+Опции:
+
+| Опция | Описание |
+|-------|----------|
+| `--api-id=` | Telegram `api_id` (или `TG_APP_ID` из `.env`) |
+| `--api-hash=` | Telegram `api_hash` (или из активного канала БД с тем же `api_id`, иначе `TG_APP_HASH`) |
+| `--qr` | Вход по QR-коду (Telegram → Устройства → Подключить устройство), без ввода телефона |
+| `--reset` | Архивировать каталог `session.madeline.{api_id}` в `session.madeline.{api_id}.broken.YYYY-MM-DD-HHMMSS` и создать пустую сессию |
+
+Примеры (prod):
+
+```bash
+pkill -f "MadelineProto worker" 2>/dev/null
+php artisan config:clear
+
+php artisan app:tg_auth --api-id=22885091 --api-hash=... --qr --reset
+php artisan app:tg_parse:builder
+```
+
+> При `--api-id` без `--api-hash` hash берётся из **первого активного** `api_channels` с тем же `api_id`, а не из `TG_APP_HASH` (иначе возможна ошибка `API_ID_INVALID`).
+
+Подробный runbook сбоев — §6.9 и `docs/madelineproto-vpn-routing.md` (раздел «Восстановление сессии»).
 
 ### 6.7. Модуль ВКонтакте (стены сообществ)
 
@@ -473,6 +496,81 @@ flowchart TD
 
 Аватары авторов (опционально): загрузка в `public` storage с префиксом имён `vk_`, аналогично Telegram-профилям.
 
+### 6.9. Восстановление сессии и типовые сбои MadelineProto
+
+> Подробнее про SOCKS/VPN: `docs/madelineproto-vpn-routing.md`.  
+> Инцидент на prod (июнь 2026): сбой без изменений кода; восстановление — переавторизация `22885091` через `app:tg_auth --qr`.
+
+#### Карта сессий на prod (типовая)
+
+| `api_id` | Каталог | Назначение |
+|----------|---------|------------|
+| из `api_channels.options` (напр. `22885091`) | `session.madeline.{apiId}` | Парсинг TG-каналов (builder / company / specialist) |
+| `27167185` | `session.madeline.27167185` | Отдельный канал specialist с другим приложением |
+| `mailing_tg_api_id` (напр. `22974903`) | `session.madeline.{id}` | Рассылка `app:tg_chat:send_company` |
+
+**Redis:** ключи MadelineProto имеют префикс `{namespace}_PeerDatabase_...`, где `namespace` — **не** `api_id`, а внутренний id сессии MadelineProto. Не использовать `redis-cli FLUSHDB`. Очистка peer cache — только точечно по префиксу после согласования с логом.
+
+#### Симптомы и причины
+
+| Ошибка | Вероятная причина | Первые шаги |
+|--------|-------------------|-------------|
+| `Could not connect to DC 2.0!` | Прокси/xray, stale `config:cache`, падение IPC-воркера | `config:clear`, проверка SOCKS, `pkill -f "MadelineProto worker"` |
+| `The endpoint does not exist!` | Гонка процессов / мёртвый IPC | Остановить cron Madeline, сброс `ipcState.php` и IPC-сокетов |
+| `No info for DC -1!` | Повреждён `safe.php` / auth state (часто после гонки cron) | Переавторизация §6.6; **не** восстанавливать старые `safe.php` с другой версии MP |
+| `RedisArray::$db must not be accessed before initialization` | Несовместимый `safe.php` (бэкап от старой версии MadelineProto) | Откат на `before-restore` **или** переавторизация; не подменять апрельские бэкапы на текущий MP 8.x |
+| `API_ID_INVALID` | Неверная пара `api_id` + `api_hash` (часто `TG_APP_HASH` из `.env` ≠ `--api-id`) | Явно передать `--api-hash` из Moonshine / `api_channels` |
+
+#### Runbook восстановления (минимальный риск)
+
+1. **Изоляция**
+   - Закомментировать в crontab только **`schedule:run`** (или держать `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false`).
+   - `pkill -f "MadelineProto worker"`; `pgrep -fa MadelineProto` — пусто.
+
+2. **Сеть**
+   - `curl -x socks5h://127.0.0.1:10808 -m 10 -s -o /dev/null -w '%{http_code}' https://api.telegram.org` → `200` / `301` / `302`.
+   - `php artisan config:clear`.
+
+3. **IPC** (для сессии парсинга, напр. `22885091`)
+   ```bash
+   rm -f session.madeline.22885091/ipcState.php
+   find session.madeline.22885091 -maxdepth 1 \( -name 'ipc' -o -name 'callback.ipc' \) -delete
+   ```
+
+4. **Тест**
+   ```bash
+   php artisan app:tg_parse:builder
+   ```
+
+5. **Если `DC -1` или сессия бита — переавторизация**
+   ```bash
+   php artisan app:tg_auth --api-id=22885091 --api-hash=... --qr --reset
+   php artisan app:tg_parse:builder
+   ```
+   `--reset` архивирует каталог в `session.madeline.{apiId}.broken.*` (БД приложения не затрагивается).
+
+6. **Что не делать**
+   - Не восстанавливать `safe.php` из старых бэкапов без проверки версии MadelineProto.
+   - Не выполнять `FLUSHDB` в Redis.
+   - Не удалять ключи других namespace (рассылка / другие сессии) без проверки.
+
+7. **Возврат cron**
+   - `php artisan config:cache`
+   - Раскомментировать `* * * * * php artisan schedule:run`
+   - Сначала парсинг; рассылку включить позже (`SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=true`) или после стабилизации.
+
+#### Env-переменные (Madeline + scheduler)
+
+| Переменная | Назначение |
+|------------|------------|
+| `MPROTO_PROXY_*` | SOCKS/HTTP до Telegram (см. `MadelineConnectionConfigurator`) |
+| `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED` | `false` — не планировать `app:tg_chat:send_company` (временно при восстановлении парсинга) |
+
+#### Логи
+
+- `storage/logs/MadelineProto.log` — IPC, DC, авторизация
+- `post_parser` — агрегаты парсинга
+- `mailing_tg` — рассылка
 
 ## 7. AI-пайплайн и провайдеры
 
@@ -1185,7 +1283,7 @@ Builder two-pass pipeline для Ollama/Qwen настраивается отде
 
 Telegram-парсинг использует **`session.madeline.{apiId}`** (группировка каналов по `api_id` в `readTelegramChannelsWithSharedSession`). Отправка сообщений — тот же шаблон имени. Настройка сети — `MadelineConnectionConfigurator` + env `MPROTO_*`.
 
-Если повысить частоту параллельных команд, могут возникнуть конфликты доступа к session-пути. Текущая защита — `withoutOverlapping()` на уровне каждой команды и shared session внутри одного `api_id`.
+Если повысить частоту параллельных команд, могут возникнуть конфликты доступа к session-пути. Текущая защита — `withoutOverlapping()` на уровне каждой команды и shared session внутри одного `api_id`. Рассылка `app:tg_chat:send_company` (**каждую минуту**, отдельный `api_id`) — основной источник параллельной нагрузки на MadelineProto; см. runbook §6.9.
 
 ### 13.6. Наблюдаемость (логирование)
 
