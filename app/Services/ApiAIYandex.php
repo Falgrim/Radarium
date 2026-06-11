@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enum\ApiDataTypeEnum;
+use App\Exceptions\AiProviderUnavailableException;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -232,9 +234,20 @@ class ApiAIYandex
         $json = $this->generateJson();
 
         $this->logging($this->text);
-        $response = Http::withHeaders($headers)->post($this->url, $json);
+
+        try {
+            $response = Http::withHeaders($headers)->post($this->url, $json);
+        } catch (ConnectionException $e) {
+            throw new AiProviderUnavailableException($this->logPrefix.' '.$e->getMessage(), 0, $e);
+        }
 
         if ($response->status() !== 200) {
+            if (in_array($response->status(), [429, 502, 503, 504], true)) {
+                throw new AiProviderUnavailableException(
+                    $this->logPrefix.' Не удалось отправить запрос (HTTP '.$response->status().'): '.$response->body()
+                );
+            }
+
             throw new \Exception('Не удалось отправить запрос: '.$response->body());
         }
 

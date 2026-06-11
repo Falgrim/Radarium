@@ -14,7 +14,8 @@ class AiResetBuilderQueue extends Command
                             {from : Начало периода (Y-m-d), например 2026-04-06}
                             {to : Конец периода включительно (Y-m-d), например 2026-04-13}
                             {--date-field=ai_date : ai_date — по дате обработки ИИ; post_date — по дате написания сообщения в Telegram}
-                            {--provider=ollama_qwen : Провайдер ИИ, сообщения которого надо сбросить (по умолчанию ollama_qwen)}
+                            {--provider=ollama_qwen : Провайдер ИИ (пустое значение — любой провайдер)}
+                            {--only-error : Вернуть в очередь только посты со статусом Error (не трогать Complete/DontMatch/Empty)}
                             {--dry-run : Показать количество без изменений в БД}
                             {--clear-metadata : Обнулить ai_result, ai_date, ai_provider_used (иначе старый ответ ИИ останется до нового прогона)}';
 
@@ -33,12 +34,14 @@ class AiResetBuilderQueue extends Command
         $to = $this->argument('to') . ' 23:59:59';
         $provider = $this->option('provider');
 
-        $requeueStatuses = [
-            ApiChannelPostStatusEnum::Complete,
-            ApiChannelPostStatusEnum::Error,
-            ApiChannelPostStatusEnum::DontMatch,
-            ApiChannelPostStatusEnum::Empty,
-        ];
+        $requeueStatuses = $this->option('only-error')
+            ? [ApiChannelPostStatusEnum::Error]
+            : [
+                ApiChannelPostStatusEnum::Complete,
+                ApiChannelPostStatusEnum::Error,
+                ApiChannelPostStatusEnum::DontMatch,
+                ApiChannelPostStatusEnum::Empty,
+            ];
 
         $query = ApiChannelPost::query()
             ->select('api_channel_posts.id')
@@ -47,7 +50,7 @@ class AiResetBuilderQueue extends Command
             ->whereBetween('api_channel_posts.' . $dateField, [$from, $to])
             ->whereIn('api_channel_posts.ai_parse_status', $requeueStatuses);
 
-        if ($provider) {
+        if ($provider !== null && $provider !== '') {
             $query->where('api_channel_posts.ai_provider_used', $provider);
         }
 
@@ -55,8 +58,11 @@ class AiResetBuilderQueue extends Command
         $count = $ids->count();
 
         if ($this->option('dry-run')) {
+            $statusLabel = $this->option('only-error')
+                ? 'Error'
+                : 'Complete, Error, DontMatch, Empty';
             $this->info("Записей для возврата в очередь: {$count}");
-            $this->info("Условия: каналы Строителей, период {$from} — {$to} по полю {$dateField}, провайдер: " . ($provider ?: 'Любой'));
+            $this->info("Условия: каналы Строителей, период {$from} — {$to} по полю {$dateField}, статусы: {$statusLabel}, провайдер: " . ($provider !== null && $provider !== '' ? $provider : 'любой'));
 
             return self::SUCCESS;
         }

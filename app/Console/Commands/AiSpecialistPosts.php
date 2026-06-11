@@ -15,8 +15,9 @@ use App\Models\ApiChannelPost;
 use App\Models\Specialist;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
-use App\Services\BuilderVacancyGigHeuristic;
+use App\Services\AiParsePostExceptionHandler;
 use App\Services\AuthorCatalogSpecialitiesSync;
+use App\Services\BuilderVacancyGigHeuristic;
 use App\Services\CatalogPublicationGate;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
@@ -213,26 +214,13 @@ class AiSpecialistPosts extends Command
                     $post->save();
                     $this->warn('По специалисту не найдены данные');
                 }
-            } catch (\TypeError $e) {
-                $this->error($e->getMessage());
-                if (isset($aiService)) {
-                    $aiService->logging($e->getMessage(), true);
-                }
-
-                $post->ai_result = $e->getMessage();
-                $post->ai_date = now();
-                $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
-                $post->save();
-            } catch (\Exception $e) {
-                $this->error($e->getMessage());
-                if (isset($aiService)) {
-                    $aiService->logging($e->getMessage(), true);
-                }
-
-                $post->ai_result = $e->getMessage();
-                $post->ai_date = now();
-                $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
-                $post->save();
+            } catch (\Throwable $e) {
+                app(AiParsePostExceptionHandler::class)->handle(
+                    $post,
+                    $e,
+                    $aiService ?? null,
+                    $this
+                );
             }
         }
 
