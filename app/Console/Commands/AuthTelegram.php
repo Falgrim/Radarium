@@ -6,6 +6,7 @@ use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiChannelStatusEnum;
 use App\Models\ApiChannel;
 use App\Services\MadelineConnectionConfigurator;
+use App\Services\MadelineSessionIpcCleaner;
 use danog\MadelineProto\API;
 use danog\MadelineProto\TL\Types\LoginQrCode;
 use Illuminate\Console\Command;
@@ -92,6 +93,7 @@ class AuthTelegram extends Command
             } catch (\Throwable $e) {
                 Log::channel('post_parser')->warning('AuthTelegram finalize', ['message' => $e->getMessage()]);
             }
+            MadelineSessionIpcCleaner::clear($sessionName);
         }
 
         $this->info('Готово. Проверка: php artisan app:tg_parse:builder');

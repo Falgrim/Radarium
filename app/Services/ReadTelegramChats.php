@@ -105,19 +105,32 @@ class ReadTelegramChats
             $sessionName = 'session.madeline.' . $apiId;
 
             $MadelineProto = null;
+            $ipcSessionRetried = false;
 
             try {
-                $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
-
-                if (!$MadelineProto->getSelf()) {
-                    $MadelineProto->start();
-                }
+                $MadelineProto = $this->openMadelineApi($sessionName, $settings);
 
                 $remaining = $group->values();
                 foreach ($remaining as $idx => $channel) {
                     $this->unsetMessages();
                     $this->readChannelWithMadeline($MadelineProto, $channel);
                     $afterEachChannel($this);
+
+                    if ($this->lastChannelHadIpcLoss && ! $ipcSessionRetried) {
+                        $ipcSessionRetried = true;
+                        Log::channel('post_parser')->warning('ReadTelegramChats IPC loss, retry session', [
+                            'session' => $sessionName,
+                            'channel_id' => $channel->id,
+                        ]);
+                        $this->releaseMadelineClient($MadelineProto);
+                        $this->finalizeMadelineProcess();
+                        MadelineSessionIpcCleaner::clear($sessionName);
+                        sleep(2);
+                        $MadelineProto = $this->openMadelineApi($sessionName, $settings);
+                        $this->unsetMessages();
+                        $this->readChannelWithMadeline($MadelineProto, $channel);
+                        $afterEachChannel($this);
+                    }
 
                     if ($this->lastChannelHadIpcLoss) {
                         $skipped = $remaining->slice($idx + 1);
@@ -160,17 +173,26 @@ class ReadTelegramChats
         $MadelineProto = null;
 
         try {
-            $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
-
-            if (!$MadelineProto->getSelf()) {
-                $MadelineProto->start();
-            }
+            $MadelineProto = $this->openMadelineApi($sessionName, $settings);
 
             return $this->readChannelWithMadeline($MadelineProto, $this->apiChannel);
         } finally {
             $this->releaseMadelineClient($MadelineProto);
             $this->finalizeMadelineProcess();
         }
+    }
+
+    private function openMadelineApi(string $sessionName, Settings $settings): \danog\MadelineProto\API
+    {
+        MadelineSessionIpcCleaner::clear($sessionName);
+
+        $MadelineProto = new \danog\MadelineProto\API($sessionName, $settings);
+
+        if (!$MadelineProto->getSelf()) {
+            $MadelineProto->start();
+        }
+
+        return $MadelineProto;
     }
 
     private function channelHasTelegramCredentials(ApiChannel $channel): bool

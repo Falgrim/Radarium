@@ -43,9 +43,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 // Каждые X минут
                 $schedule->cron('*/'.$readSourceCron->value.' * * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->withoutOverlapping();
-                        $schedule->command('app:tg_parse:builder')->withoutOverlapping();
-                        $schedule->command('app:tg_parse:company')->withoutOverlapping();
+                        $schedule->command('app:tg_parse:specialist')->name('madeline-proto')->withoutOverlapping(180);
+                        $schedule->command('app:tg_parse:builder')->name('madeline-proto')->withoutOverlapping(180);
+                        $schedule->command('app:tg_parse:company')->name('madeline-proto')->withoutOverlapping(180);
                         $schedule->command('app:vk_parse:specialist')->withoutOverlapping();
                         $schedule->command('app:vk_parse:builder')->withoutOverlapping();
                         $schedule->command('app:vk_parse:company')->withoutOverlapping();
@@ -54,9 +54,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 // Каждые Х часов
                 $schedule->cron('0 */'.ceil($readSourceCron->value / 60).' * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->withoutOverlapping();
-                        $schedule->command('app:tg_parse:builder')->withoutOverlapping();
-                        $schedule->command('app:tg_parse:company')->withoutOverlapping();
+                        $schedule->command('app:tg_parse:specialist')->name('madeline-proto')->withoutOverlapping(180);
+                        $schedule->command('app:tg_parse:builder')->name('madeline-proto')->withoutOverlapping(180);
+                        $schedule->command('app:tg_parse:company')->name('madeline-proto')->withoutOverlapping(180);
                         $schedule->command('app:vk_parse:specialist')->withoutOverlapping();
                         $schedule->command('app:vk_parse:builder')->withoutOverlapping();
                         $schedule->command('app:vk_parse:company')->withoutOverlapping();
@@ -65,18 +65,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 // Каждый день в 00:00
                 $schedule->cron('0 0 * * *')
                     ->group(function (Schedule $schedule) {
-                        $schedule->command('app:tg_parse:specialist')->withoutOverlapping();
-                        $schedule->command('app:tg_parse:builder')->withoutOverlapping();
-                        $schedule->command('app:tg_parse:company')->withoutOverlapping();
+                        $schedule->command('app:tg_parse:specialist')->name('madeline-proto')->withoutOverlapping(180);
+                        $schedule->command('app:tg_parse:builder')->name('madeline-proto')->withoutOverlapping(180);
+                        $schedule->command('app:tg_parse:company')->name('madeline-proto')->withoutOverlapping(180);
                         $schedule->command('app:vk_parse:specialist')->withoutOverlapping();
                         $schedule->command('app:vk_parse:builder')->withoutOverlapping();
                         $schedule->command('app:vk_parse:company')->withoutOverlapping();
                     });
             }
         } else {
-            $schedule->command('app:tg_parse:specialist')->withoutOverlapping()->hourly();
-            $schedule->command('app:tg_parse:builder')->withoutOverlapping()->hourly();
-            $schedule->command('app:tg_parse:company')->withoutOverlapping()->hourly();
+            $schedule->command('app:tg_parse:specialist')->name('madeline-proto')->withoutOverlapping(180)->hourly();
+            $schedule->command('app:tg_parse:builder')->name('madeline-proto')->withoutOverlapping(180)->hourly();
+            $schedule->command('app:tg_parse:company')->name('madeline-proto')->withoutOverlapping(180)->hourly();
             $schedule->command('app:vk_parse:specialist')->withoutOverlapping()->hourly();
             $schedule->command('app:vk_parse:builder')->withoutOverlapping()->hourly();
             $schedule->command('app:vk_parse:company')->withoutOverlapping()->hourly();
@@ -101,7 +101,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Отправка текста в ТГ чаты (отключить: SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false в .env)
         if (filter_var(env('SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED', true), FILTER_VALIDATE_BOOLEAN)) {
-            $schedule->command('app:tg_chat:send_company')->withoutOverlapping()->everyMinute();
+            $schedule->command('app:tg_chat:send_company')->name('madeline-proto')->withoutOverlapping(180)->everyMinute();
         }
 
         // Удаление просроченных токенов восстановления паролей
