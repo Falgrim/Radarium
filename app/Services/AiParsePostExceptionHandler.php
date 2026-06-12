@@ -23,6 +23,13 @@ final class AiParsePostExceptionHandler
                 $aiService->logging($e->getMessage(), true);
             }
 
+            [$providerLabel, $endpoint] = $this->resolveProviderContext($aiService);
+            app(AiProviderHealthAlertService::class)->notifyUnavailable(
+                $providerLabel,
+                $endpoint,
+                $e->getMessage(),
+            );
+
             $command->warn(sprintf(
                 'ИИ временно недоступен — пост %d остаётся в очереди (InQueue): %s',
                 $post->id,
@@ -53,5 +60,21 @@ final class AiParsePostExceptionHandler
         $previous = $e->getPrevious();
 
         return $previous !== null && $this->isProviderUnavailable($previous);
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function resolveProviderContext(?object $aiService): array
+    {
+        if ($aiService instanceof ApiAIOllama) {
+            return ['Ollama Qwen', $aiService->getHost()];
+        }
+
+        if ($aiService instanceof ApiAIYandex) {
+            return ['Yandex GPT', 'yandex.cloud'];
+        }
+
+        return ['ИИ', 'unknown'];
     }
 }

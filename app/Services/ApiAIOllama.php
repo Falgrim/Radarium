@@ -127,6 +127,13 @@ class ApiAIOllama
         $this->maxTokens = $maxTokens;
     }
 
+    public function getHost(): string
+    {
+        $host = $this->host ?? config('services.ollama.host', 'http://localhost:11434');
+
+        return rtrim((string) $host, '/');
+    }
+
     protected function getUrl(): string
     {
         return rtrim($this->host, '/') . '/v1/chat/completions';

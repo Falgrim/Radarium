@@ -38,6 +38,9 @@ return [
     'ai' => [
         'logging' => env('AI_LOGGING', false),
         'debug' => env('AI_DEBUG', false),
+        'alert_enabled' => env('AI_ALERT_ENABLED', true),
+        'alert_throttle_minutes' => (int) env('AI_ALERT_THROTTLE_MINUTES', 60),
+        'health_check_timeout' => (int) env('AI_HEALTH_CHECK_TIMEOUT', 10),
     ],
 
     'ollama' => [

@@ -83,6 +83,8 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         // Отправка запросов в ИИ
+        $schedule->command('app:ai:health-check')->everyFifteenMinutes()->withoutOverlapping();
+
         $schedule->everyThirtyMinutes()
             ->withoutOverlapping()
             ->group(function (Schedule $schedule) {

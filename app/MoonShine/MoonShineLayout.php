@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\MoonShine;
 
+use App\Services\AiProviderHealthAlertService;
+use MoonShine\Components\FlexibleRender;
 use MoonShine\Components\Layout\{Content,
     Flash,
     Footer,
@@ -31,6 +33,12 @@ final class MoonShineLayout implements MoonShineLayoutContract
             ]),
             LayoutBlock::make([
                 Flash::make(),
+                FlexibleRender::make(
+                    view('moonshine.components.ai-provider-health-banner', [
+                        'banners' => app(AiProviderHealthAlertService::class)->getActiveBanners(),
+                        'apiAiUrl' => app(AiProviderHealthAlertService::class)->adminApiAiUrl(),
+                    ])
+                ),
                 Header::make([
                     Search::make(),
                 ]),
