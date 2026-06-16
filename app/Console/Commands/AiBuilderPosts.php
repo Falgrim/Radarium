@@ -23,6 +23,7 @@ use App\Services\BuilderAiPipelineRuntimeConfig;
 use App\Services\BuilderServiceOfferClassifier;
 use App\Services\BuilderSpecialityMatcher;
 use App\Services\AiParsePostExceptionHandler;
+use App\Services\BuilderNonFieldSpecialistRedirect;
 use App\Services\BuilderVacancyGigHeuristic;
 use App\Services\CatalogPublicationBuilderNonServiceSignals;
 use App\Services\CatalogPublicationGate;
@@ -112,6 +113,10 @@ class AiBuilderPosts extends Command
                 $aiService->logging('Анализ поста ID: '.$post->id);
                 $aiService->setConfig($options);
                 $post->ai_provider_used = $apiSource->value;
+
+                if ($this->tryRedirectNonFieldToSpecialist($post, 'builder_pipeline_early')) {
+                    continue;
+                }
 
                 if (
                     $apiSource === ApiAiSourceEnum::OllamaQwen
@@ -265,6 +270,14 @@ class AiBuilderPosts extends Command
                         CatalogPublicationBuilderNonServiceSignals::pipelineHardBlockReasonCodes()
                     ));
                     if ($blocking !== []) {
+                        if (in_array(
+                            CatalogPublicationBuilderNonServiceSignals::REASON_NON_FIELD_CONSTRUCTION,
+                            $blocking,
+                            true
+                        ) && $this->tryRedirectNonFieldToSpecialist($post, 'builder_pipeline_heuristic')) {
+                            continue;
+                        }
+
                         $post->ai_result = json_encode([
                             'heuristic_pipeline_blocked' => true,
                             'reasons' => $heuristicReasons,
@@ -390,6 +403,50 @@ class AiBuilderPosts extends Command
         }
 
         $this->info('Завершено');
+    }
+
+    private function tryRedirectNonFieldToSpecialist(ApiChannelPost $post, string $trigger): bool
+    {
+        $redirect = app(BuilderNonFieldSpecialistRedirect::class);
+        if (! $redirect->shouldRedirect((string) $post->post)) {
+            return false;
+        }
+
+        $result = $redirect->redirectPost($post, $trigger);
+        $import = $result['import'];
+
+        if ($result['redirected'] && $import !== null) {
+            $this->info(sprintf(
+                'Перенаправление в проектировщики: post_id=%d → specialist_id=%d (%s)',
+                $post->id,
+                (int) $import['specialist_id'],
+                $trigger
+            ));
+
+            return true;
+        }
+
+        $message = $import['message'] ?? 'не удалось создать карточку проектировщика';
+        $status = $import['status'] ?? 'unknown';
+        $post->ai_result = json_encode([
+            'redirect_failed' => true,
+            'trigger' => $trigger,
+            'import_status' => $status,
+            'message' => $message,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $post->ai_date = now();
+        $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+        $post->save();
+
+        $this->warn(sprintf(
+            'Перенаправление в проектировщики не удалось → DontMatch, post_id=%d, trigger=%s, status=%s, %s',
+            $post->id,
+            $trigger,
+            $status,
+            $message
+        ));
+
+        return true;
     }
 
     /**

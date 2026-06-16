@@ -66,6 +66,87 @@ final class CatalogPublicationBuilderNonServiceSignalsTest extends TestCase
         );
     }
 
+    #[DataProvider('nonFieldConstructionSamples')]
+    public function test_should_redirect_to_specialist(string $text): void
+    {
+        $this->assertTrue(
+            $this->signals->shouldRedirectToSpecialist($text),
+            'Должно перенаправляться в проектировщики: '.mb_substr($text, 0, 80)
+        );
+    }
+
+    #[DataProvider('nonFieldConstructionSamples')]
+    public function test_non_field_construction_service_detected(string $text): void
+    {
+        $reasons = $this->signals->reasons($text);
+
+        $this->assertContains(
+            CatalogPublicationBuilderNonServiceSignals::REASON_NON_FIELD_CONSTRUCTION,
+            $reasons,
+            'Должно считаться нецелевой услугой (проектирование/дизайн/визуализация): '.mb_substr($text, 0, 80)
+        );
+    }
+
+    #[DataProvider('fieldConstructionPerformerSamples')]
+    public function test_field_construction_performers_not_flagged_as_non_field(string $text): void
+    {
+        $reasons = $this->signals->reasons($text);
+
+        $this->assertNotContains(
+            CatalogPublicationBuilderNonServiceSignals::REASON_NON_FIELD_CONSTRUCTION,
+            $reasons,
+            'Ложное срабатывание на полевого исполнителя: '.mb_substr($text, 0, 80)
+        );
+    }
+
+    public static function nonFieldConstructionSamples(): array
+    {
+        return [
+            'ux_ui_designer' => [<<<'TXT'
+Создам сайт для вашего бизнеса или каталога услуг
+Я UX/UI дизайнер сайтов.
+Создаю лендинги, многостраничные сайты, интернет-магазины.
+Могу разработать только дизайн или помимо дизайна сверстать сайт на Тап Топ/Тильде.
+https://www.behance.net/gallery/238731201/Online-store
+TXT],
+            'visualizer' => [<<<'TXT'
+#визуализатор #услуга
+Привет! Я предоставляю услуги 3D визуализатора
+Цена: 7$ м2
+4 ракурса на помещение, 2 включенных круга правок
+3ds max, corona
+TXT],
+            'revit_drafter' => [<<<'TXT'
+#услуга #рабочаядокументация #чертежник #Revit
+Добрый день.
+Разрабатываю рабочую документацию дизайн-проектов. Работаю в ревите, имеется свой шаблон.
+Цена: 600 руб. м²
+TXT],
+            'project_team' => [<<<'TXT'
+Опытная команда проектировщиков выполнит:
+- Разработка низкополигональных и высокополигональных моделей по требованиям МКА.
+- IFC для АГР
+- Раздел ГП, АР, КР, КЖ, КМ, ЭС, СС, ОВ, ТС, ВК, НВ и т.д.
+- 3D визуализация.
+- 360° панорама.
+TXT],
+            'freelance offer' => ['#подработка #работа #фриланс #Revit #удаленнаяработа Здравствуйте Предлагаю услуги выполнения чертежей'],
+            'remote service' => ['#услуга #удаленно #Revit #дизайнпроект #чертежник Добрый день! Меня зовут Анастасия'],
+            'drafter help hashtag' => ['#чертежник #помогу Добрый день! меня зовут Дина Лазарева, закончила МГСУ по направлению'],
+            'bim developer pitch' => ['#revit #BIM #BIM-разработчик Доброго времени суток коллеги! У всех нас бывают сжатые сроки'],
+        ];
+    }
+
+    public static function fieldConstructionPerformerSamples(): array
+    {
+        return [
+            'finisher seeking gig' => ['Отделочник ищет подработку, пишите в лс'],
+            'brigade offers ceilings' => ['Бригада отделочников от 5-25 человек(РФ) предлагает монтаж: подвесных потолков Armstrong'],
+            'take finishing volume' => ['Возьмём объёмы по внутренней отделке помещений, бригада мастеров(2-10 человек) РФ с большим опытом'],
+            'electricians seek orders' => ['Бригада электромонтажников, ищем работу. Казань, Республика Татарстан, Москва. Ищем заказы'],
+        ];
+    }
+
     public static function spamOrLowLexicalSamples(): array
     {
         $emojiWall = str_repeat('🤍', 18).' '.str_repeat('💫', 12).' https://t.me/stroitel_arhitector';
@@ -80,8 +161,6 @@ final class CatalogPublicationBuilderNonServiceSignalsTest extends TestCase
     {
         return [
             'bim resume' => ['#ищуработу Добрый день ищу работу Bim-manager или подработку перевод в 3д revit моё портф'],
-            'freelance offer' => ['#подработка #работа #фриланс #Revit #удаленнаяработа Здравствуйте Предлагаю услуги выполнения чертежей'],
-            'remote service' => ['#услуга #удаленно #Revit #дизайнпроект #чертежник Добрый день! Меня зовут Анастасия'],
             'student resume' => ['#удаленно #резюме #услуга #самозанятость Добрый день! Меня зовут Алексей. Я студент архитектуры'],
             'revit subcontract' => ['#резюме #удаленно Добрый день! Меня зовут Эдуард. Работаю в Revit 23. Ищу подработку по сопровождению'],
             'finisher seeking gig' => ['Отделочник ищет подработку, пишите в лс'],
@@ -96,8 +175,6 @@ final class CatalogPublicationBuilderNonServiceSignalsTest extends TestCase
             'night crew seeks employer' => ['Ночь есть 6 человек разнорабочий работаем только с ежедневной оплатой у кого есть работа напишите'],
             'decorative plaster' => ['Добрый день! Меня зовут Роман. Занимаюсь нанесением декоративной штукатурки любой сложности'],
             'restoration crew' => ['Здравствуйте. Возьмём объём работ по реставрации. В команде: -лепщики реставраторы гипсовые формы'],
-            'drafter help hashtag' => ['#чертежник #помогу Добрый день! меня зовут Дина Лазарева, закончила МГСУ по направлению'],
-            'bim developer pitch' => ['#revit #BIM #BIM-разработчик Доброго времени суток коллеги! У всех нас бывают сжатые сроки'],
             'pair seeking gig' => ['Нас двое,гражданство РФ,очень нужна подработка на завтра,руки растут откуда надо,умеем много'],
             'laborers available' => ['Есть разнорабочие мужчины: демонтаж Подъем материала Уборка территории Помощь мастеру'],
             'ac installer pitch' => ['Кому требуется мастер по монтажу кондицианеров пишите!'],

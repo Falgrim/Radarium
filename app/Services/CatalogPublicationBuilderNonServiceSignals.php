@@ -28,6 +28,9 @@ final class CatalogPublicationBuilderNonServiceSignals
     /** Спам, эмодзи-флуд или недостаточно русских букв для карточки исполнителя. */
     public const REASON_SPAM_OR_LOW_LEXICAL_SIGNAL = 'post_text_spam_or_low_lexical_signal';
 
+    /** Проектирование, визуализация, веб-дизайн, чертёж Revit/BIM — не полевые строительные работы. */
+    public const REASON_NON_FIELD_CONSTRUCTION = 'post_text_non_field_construction_service';
+
     /**
      * Причины, при которых пайплайн обрывается до создания Builder (как при найме).
      *
@@ -38,7 +41,16 @@ final class CatalogPublicationBuilderNonServiceSignals
         return [
             self::REASON_HIRING,
             self::REASON_SPAM_OR_LOW_LEXICAL_SIGNAL,
+            self::REASON_NON_FIELD_CONSTRUCTION,
         ];
+    }
+
+    /**
+     * Текст относится к проектированию/визуализации/веб-дизайну — перенаправить в каталог проектировщиков.
+     */
+    public function shouldRedirectToSpecialist(string $postText): bool
+    {
+        return in_array(self::REASON_NON_FIELD_CONSTRUCTION, $this->reasons($postText), true);
     }
 
     /**
@@ -53,6 +65,10 @@ final class CatalogPublicationBuilderNonServiceSignals
 
         if ($this->matchesSpamOrLowLexicalSignal($postText)) {
             return [self::REASON_SPAM_OR_LOW_LEXICAL_SIGNAL];
+        }
+
+        if ($this->matchesNonFieldConstructionService($postText, $text)) {
+            return [self::REASON_NON_FIELD_CONSTRUCTION];
         }
 
         if ($this->matchesHiringOrStaffing($text)) {
@@ -99,6 +115,108 @@ final class CatalogPublicationBuilderNonServiceSignals
         $t = preg_replace('/\h+/u', ' ', $t) ?? $t;
 
         return trim($t);
+    }
+
+    /**
+     * Услуги проектировщиков, визуализаторов, веб/UI-дизайнеров, чертёжников Revit/BIM —
+     * не целевые для каталога «Строительство» (полевые бригады и мастера на объекте).
+     */
+    private function matchesNonFieldConstructionService(string $original, string $lower): bool
+    {
+        if ($this->looksLikeFieldConstructionPerformer($lower)) {
+            return false;
+        }
+
+        $strongPatterns = [
+            '/\b(?:ux\s*\/\s*ui|ui\s*\/\s*ux|uxui)\b/u',
+            '/\b(?:ux|ui)\s*[-\s]?(?:\/\s*)?(?:ux|ui)?\s*дизайн/u',
+            '/\bдизайнер\s+сайт/u',
+            '/\b(?:создам|разработаю|сверстаю)\b.{0,48}\b(?:сайт|лендинг|интернет[-\s]магазин)\b/u',
+            '/\b(?:лендинг|интернет[-\s]магазин)\b.{0,80}\b(?:тильд|tilda|tap\s*top|тап\s*топ)\b/u',
+            '/\b#визуализатор\b/u',
+            '/\b(?:3d|3\s*d)\s*[-\s]?визуализ/u',
+            '/\bвизуализатор\b/u',
+            '/\b3ds\s*max\b/u',
+            '/\b(?:corona|v[\-\s]?ray)\b/u',
+            '/\b(?:ракурс|круг\w*\s+правок)\b/u',
+            '/\bрабоч(?:ая|ую|ей|e)\s+документаци/u',
+            '/\bдизайн[-\s]проект/u',
+            '/\b(?:тильд|tilda)\b/u',
+            '/\bbehance\.net\b/u',
+            '/\b(?:команда|опытная\s+команда)\s+проектировщик/u',
+            '/\b(?:низко|высоко)полигональн/u',
+            '/\bifc\b.{0,24}\b(?:агр|agr)\b/u',
+            '/\b(?:мка|mka)\b/u',
+            '/\b(?:лазерное\s+сканирование|3d\s+видео\s+обл[её]т)\b/u',
+            '/\b360\s*[°º]?\s*панорам/u',
+        ];
+
+        foreach ($strongPatterns as $re) {
+            if (preg_match($re, $lower) === 1) {
+                return true;
+            }
+        }
+
+        if ($this->countProjectDesignSectionAbbreviations($lower) >= 3) {
+            return true;
+        }
+
+        $officeToolPatterns = [
+            '/\b#(?:чертежник|revit|ревит|bim|визуализатор|дизайн)\b/u',
+            '/\b(?:revit|ревит|autocad|архикад|archicad)\b/u',
+            '/\b#чертежник\b/u',
+            '/\bчертежник\b/u',
+            '/\bbim[-\s]?(?:разработ|проект|manager|менеджер)\b/u',
+        ];
+
+        $officeHits = 0;
+        foreach ($officeToolPatterns as $re) {
+            if (preg_match($re, $lower) === 1) {
+                $officeHits++;
+            }
+        }
+
+        if ($officeHits >= 2) {
+            return true;
+        }
+
+        if ($officeHits >= 1 && preg_match('/\b(?:#услуга|предоставля(?:ю|ем)|предлага(?:ю|ем)|разрабатыва(?:ю|ем)|выполня(?:ю|ем))\b/u', $lower) === 1) {
+            return true;
+        }
+
+        if (preg_match('/\b(?:revit|ревит|bim)\b/u', $lower) === 1
+            && preg_match('/\b(?:чертеж|рабоч(?:ая|ую)|дизайн[-\s]проект|проект(?:ир|н)|визуализ)\b/u', $lower) === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function looksLikeFieldConstructionPerformer(string $lower): bool
+    {
+        $patterns = [
+            '/\b(?:бригада|мы|я)\b.{0,96}\b(?:выполн|делаем|делаю|монтиру|отделыва|штукатур|маляр|кладк|демонтаж|плитк|покрас|гипсокартон|кровл|фасад|ремонт|газоблок|пеноблок)\b/u',
+            '/\b(?:маляр|штукатур|плиточник|каменщик|электрик|сантехник|монтажник|разнорабоч|гипсокартонщик|кровельщик|фасадчик|отделочник)\b.{0,80}\b(?:ищ(?:у|ем)|предлага(?:ю|ем)|выполн|дела(?:ю|ем)|готов)\b/u',
+            '/\b(?:возьм(?:ём|ем)|возьму)\s+объ/u',
+            '/\b(?:уборк[аи]\s+снег|очистк[аи]\s+снег)\b/u',
+        ];
+
+        foreach ($patterns as $re) {
+            if (preg_match($re, $lower) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function countProjectDesignSectionAbbreviations(string $lower): int
+    {
+        if (preg_match_all('/\b(?:раздел\s+)?(?:гп|ар|кр|кж|км|эс|сс|ов|тс|вк|нв|гсн|гсв|пpr|ппр)\b/u', $lower, $matches) !== false) {
+            return count(array_unique($matches[0]));
+        }
+
+        return 0;
     }
 
     /**

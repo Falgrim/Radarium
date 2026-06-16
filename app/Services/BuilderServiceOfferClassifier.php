@@ -51,6 +51,10 @@ final class BuilderServiceOfferClassifier
         }
 
         foreach ((new CatalogPublicationBuilderNonServiceSignals)->reasons($trimmed) as $reason) {
+            if ($reason === CatalogPublicationBuilderNonServiceSignals::REASON_NON_FIELD_CONSTRUCTION) {
+                continue;
+            }
+
             return $reason;
         }
 
