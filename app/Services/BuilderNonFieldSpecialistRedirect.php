@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
+use App\Enum\ApiChannelPostStatusEnum;
 use App\Models\ApiChannelPost;
 use App\Models\Builder;
 use Illuminate\Support\Facades\Log;
@@ -28,14 +29,13 @@ final class BuilderNonFieldSpecialistRedirect
     }
 
     /**
-     * Удаляет builder-карточку по посту и создаёт specialist.
+     * Создаёт specialist; builder-карточка удаляется только после успеха.
      *
+     * @param  array{fallback_heuristic?: bool, requeue_if_no_ai?: bool}  $options
      * @return array{redirected: bool, import: array{status: string, specialist_id: int|null, message: string|null}|null}
      */
-    public function redirectPost(ApiChannelPost $post, string $trigger = 'builder_pipeline'): array
+    public function redirectPost(ApiChannelPost $post, string $trigger = 'builder_pipeline', array $options = []): array
     {
-        Builder::where('api_channel_post_id', $post->id)->delete();
-
         $aiService = $this->createAiServiceForPost($post);
         if ($aiService === null) {
             Log::channel('ai_debug')->warning('[BuilderNonFieldSpecialistRedirect] AI service unavailable', [
@@ -46,10 +46,17 @@ final class BuilderNonFieldSpecialistRedirect
             return ['redirected' => false, 'import' => null];
         }
 
+        $fallbackHeuristic = ! ($options['requeue_if_no_ai'] ?? false);
+
         $import = $this->importer->import($post, $aiService, [
             'trigger' => $trigger,
             'redirected_from' => 'builder_channel',
+            'fallback_heuristic' => $fallbackHeuristic,
         ]);
+
+        if ($import['status'] === SpecialistPostImporter::STATUS_CREATED) {
+            Builder::where('api_channel_post_id', $post->id)->delete();
+        }
 
         return [
             'redirected' => $import['status'] === SpecialistPostImporter::STATUS_CREATED,

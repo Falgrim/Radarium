@@ -428,6 +428,17 @@ class AiBuilderPosts extends Command
 
         $message = $import['message'] ?? 'не удалось создать карточку проектировщика';
         $status = $import['status'] ?? 'unknown';
+
+        if ($status === SpecialistPostImporter::STATUS_AI_UNAVAILABLE) {
+            $this->warn(sprintf(
+                'ИИ недоступен — post_id=%d остаётся InQueue, builder не удалён (%s)',
+                $post->id,
+                $message
+            ));
+
+            return true;
+        }
+
         $post->ai_result = json_encode([
             'redirect_failed' => true,
             'trigger' => $trigger,

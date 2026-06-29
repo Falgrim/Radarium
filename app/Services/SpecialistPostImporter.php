@@ -11,9 +11,11 @@ use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ModerationAlertSystemEnum;
 use App\Enum\ModerationAlertTableNameEnum;
+use App\Exceptions\AiProviderUnavailableException;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
 use App\Models\Specialist;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -30,6 +32,8 @@ final class SpecialistPostImporter
     public const STATUS_ERROR = 'error';
 
     public const STATUS_NO_PROMPT = 'no_prompt';
+
+    public const STATUS_AI_UNAVAILABLE = 'ai_unavailable';
 
     public function __construct(
         private readonly Dictionary $dictionary,
@@ -65,14 +69,31 @@ final class SpecialistPostImporter
             ];
         }
 
-        $specialityList = $this->dictionary->getAll(
-            DictionaryEnum::Speciality,
-            ApiDataTypeEnum::Specialist
-        );
-
         $aiService->setPromt($prompt);
         $aiService->setText((string) $post->post);
-        $result = $aiService->getResult(ApiDataTypeEnum::Specialist);
+
+        try {
+            $result = $aiService->getResult(ApiDataTypeEnum::Specialist);
+        } catch (AiProviderUnavailableException|ConnectionException $e) {
+            Log::channel('ai_debug')->warning('[SpecialistPostImporter] AI provider unavailable', [
+                'api_channel_post_id' => $post->id,
+                'context' => $context,
+                'message' => $e->getMessage(),
+            ]);
+
+            if (! empty($context['fallback_heuristic'])) {
+                return $this->importHeuristicFallback($post, $context, $e->getMessage());
+            }
+
+            $post->ai_parse_status = ApiChannelPostStatusEnum::InQueue;
+            $post->save();
+
+            return [
+                'status' => self::STATUS_AI_UNAVAILABLE,
+                'specialist_id' => null,
+                'message' => $e->getMessage(),
+            ];
+        }
 
         if (count($result['json']) === 0) {
             $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
@@ -129,11 +150,64 @@ final class SpecialistPostImporter
             ];
         }
 
+        return $this->persistSpecialist($post, $payload, $context, $this->wrapAiResult($result['origin'], $context, [
+            'route' => 'specialist_created',
+        ]), false);
+    }
+
+    /**
+     * Минимальная карточка проектировщика без ИИ (текст поста + специализации из словаря).
+     *
+     * @param  array{trigger?: string, redirected_from?: string}  $context
+     * @return array{status: string, specialist_id: int|null, message: string|null}
+     */
+    public function importHeuristicFallback(ApiChannelPost $post, array $context, string $aiErrorMessage): array
+    {
+        if (BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy((string) $post->post)) {
+            $post->ai_result = json_encode([
+                'specialist_import' => $context,
+                'route' => 'dont_match_gig_heuristic_heuristic_fallback',
+                'ai_unavailable' => $aiErrorMessage,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $post->ai_date = now();
+            $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+            $post->save();
+
+            return [
+                'status' => self::STATUS_DONT_MATCH,
+                'specialist_id' => null,
+                'message' => 'Эвристика подработки (fallback без ИИ)',
+            ];
+        }
+
+        $payload = $this->buildHeuristicPayload($post);
+
+        return $this->persistSpecialist($post, $payload, $context, json_encode([
+            'specialist_import' => $context,
+            'route' => 'specialist_created_heuristic_fallback',
+            'ai_unavailable' => $aiErrorMessage,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  array{trigger?: string, redirected_from?: string}  $context
+     * @return array{status: string, specialist_id: int|null, message: string|null}
+     */
+    private function persistSpecialist(
+        ApiChannelPost $post,
+        array $payload,
+        array $context,
+        string $aiResultJson,
+        bool $heuristicFallback,
+    ): array {
+        Specialist::where('api_channel_post_id', $post->id)->delete();
+
         $payload['post_date'] = $post->post_date;
         $payload['api_post_user_id'] = $post->apiPostUser->id;
         $payload['api_channel_post_id'] = $post->id;
 
-        if (! $payload['contact_info']) {
+        if (empty($payload['contact_info'])) {
             $payload['contact_info'] = '';
         }
 
@@ -145,6 +219,10 @@ final class SpecialistPostImporter
 
         unset($payload['location_region'], $payload['location_city']);
 
+        $specialityList = $this->dictionary->getAll(
+            DictionaryEnum::Speciality,
+            ApiDataTypeEnum::Specialist
+        );
         $specialistSpecialties = $this->dictionary->checkMatchByList((string) $post->post, $specialityList);
 
         $gateDecision = $this->gate->decide(
@@ -155,6 +233,7 @@ final class SpecialistPostImporter
                 'api_channel_post_id' => $post->id,
                 'api_channel_id' => $post->api_channel_id,
                 'ai_parser' => self::class,
+                'heuristic_fallback' => $heuristicFallback,
             ], $context)
         );
         $payload['status'] = $gateDecision['status'];
@@ -170,12 +249,26 @@ final class SpecialistPostImporter
             );
         }
 
-        $post->ai_result = $this->wrapAiResult($result['origin'], $context, [
-            'route' => 'specialist_created',
+        $wrapExtra = [
+            'route' => $heuristicFallback ? 'specialist_created_heuristic_fallback' : 'specialist_created',
             'specialist_id' => $specialist->id,
             'catalog_status' => $gateDecision['status']->value,
             'catalog_gate_reasons' => $gateDecision['reasons'],
-        ]);
+        ];
+        if ($heuristicFallback) {
+            $decoded = json_decode($aiResultJson, true);
+            if (is_array($decoded)) {
+                $post->ai_result = json_encode(array_merge($decoded, $wrapExtra), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            } else {
+                $post->ai_result = $aiResultJson;
+            }
+        } else {
+            $decoded = json_decode($aiResultJson, true);
+            $post->ai_result = is_array($decoded)
+                ? json_encode(array_merge($decoded, $wrapExtra), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                : $this->wrapAiResult($aiResultJson, $context, $wrapExtra);
+        }
+
         $post->ai_date = now();
         $post->ai_parse_status = ApiChannelPostStatusEnum::Complete;
         $post->save();
@@ -199,12 +292,37 @@ final class SpecialistPostImporter
             'api_post_user_id' => (int) $specialist->api_post_user_id,
             'context' => $context,
             'catalog_status' => $gateDecision['status']->value,
+            'heuristic_fallback' => $heuristicFallback,
         ]);
 
         return [
             'status' => self::STATUS_CREATED,
             'specialist_id' => (int) $specialist->id,
-            'message' => null,
+            'message' => $heuristicFallback ? 'Создано без ИИ (эвристический fallback)' : null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildHeuristicPayload(ApiChannelPost $post): array
+    {
+        return [
+            'ai_type' => 'предоставление услуги',
+            'ai_reason' => 'heuristic_redirect_from_builder_channel',
+            'experience' => '',
+            'soft_experience' => '',
+            'education' => '',
+            'work_schedule' => '',
+            'total_work_project' => '',
+            'type_of_work' => '',
+            'price_by_hour' => '',
+            'price_by_project' => '',
+            'price_by_month' => '',
+            'about' => trim((string) $post->post),
+            'spec_requirements' => '',
+            'link_resume' => '',
+            'contact_info' => '',
         ];
     }
 
