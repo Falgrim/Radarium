@@ -101,8 +101,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Проверка статуса новых платежей
         $schedule->command('app:payments:check')->withoutOverlapping()->everyTwoMinutes();
 
-        // Отправка текста в ТГ чаты (отключить: SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false в .env)
-        if (filter_var(env('SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED', true), FILTER_VALIDATE_BOOLEAN)) {
+        // Legacy-рассылка в TG (на prod постоянно выключена)
+        if (filter_var(env('SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
             $schedule->command('app:tg_chat:send_company')->name('madeline-proto')->withoutOverlapping(180)->everyMinute();
         }
 
