@@ -4,7 +4,7 @@
 >
 > Ядро: Laravel 11 + MariaDB (по умолчанию используется в производстве) + доменная модель “посты из источников (Telegram / ВКонтакте) → AI → каталоги”.
 >
-> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-06-10** (см. также `DOC/CHANGE_LOG.md`): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов, восстановление TG-сессий и `app:tg_auth --qr`.
+> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-07-08** (см. также `DOC/CHANGE_LOG.md`): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов, восстановление TG-сессий и `app:tg_auth --qr`, runbook `git pull` на production.
 
 ## 1. Общее описание
 
@@ -1402,3 +1402,16 @@ flowchart TD
   - `user_tariffs.count_contacts_left`
   - `users.free_contacts`
 - факт открытия фиксируется в `user_open_contacts`
+
+## 15. Обновление кода на production
+
+Сервер **progs.com**, пользователь `www-root`, каталог `/var/www/www-root/data/www/progs.com`.
+
+**Рекомендуемый порядок:**
+
+1. `git pull origin` — remote `origin` на GitLab по **HTTPS**.
+2. Аутентификация: **Deploy Token** проекта (`Settings → Repository → Deploy tokens`, право `read_repository`). В терминале username — `gitlab+deploy-token-...`, password — сам token (не пароль аккаунта).
+3. Чтобы не вводить credentials каждый раз: `git config --global credential.helper store` (файл `~/.git-credentials`, права `600`).
+4. После pull: `sh gitupdate.sh` (права storage/MadelineProto, `artisan optimize`, `schedule:interrupt`).
+
+Полный runbook, диагностика SSH/deploy key и разбор ошибок 403 — **`docs/production-git-pull.md`**.

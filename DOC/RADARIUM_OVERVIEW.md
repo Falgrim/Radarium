@@ -130,6 +130,7 @@ Radarium — **коммерческий продукт** с платным до�
 
 - `DOC/CHANGE_LOG.md` — журнал изменений продукта
 - `DOC/RADARIUM_TECHDOC.md` — техническая документация (для IT-специалистов)
+- `docs/production-git-pull.md` — обновление кода на production (git pull, Deploy Token)
 
 ---
 

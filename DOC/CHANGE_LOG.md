@@ -1,6 +1,16 @@
 # Radarium — журнал изменений
 
-> Период: **с 08.04.2026** по состояние репозитория на **10.06.2026**.
+> Период: **с 08.04.2026** по состояние репозитория на **08.07.2026**.
+
+---
+
+## 2026-07-08
+
+### Production / доступ к GitLab (progs.com)
+- Задокументирован runbook обновления кода на production: `docs/production-git-pull.md`.
+- Зафиксирован рабочий способ: **HTTPS** + **Deploy Token** (`read_repository`), username вида `gitlab+deploy-token-...`, сохранение через `git config --global credential.helper store`.
+- Описаны типовые ошибки: SSH `Permission denied (publickey)`, `Fingerprint sha256 has already been taken`, 403 для classic PAT (нужен fine-grained с **Code: Download** или deploy token).
+- В `DOC/RADARIUM_TECHDOC.md` добавлен §15 со ссылкой на runbook.
 
 ---
 
