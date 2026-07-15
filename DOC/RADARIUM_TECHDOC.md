@@ -421,7 +421,7 @@ flowchart TD
 
 В `SendMessageTelegram->send()`:
 
-1. Инициализируется MadelineProto session (`session.madeline.{apiId}`)
+1. Инициализируется MadelineProto через `MadelineConnectionConfigurator::buildSettings()` (прокси/Redis как у парсера) и session `session.madeline.{apiId}`
 2. Для каждого пользователя:
    - если сообщение “основное” (`is_main`):
      - выставляется `send_welcome_msg = Error` (как предварительное состояние)
@@ -436,7 +436,8 @@ flowchart TD
    - `msg_id` сохраняется из ответа Telegram
 5. У пользователя обновляется флаг рассылки:
    - для `is_main` → `send_welcome_msg = Sended` при успехе
-6. В конце пишет агрегат в `mailing_tg` log-channel.
+6. Пишет агрегат в `mailing_tg` log-channel
+7. В `finally`: `unset` клиента + `API::finalize()` (без `gc_collect_cycles()`), чтобы не оставлять зомби IPC-воркеров
 
 ### 6.6. Авторизация MadelineProto (`app:tg_auth`)
 

@@ -1,6 +1,14 @@
 # Radarium — журнал изменений
 
-> Период: **с 08.04.2026** по состояние репозитория на **08.07.2026**.
+> Период: **с 08.04.2026** по состояние репозитория на **15.07.2026**.
+
+---
+
+## 2026-07-15
+
+### Telegram / MadelineProto — профилактика гонок рассылки
+- `SendMessageTelegram::send()`: настройки через `MadelineConnectionConfigurator::buildSettings()`; корректный shutdown (`unset` + `API::finalize()` вместо `gc_collect_cycles()`).
+- Документация: обновлён §6.5.2 в `DOC/RADARIUM_TECHDOC.md`.
 
 ---
 
