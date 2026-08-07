@@ -1027,6 +1027,9 @@ AI-команды создают доменные сущности и затем
   - переводят пост в `Complete`/`Error`/`DontMatch`/`Empty` (в зависимости от ветки)
 - `app:ai_parse:reset-builder-queue` (`AiResetBuilderQueue`): массовый возврат builder-постов в `InQueue` за период (по дате и провайдеру; есть `--dry-run`; при requeue удаляются старые `Builder` с тем же `api_channel_post_id`).
 - `app:ai_parse:requeue-builder-missing-visible-posts` (`AiRequeueBuilderMissingVisiblePosts`): выборочный requeue для авторов каталога без «видимого» Complete-поста (`--dry-run` / `--apply`).
+- `app:ai_parse:reset-specialist-queue` (`AiResetSpecialistQueue`): то же для каналов проектировщиков (default `--provider` пустой = любой; при apply удаляются связанные `Specialist`).
+- `app:ai_parse:requeue-specialist-missing-visible-posts` (`AiRequeueSpecialistMissingVisiblePosts`): requeue для авторов каталога «Проектирование» без видимого Complete-поста (`PublicSpecialistCatalogScope`).
+- `app:channels:enable-specialists` (`EnableSpecialistChannelsCommand`): инвентаризация/включение disabled specialist-каналов (`--dry-run` / `--apply`). Runbook: `docs/specialist-ops-phase1.md`.
 - `app:builders:rematch_specialities` (`RematchBuilderSpecialities`): пересчёт `builder_specialities` по тексту поста и сохранённому JSON ИИ (с cap специализаций и `AuthorCatalogSpecialitiesSync`).
 - `app:catalog:disable-active-builders-hiring-text` (`DisableActiveBuildersHiringTextCommand`): перевод активных карточек строителей с текстом найма/не-услуги в `InModeration` по `CatalogPublicationBuilderNonServiceSignals` (`--dry-run`).
 - `app:regions:normalize_stored` (`NormalizeStoredRegions`): нормализация поля `region` у существующих builders/specialists.
@@ -1078,7 +1081,7 @@ AI-команды создают доменные сущности и затем
 - `app/Http/Controllers/CatalogController.php`
   - выдаёт список специалистов и карточку автора специалиста
   - фильтрует по `ApiPostAiStatusEnum::Active` (если `onlyActive`)
-  - учитывает только посты с **`ai_parse_status = Complete`** (через `PublicBuilderCatalogScope::restrictBuilderCardsToCompleteSourcePosts` и аналогичные условия)
+  - общий scope выдачи: **`PublicSpecialistCatalogScope`** (`app/Support/PublicSpecialistCatalogScope.php`) — только карточки со связанным постом в статусе `Complete`
   - использует словарь специализаций (`DictionarySpecialityRepository`) для UI-фильтра
 - `app/Http/Controllers/BuilderController.php`
   - аналогично для строителей (поиск/страницы/отзывы)
