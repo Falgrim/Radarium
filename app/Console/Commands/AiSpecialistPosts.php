@@ -7,6 +7,7 @@ use App\Enum\ApiAiStatusEnum;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Models\ApiChannel;
+use App\Models\ApiChannelPost;
 use App\Services\AiParsePostExceptionHandler;
 use App\Services\ApiAIOllama;
 use App\Services\ApiAIYandex;
