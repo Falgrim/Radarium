@@ -63,7 +63,8 @@
         "network": "tcp",
         "security": "reality",
         "realitySettings": {
-          "serverName": "YOUR_SERVER_NAME",
+          "serverName": "dl.google.com",
+          "fingerprint": "firefox",
           "publicKey": "YOUR_PUBLIC_KEY",
           "shortId": "YOUR_SHORT_ID"
         }
@@ -72,6 +73,10 @@
   ]
 }
 ```
+
+**Prod (актуально с 2026-08-06):** Reality `serverName` / на VPS `dest`+`serverNames` = **`dl.google.com`**, на клиенте `fingerprint: firefox`.  
+Не использовать `www.microsoft.com` (сертификат Akamai ломает Reality handshake → SOCKS curl `000`).  
+Handoff: `DOC/tg_connection_problem_july09.md`; runbook: `DOC/RADARIUM_TECHDOC.md` §6.9.
 
 Проверки:
 

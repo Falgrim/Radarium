@@ -4,7 +4,7 @@
 >
 > Ядро: Laravel 11 + MariaDB (по умолчанию используется в производстве) + доменная модель “посты из источников (Telegram / ВКонтакте) → AI → каталоги”.
 >
-> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-07-08** (см. также `DOC/CHANGE_LOG.md`): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов, восстановление TG-сессий и `app:tg_auth --qr`, runbook `git pull` на production.
+> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-08-06** (см. также `DOC/CHANGE_LOG.md`): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов, восстановление TG-сессий и `app:tg_auth --qr`, runbook `git pull` на production, инцидент VPN Reality / MadelineProto (июль–август 2026, §6.9).
 
 ## 1. Общее описание
 
@@ -500,7 +500,32 @@ php artisan app:tg_parse:builder
 ### 6.9. Восстановление сессии и типовые сбои MadelineProto
 
 > Подробнее про SOCKS/VPN: `docs/madelineproto-vpn-routing.md`.  
-> Инцидент на prod (июнь 2026): сбой без изменений кода; восстановление — переавторизация `22885091` через `app:tg_auth --qr`.
+> Развёрнутый handoff инцидента: `DOC/tg_connection_problem_july09.md` (решено **2026-08-06**).
+
+**Инциденты на prod:**
+
+| Когда | Суть | Что помогло |
+|-------|------|-------------|
+| Июнь 2026 | Битая сессия без изменений кода | Переавторизация `22885091` через `app:tg_auth --qr` |
+| Июль–август 2026 | SOCKS `000` + `The endpoint does not exist!` / IPC недоступен | **Две поломки:** (1) Reality handshake с `www.microsoft.com`; (2) битая сессия MadelineProto после простоя — см. ниже |
+
+#### VPN / Xray Reality (актуально с 2026-08-06)
+
+Цепочка: MadelineProto → SOCKS `127.0.0.1:10808` (xray на **prod** `77.222.58.189`) → VLESS+Reality → **VPS** `103.90.72.46:443` → Telegram DC.
+
+| | Prod (client) | VPS (server) |
+|--|---------------|--------------|
+| Reality SNI / dest | `serverName: dl.google.com` | `dest: dl.google.com:443`, `serverNames: ["dl.google.com"]` |
+| fingerprint | `firefox` | — |
+| UUID / shortId / keys | без смены относительно эталона | без смены |
+
+**Не использовать** `www.microsoft.com` как Reality dest/SNI: у Akamai слишком большой сертификат → на клиенте `handshake did not complete successfully`, curl через SOCKS даёт **`000`**, на VPS нет `from 77.222.58.189 … accepted`.
+
+**Диагностика туннеля (порядок важен):**
+
+1. `curl -x socks5h://127.0.0.1:10808 -m 10 -s -o /dev/null -w '%{http_code}\n' https://api.telegram.org` → нужно **200 / 301 / 302**.
+2. Если **`000`**: это VPN, **не** Laravel. На VPS при live-curl должна появиться строка `from 77.222.58.189:… accepted tcp:…`. Лог prod `from tcp:127.0.0.1 accepted …` — только локальный SOCKS, не успех VLESS.
+3. Только после зелёного SOCKS чинить IPC / сессию MadelineProto.
 
 #### Карта сессий на prod (типовая)
 
@@ -516,8 +541,9 @@ php artisan app:tg_parse:builder
 
 | Ошибка | Вероятная причина | Первые шаги |
 |--------|-------------------|-------------|
+| `curl` через SOCKS → `000` / TLS timeout | Reality/VLESS не поднимается (SNI/dest, xray, сеть) | Проверка VPN (§ выше); **не** править Laravel, пока SOCKS ≠ 200/301/302 |
 | `Could not connect to DC 2.0!` | Прокси/xray, stale `config:cache`, падение IPC-воркера | `config:clear`, проверка SOCKS, `pkill -f "MadelineProto worker"` |
-| `The endpoint does not exist!` | Гонка процессов / мёртвый IPC | Остановить cron Madeline, сброс `ipcState.php` и IPC-сокетов |
+| `The endpoint does not exist!` | Сначала проверить SOCKS; если SOCKS OK — гонка cron / мёртвый IPC / битая сессия после простоя | Изоляция cron → сброс IPC; при необходимости `app:tg_auth --qr --reset` |
 | `No info for DC -1!` | Повреждён `safe.php` / auth state (часто после гонки cron) | Переавторизация §6.6; **не** восстанавливать старые `safe.php` с другой версии MP |
 | `RedisArray::$db must not be accessed before initialization` | Несовместимый `safe.php` (бэкап от старой версии MadelineProto) | Откат на `before-restore` **или** переавторизация; не подменять апрельские бэкапы на текущий MP 8.x |
 | `API_ID_INVALID` | Неверная пара `api_id` + `api_hash` (часто `TG_APP_HASH` из `.env` ≠ `--api-id`) | Явно передать `--api-hash` из Moonshine / `api_channels` |
@@ -528,8 +554,9 @@ php artisan app:tg_parse:builder
    - Закомментировать в crontab только **`schedule:run`** (или держать `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false`).
    - `pkill -f "MadelineProto worker"`; `pgrep -fa MadelineProto` — пусто.
 
-2. **Сеть**
+2. **Сеть (обязательно до IPC/сессии)**
    - `curl -x socks5h://127.0.0.1:10808 -m 10 -s -o /dev/null -w '%{http_code}' https://api.telegram.org` → `200` / `301` / `302`.
+   - При `000`: чинить Reality/xray (актуальный dest — `dl.google.com`, fingerprint на prod — `firefox`); см. `DOC/tg_connection_problem_july09.md`.
    - `php artisan config:clear`.
 
 3. **IPC** (для сессии парсинга, напр. `22885091`)
@@ -548,31 +575,34 @@ php artisan app:tg_parse:builder
    php artisan app:tg_auth --api-id=22885091 --api-hash=... --qr --reset
    php artisan app:tg_parse:builder
    ```
-   `--reset` архивирует каталог в `session.madeline.{apiId}.broken.*` (БД приложения не затрагивается).
+   `--reset` архивирует каталог в `session.madeline.{apiId}.broken.*` (БД приложения не затрагивается).  
+   После длительного простоя VPN (как 2026-08-06) часто нужна именно переавторизация, даже если SOCKS уже зелёный.
 
 6. **Что не делать**
    - Не восстанавливать `safe.php` из старых бэкапов без проверки версии MadelineProto.
    - Не выполнять `FLUSHDB` в Redis.
    - Не удалять ключи других namespace (рассылка / другие сессии) без проверки.
+   - Не чинить IPC/код Laravel, пока SOCKS curl ≠ 200/301/302.
+   - Не возвращать Reality dest на `www.microsoft.com`.
 
 7. **Возврат cron**
    - `php artisan config:cache`
    - Раскомментировать `* * * * * php artisan schedule:run`
-   - Сначала парсинг; рассылку включить позже (`SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=true`) или после стабилизации.
+   - Сначала парсинг; рассылку **не** включать без явной необходимости (`SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false` на prod).
 
 #### Env-переменные (Madeline + scheduler)
 
 | Переменная | Назначение |
 |------------|------------|
 | `MPROTO_PROXY_*` | SOCKS/HTTP до Telegram (см. `MadelineConnectionConfigurator`) |
-| `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED` | `false` — не планировать `app:tg_chat:send_company` (временно при восстановлении парсинга) |
+| `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED` | `false` — не планировать `app:tg_chat:send_company` (на prod держать выключенным) |
 
 #### Логи
 
 - `storage/logs/MadelineProto.log` — IPC, DC, авторизация
 - `post_parser` — агрегаты парсинга
 - `mailing_tg` — рассылка
-
+- `journalctl -u xray` на prod и VPS — SOCKS vs VLESS (`accepted`)
 ## 7. AI-пайплайн и провайдеры
 
 > В текущей архитектуре AI выполняется “батчами” по очереди `api_channel_posts.ai_parse_status = InQueue`.
