@@ -20,6 +20,7 @@ use App\Models\UserOpenContact;
 use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use App\Support\CatalogRegionOptions;
+use App\Support\PublicSpecialistCatalogScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -101,7 +102,7 @@ class CatalogController extends Controller
      */
     private function specialistCatalogRegionOptions(array $validated): array
     {
-        $base = $this->specialistsMatchingCatalogScope($validated);
+        $base = PublicSpecialistCatalogScope::specialistsMatchingCatalogScope($validated, $this->onlyActive);
 
         $hasNullRegion = (clone $base)
             ->where(function (Builder $q) {
@@ -123,66 +124,6 @@ class CatalogController extends Controller
         );
 
         return [$regionsList, $hasNullRegion];
-    }
-
-    /**
-     * Специалисты, попадающие в каталог при тех же условиях поиска, что и основной список, без фильтра по region.
-     *
-     * @param  array<string, mixed>  $validated
-     * @return Builder<\App\Models\Specialist>
-     */
-    private function specialistsMatchingCatalogScope(array $validated): Builder
-    {
-        $query = Specialist::query()
-            ->when($this->onlyActive, function (Builder $q): void {
-                $q->where('status', '=', ApiPostAiStatusEnum::Active);
-            });
-
-        $this->restrictSpecialistCardsToCompleteSourcePosts($query);
-
-        return $query
-            ->when(! empty($validated['key_word_tags']), function (Builder $query) use ($validated) {
-                $query->whereHas('post', function (Builder $postQuery) use ($validated) {
-                    $postQuery->where(function (Builder $inner) use ($validated) {
-                        foreach ($validated['key_word_tags'] as $keyWordTag) {
-                            $inner->orWhere('post', 'like', '%'.$keyWordTag.'%');
-                        }
-                    });
-                });
-            })
-            ->when(! empty($validated['speciality_id']), function (Builder $query) use ($validated) {
-                $query->whereRelation('specialities', function (Builder $relationQuery) use ($validated) {
-                    $relationQuery->whereIn('dictionary_speciality_id', $validated['speciality_id']);
-                });
-            })
-            ->whereHas('user', function (Builder $userQuery) use ($validated) {
-                $userQuery->whereHas('postsComplete', function (Builder $postsQuery) use ($validated) {
-                    if (! empty($validated['key_word'])) {
-                        $postsQuery->where('post', 'like', '%'.$validated['key_word'].'%');
-                    }
-                });
-                if (! empty($validated['open_contacts']) && Auth::check()) {
-                    $userQuery->whereIn('id', function ($sub) {
-                        $sub->select('api_post_user_id')
-                            ->from(with(new UserOpenContact())->getTable())
-                            ->where('user_id', Auth::user()->id);
-                    });
-                }
-                $userQuery->where(function (Builder $contact) {
-                    $contact->whereNotNull('phone')
-                        ->orWhere('username', '<>', '');
-                });
-            });
-    }
-
-    /**
-     * Каталог специалистов: только карточки по сообщениям с завершённой ИИ-обработкой (как у строителей).
-     */
-    private function restrictSpecialistCardsToCompleteSourcePosts(Builder $specialistQuery): void
-    {
-        $specialistQuery->whereHas('post', function (Builder $postQuery): void {
-            $postQuery->where('ai_parse_status', ApiChannelPostStatusEnum::Complete);
-        });
     }
 
     /**
@@ -268,7 +209,7 @@ class CatalogController extends Controller
             if ($this->onlyActive) {
                 $query->where('status', '=', ApiPostAiStatusEnum::Active);
             }
-            $this->restrictSpecialistCardsToCompleteSourcePosts($query);
+            PublicSpecialistCatalogScope::restrictSpecialistCardsToCompleteSourcePosts($query);
 
             if (!empty($validated['region'])) {
                 if ($validated['region'] === 'none') {
@@ -376,7 +317,7 @@ class CatalogController extends Controller
             $specialists = $specialists->where('status', '=', ApiPostAiStatusEnum::Active);
         }
 
-        $this->restrictSpecialistCardsToCompleteSourcePosts($specialists);
+        PublicSpecialistCatalogScope::restrictSpecialistCardsToCompleteSourcePosts($specialists);
 
         if (!empty($validated['key_word'])) {
             $specialists = $specialists->whereHas('post', function (Builder $query) use ($validated) {
@@ -423,7 +364,7 @@ class CatalogController extends Controller
                 if ($this->onlyActive) {
                     $query->where('status', '=', ApiPostAiStatusEnum::Active);
                 }
-                $this->restrictSpecialistCardsToCompleteSourcePosts($query);
+                PublicSpecialistCatalogScope::restrictSpecialistCardsToCompleteSourcePosts($query);
             })
             ->with(['specialists', 'postsComplete', 'specialistReviews'])
             ->withAvg(['specialistReviews' => function ($query) {

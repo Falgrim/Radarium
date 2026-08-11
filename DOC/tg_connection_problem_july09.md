@@ -1,39 +1,45 @@
 # Handoff: восстановление доступа Radarium → Telegram через Xray VPN
 
-**Дата:** 2026-07-09  
-**Статус:** ⏸ Пауза — инфраструктура VPN, не код Laravel  
+**Дата:** 2026-07-09 (решено 2026-08-06)  
+**Статус:** ✅ Решено — VPN + переавторизация MadelineProto  
 **Цель:** восстановить парсинг Telegram (`app:tg_parse:*`) после починки туннеля prod → VPS → Telegram
 
 ---
 
-## Контекст для новой задачи (промпт)
+## Итог (2026-08-06)
+
+Две отдельные поломки:
+
+1. **VLESS/Reality prod → VPS** — handshake не завершался с `dest`/`serverName` = `www.microsoft.com` (огромный сертификат Akamai; `handshake did not complete successfully`).  
+   **Фикс:** на VPS и prod сменить маскировку на `dl.google.com`; на prod `fingerprint: firefox`.  
+   Проверка: `curl -x socks5h://127.0.0.1:10808 … https://api.telegram.org` → **302**; на VPS `from 77.222.58.189 accepted tcp:api.telegram.org:443`.
+
+2. **MadelineProto IPC / битая сессия** после простоя — `The endpoint does not exist!`, гонка cron (`schedule:run` каждые 2 мин поднимал несколько `tg_parse:*`).  
+   **Фикс:** отключить cron → убить процессы → `app:tg_auth --api-id=22885091 --qr --reset` (+ 2FA) → ручной `app:tg_parse:builder` OK.
+
+### Актуально в xray-конфигах
+
+| | Prod client | VPS server |
+|--|-------------|------------|
+| Reality SNI / dest | `serverName: dl.google.com` | `dest: dl.google.com:443`, `serverNames: ["dl.google.com"]` |
+| fingerprint | `firefox` | — |
+| UUID / shortId / keys | без изменений (совпадали) | без изменений |
+
+### Чеклист после победы
+
+- [ ] Вернуть `schedule:run` в crontab (если ещё закомментирован)
+- [ ] На prod и VPS: `loglevel: warning`; на VPS `show: false`
+- [ ] `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false` — не включать рассылку
+
+---
+
+## Контекст на момент паузы 09.07 (архив)
 
 ```
-Продолжаем задачу по восстановлению парсинга Telegram в Radarium.
-
-Исходная проблема: в логах post_parser ошибки MadelineProto IPC
-(«The endpoint does not exist!», abort group on IPC loss).
-
-Расследование показало: корневая причина — недоступность VPN-туннеля
-prod → VPS (Xray VLESS/Reality), через который MadelineProto выходит в Telegram.
-
-VPS провайдер чинил доступность. Сейчас:
-- VPS жив, 443 открыт, VPS сам до Telegram достучался (curl → 302)
-- TCP prod → VPS:443 работает (nc succeeded)
-- SOCKS prod (127.0.0.1:10808) принимает соединения
-- НО VLESS-туннель prod → VPS НЕ устанавливается:
-  при curl через SOCKS на VPS НЕ появляются строки
-  «from 77.222.58.189:... accepted»
-- publicKey Reality проверен — СОВПАДАЕТ с VPS privateKey
-
-Изменения в коде Laravel по IPC были откачены (преждевременно).
-Оставлено только: SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false по умолчанию
-(рассылка на prod навсегда выключена).
-
-Следующий шаг: debug-логи xray на prod во время curl,
-при необходимости tag+routing в config.json, затем smoke парсинга.
-
-Полный контекст: DOC/tg_connection_problem_july09.md
+Исходная проблема: MadelineProto IPC «The endpoint does not exist!».
+Корневая причина тогда: VLESS/Reality prod→VPS не поднимался
+(SOCKS OK, TCP OK, ключи OK, но VPS не видел accepted от 77.222.58.189).
+Следующий шаг был: debug-логи xray → см. итог 2026-08-06 выше.
 ```
 
 ---
@@ -138,7 +144,7 @@ MadelineProto / curl
 
 ---
 
-## Текущее состояние (checkpoint)
+## Текущее состояние (checkpoint 2026-08-06)
 
 | Компонент | Статус |
 |-----------|--------|
@@ -147,11 +153,10 @@ MadelineProto / curl
 | VPS → Telegram | ✅ (curl 302) |
 | prod nc → VPS:443 | ✅ |
 | prod SOCKS inbound | ✅ |
-| prod VLESS → VPS | ❌ (VPS не видит 77.222.58.189 при curl) |
+| prod VLESS → VPS | ✅ (после смены dest на dl.google.com) |
 | Reality keys | ✅ совпадают |
-| MadelineProto парсинг | ❌ ждёт VPN |
-| Код Laravel (IPC fixes) | откачен |
-| Рассылка TG | выключена навсегда |
+| MadelineProto парсинг | ✅ ручной `app:tg_parse:builder` OK после `--qr --reset` |
+| Рассылка TG | выключена (`SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED=false`) |
 
 ---
 

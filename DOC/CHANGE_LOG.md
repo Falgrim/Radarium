@@ -1,6 +1,18 @@
 # Radarium — журнал изменений
 
-> Период: **с 08.04.2026** по состояние репозитория на **15.07.2026**.
+> Период: **с 08.04.2026** по состояние репозитория на **07.08.2026**.
+
+---
+
+## 2026-08-07
+
+### Specialists / операционный слой (фаза 1)
+- `app:channels:enable-specialists` — инвентаризация и включение отключённых каналов проектировщиков (`--dry-run` / `--apply`); провайдер ИИ не меняется, в отчёте предупреждения если не YandexGPT.
+- `PublicSpecialistCatalogScope` — общий scope каталога проектировщиков (Complete-посты); `CatalogController` переведён на него.
+- `app:ai_parse:reset-specialist-queue` — зеркало builder reset (default provider — любой / обычно yandexgtp4).
+- `app:ai_parse:requeue-specialist-missing-visible-posts` — requeue постов авторов без видимого Complete-сообщения.
+- Runbook: `docs/specialist-ops-phase1.md`, `docs/specialist-channels-enable.md`, `docs/specialist-ai-requeue-missing-visible.md`.
+- **Вне скоупа фазы 1:** two-pass Ollama, hiring-эвристики builders, перевод каналов на локальный ИИ.
 
 ---
 
