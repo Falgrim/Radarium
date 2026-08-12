@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiChannelPostStatusEnum;
+use App\Enum\ApiChannelSourceEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
+use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\DictionaryEnum;
 use App\Enum\ModerationAlertSystemEnum;
 use App\Enum\ModerationAlertTableNameEnum;
 use App\Exceptions\AiProviderUnavailableException;
 use App\Models\ApiChannel;
 use App\Models\ApiChannelPost;
+use App\Models\ApiPostUser;
 use App\Models\Specialist;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Log;
@@ -201,10 +203,33 @@ final class SpecialistPostImporter
         string $aiResultJson,
         bool $heuristicFallback,
     ): array {
+        $apiPostUser = $this->resolveOrCreateApiPostUser($post);
+        if ($apiPostUser === null) {
+            $post->ai_result = $this->wrapAiResult($aiResultJson, $context, [
+                'route' => 'error_missing_api_post_user',
+            ]);
+            $post->ai_date = now();
+            $post->ai_parse_status = ApiChannelPostStatusEnum::Error;
+            $post->save();
+
+            Log::channel('ai_debug')->warning('[SpecialistPostImporter] missing api_post_user', [
+                'api_channel_post_id' => $post->id,
+                'user_login_id' => $post->user_login_id,
+                'context' => $context,
+            ]);
+
+            return [
+                'status' => self::STATUS_ERROR,
+                'specialist_id' => null,
+                'message' => 'Нет автора поста (api_post_user) — карточка не создана',
+            ];
+        }
+
         Specialist::where('api_channel_post_id', $post->id)->delete();
 
+        $payload = BuilderNormalizer::sanitizePriceFields($payload);
         $payload['post_date'] = $post->post_date;
-        $payload['api_post_user_id'] = $post->apiPostUser->id;
+        $payload['api_post_user_id'] = $apiPostUser->id;
         $payload['api_channel_post_id'] = $post->id;
 
         if (empty($payload['contact_info'])) {
@@ -356,6 +381,63 @@ final class SpecialistPostImporter
             ->value('ai_promt');
 
         return is_string($fromAny) ? trim($fromAny) : '';
+    }
+
+    /**
+     * Находит автора поста или создаёт минимальную запись ApiPostUser по user_login_id.
+     * Без автора карточка не попадает в публичную выдачу по авторам.
+     */
+    private function resolveOrCreateApiPostUser(ApiChannelPost $post): ?ApiPostUser
+    {
+        $existingId = (int) ($post->api_post_user_id ?? 0);
+        if ($existingId > 0) {
+            $linked = $post->apiPostUser;
+            if ($linked !== null) {
+                return $linked;
+            }
+            $byId = ApiPostUser::query()->find($existingId);
+            if ($byId !== null) {
+                return $byId;
+            }
+        }
+
+        $externalUserId = trim((string) ($post->user_login_id ?? ''));
+        if ($externalUserId === '' || $externalUserId === '0') {
+            return null;
+        }
+
+        $channelSource = $post->channel?->channel_source;
+        if ($channelSource === null) {
+            $channelSource = ApiChannelSourceEnum::Telegram;
+        }
+
+        $user = ApiPostUser::query()
+            ->where('user_id', $externalUserId)
+            ->where('channel_source', $channelSource)
+            ->first();
+
+        if ($user === null) {
+            $user = ApiPostUser::create([
+                'user_id' => $externalUserId,
+                'channel_source' => $channelSource,
+                'username' => (string) ($post->user_login ?? ''),
+                'send_welcome_msg' => ApiPostUserMailingStatusEnum::Waiting,
+                'is_company' => ApiDataTypeEnum::Specialist,
+            ]);
+
+            Log::channel('ai_debug')->info('[SpecialistPostImporter] created api_post_user stub', [
+                'api_channel_post_id' => $post->id,
+                'api_post_user_id' => $user->id,
+                'user_id' => $externalUserId,
+            ]);
+        }
+
+        if ((int) $post->api_post_user_id !== (int) $user->id) {
+            $post->api_post_user_id = $user->id;
+            $post->save();
+        }
+
+        return $user;
     }
 
     /**

@@ -74,6 +74,8 @@ final class BuilderUpsertService
      */
     public function upsert(array $payload): array
     {
+        $payload = BuilderNormalizer::sanitizePriceFields($payload);
+
         $postId = $payload['api_channel_post_id'] ?? null;
         if ($postId === null || $postId === '') {
             throw new \InvalidArgumentException('BuilderUpsertService: отсутствует api_channel_post_id в payload');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enum\ApiChannelPostStatusEnum;
+use App\Exceptions\AiContentRefusalException;
 use App\Exceptions\AiProviderUnavailableException;
 use App\Models\ApiChannelPost;
 use Illuminate\Console\Command;
@@ -39,6 +40,25 @@ final class AiParsePostExceptionHandler
             return;
         }
 
+        if ($this->isContentRefusal($e)) {
+            if ($aiService !== null && method_exists($aiService, 'logging')) {
+                $aiService->logging($e->getMessage(), true);
+            }
+
+            $post->ai_result = $e->getMessage();
+            $post->ai_date = now();
+            $post->ai_parse_status = ApiChannelPostStatusEnum::DontMatch;
+            $post->save();
+
+            $command->warn(sprintf(
+                'Отказ модели (safety) — пост %d помечен DontMatch: %s',
+                $post->id,
+                $e->getMessage()
+            ));
+
+            return;
+        }
+
         $command->error($e->getMessage());
 
         if ($aiService !== null && method_exists($aiService, 'logging')) {
@@ -60,6 +80,15 @@ final class AiParsePostExceptionHandler
         $previous = $e->getPrevious();
 
         return $previous !== null && $this->isProviderUnavailable($previous);
+    }
+
+    public function isContentRefusal(\Throwable $e): bool
+    {
+        if ($e instanceof AiContentRefusalException) {
+            return true;
+        }
+
+        return AiModelJsonReplyDecoder::looksLikeSafetyRefusal($e->getMessage());
     }
 
     /**
