@@ -161,6 +161,9 @@ class BuilderNormalizer
      * Если после очистки пусто или не числовое — вернуть null.
      * Возвращает сумму в рублях (целое число).
      */
+    /** Верхняя граница MySQL SIGNED INT — иначе INSERT падает (часто телефон вместо цены). */
+    public const MYSQL_INT_MAX = 2147483647;
+
     public static function cleanPrice(?string $raw): ?int
     {
         if ($raw === null || $raw === '') {
@@ -174,7 +177,45 @@ class BuilderNormalizer
             return null;
         }
 
-        return (int)round((float)$cleaned);
+        $value = (int) round((float) $cleaned);
+        if ($value < 0 || $value > self::MYSQL_INT_MAX) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Нормализация price_* полей перед INSERT (null / пусто / out-of-range → null).
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
+     */
+    public static function sanitizePriceFields(array $payload, array $keys = [
+        'price_by_hour',
+        'price_by_project',
+        'price_by_month',
+        'min_price',
+        'max_price',
+    ]): array {
+        foreach ($keys as $key) {
+            if (! array_key_exists($key, $payload)) {
+                continue;
+            }
+            $raw = $payload[$key];
+            if ($raw === null || $raw === '' || $raw === '?') {
+                $payload[$key] = null;
+                continue;
+            }
+            if (is_int($raw)) {
+                $payload[$key] = ($raw < 0 || $raw > self::MYSQL_INT_MAX) ? null : $raw;
+                continue;
+            }
+            $payload[$key] = self::cleanPrice(is_string($raw) ? $raw : (string) $raw);
+        }
+
+        return $payload;
     }
 
     // TODO (Stage 2): перейти на DI через app(BuilderNormalizer::class),

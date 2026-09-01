@@ -1,6 +1,17 @@
 # Radarium — журнал изменений
 
-> Период: **с 08.04.2026** по состояние репозитория на **07.08.2026**.
+> Период: **с 08.04.2026** по состояние репозитория на **11.08.2026**.
+
+---
+
+## 2026-08-11
+
+### AI / мониторинг
+- `app:ai:yandex-health-check` (`AiYandexHealthCheck`) — проверка доступности YandexGPT живым minimal-completion запросом по активным `api_ais` (`yandexgtp4`); интеграция с `AiProviderHealthAlertService` (баннер/алерт, endpoint `yandex.cloud`); в scheduler каждые 15 минут рядом с `app:ai:health-check` (Ollama). Тесты: `tests/Unit/Console/AiYandexHealthCheckTest.php`.
+
+### Документация / Telegram VPN
+- `DOC/RADARIUM_TECHDOC.md` §6.9 синхронизирован с итогом инцидента **2026-08-06**: Reality dest `dl.google.com` + `fingerprint: firefox`, диагностика SOCKS `000` до правок Laravel, переавторизация после простоя.
+- `docs/madelineproto-vpn-routing.md` — актуальный пример Reality SNI/fingerprint; ссылка на handoff.
 
 ---
 
@@ -13,6 +24,14 @@
 - `app:ai_parse:requeue-specialist-missing-visible-posts` — requeue постов авторов без видимого Complete-сообщения.
 - Runbook: `docs/specialist-ops-phase1.md`, `docs/specialist-channels-enable.md`, `docs/specialist-ai-requeue-missing-visible.md`.
 - **Вне скоупа фазы 1:** two-pass Ollama, hiring-эвристики builders, перевод каналов на локальный ИИ.
+
+---
+
+## 2026-07-15
+
+### Telegram / MadelineProto — профилактика гонок рассылки
+- `SendMessageTelegram::send()`: настройки через `MadelineConnectionConfigurator::buildSettings()`; корректный shutdown (`unset` + `API::finalize()` вместо `gc_collect_cycles()`).
+- Документация: обновлён §6.5.2 в `DOC/RADARIUM_TECHDOC.md`.
 
 ---
 

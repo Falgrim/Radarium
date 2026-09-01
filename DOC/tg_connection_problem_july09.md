@@ -308,12 +308,263 @@ Test-NetConnection 103.90.72.46 -Port 443
 
 ---
 
-## Открытые вопросы
+## Открытые вопросы (июль 2026) — закрыты 2026-08-06
 
-1. ~~Почему VLESS не устанавливается при совпадающих ключах?~~ → Reality handshake с `www.microsoft.com` (большой cert); смена на `dl.google.com` + `fingerprint: firefox`
-2. ~~Нужна ли переавторизация?~~ → да, после простоя VPN: `app:tg_auth --qr --reset`
-3. Следить, чтобы `withoutOverlapping` реально не допускал параллельные `tg_parse:*` при `schedule:run` каждые 2 мин
+1. Почему VLESS prod→VPS не устанавливается при совпадающих ключах? → **Reality dest `www.microsoft.com`** (Akamai cert); фикс — `dl.google.com` + `fingerprint: firefox`
+2. Почему в 07:06 был один успешный `accepted` на VPS, а потом нет? → туннель деградировал на маскировке microsoft; после смены dest — стабильно
+3. Нужны ли IPC-правки в коде после починки VPN? → **нет**; достаточно переавторизации сессии после простоя
 
 ---
 
-*Файл создан для handoff между машинами. Обновлён 2026-08-06 после успешного восстановления.*
+# Продолжение: инцидент 2026-08-05 (05082026)
+
+**Дата:** 2026-08-05 (решено 2026-08-06)  
+**Статус:** ✅ Решено — см. **«Итог (2026-08-06)»** в начале файла и `DOC/RADARIUM_TECHDOC.md` §6.9  
+**Цель:** восстановить VLESS/Reality prod → VPS, затем smoke `app:tg_parse:builder`
+
+> Ниже — архив диагностики на момент паузы 05.08. Пункты 1–3 выполнены на другой машине; фикс — смена Reality dest на `dl.google.com` + переавторизация MadelineProto.
+
+---
+
+## Промпт для нового диалога в Cursor (скопировать целиком)
+
+```
+Продолжаем задачу по восстановлению доступа Radarium → Telegram через Xray VPN.
+
+Полный контекст: DOC/tg_connection_problem_july09.md
+(блок «Продолжение: инцидент 2026-08-05» + исходный handoff июля).
+
+Симптом приложения (не корневая причина):
+  php artisan app:tg_parse:builder
+  → getHistory: «The endpoint does not exist!»
+  → «Сессия session.madeline.22885091: IPC недоступен… Пропущено каналов: 30»
+Код Laravel / MadelineProto / сброс IPC — НЕ чинить, пока SOCKS→Telegram не даёт 200/301/302.
+
+Корневая причина (доказано 2026-08-05):
+  prod SOCKS 127.0.0.1:10808 принимает запросы локально,
+  TCP prod → VPS 103.90.72.46:443 OK,
+  VPS → api.telegram.org = 302 OK,
+  Reality keys совпадают,
+  НО VLESS/Reality хендшейк prod→VPS НЕ проходит:
+  - curl -x socks5h://127.0.0.1:10808 … https://api.telegram.org → 000
+  - TLS Client Hello уходит, ответ 0 bytes / timeout
+  - на VPS journalctl при live-curl НЕТ «from 77.222.58.189 … accepted»
+  - последний успешный accepted с prod на VPS: Jul 09 07:06:29
+
+Серверы:
+  Prod: 77-222-58-189 / 77.222.58.189, проект ~/www/progs.com
+  VPS:  103.90.72.46 / falgrim01.fvds.ru
+  Xray client SOCKS: 127.0.0.1:10808
+  Сессия парсинга: session.madeline.22885091
+
+Сделано сегодня (не повторять без нужды):
+  - pkill MadelineProto, config:clear, сброс ipcState/ipc — парсинг всё равно падает
+  - restart xray на prod и на VPS — curl всё равно 000
+  - x25519 privateKey VPS → Password = l_JN1lPlyZShBATsDXQKT4B_XCMTSurcyTpvYYV4ZV8 (совпадает с эталоном)
+
+НАЧНИ СРАЗУ с пунктов 1, 2, 3 ниже (конфиги → tcpdump → debug).
+Не предлагай правки Laravel, пока curl через SOCKS не станет 200/301/302.
+После оживления туннеля — smoke app:tg_parse:builder (шаг 5 июля / §6.9 TECHDOC).
+```
+
+---
+
+## Хронология 2026-08-05
+
+### A. Симптом в приложении
+
+```text
+www-root@77-222-58-189:~/www/progs.com$ php artisan app:tg_parse:builder
+Подключение к Telegram…
+Выборка с даты: 16:31:27 25.06.2026
+getHistory … The endpoint does not exist!
+Сессия session.madeline.22885091: IPC недоступен
+(worker MadelineProto не подключился к Telegram DC).
+Пропущено каналов: 30 [ID: 9, 54…82]
+```
+
+### B. Быстрая проверка сети на prod
+
+| Проверка | Результат |
+|----------|-----------|
+| `curl -x socks5h://127.0.0.1:10808 … api.telegram.org` | **000** |
+| `systemctl status xray` | active (до рестарта uptime с **2026-07-09**) |
+| `ss -lntp \| grep 10808` | LISTEN `127.0.0.1:10808` |
+| `pkill MadelineProto` + `config:clear` + сброс IPC `22885091` | сделано |
+| повторный `app:tg_parse:builder` | снова `The endpoint does not exist!` |
+
+**Вывод:** Laravel/IPC — следствие; SOCKS uplink мёртв.
+
+### C. Prod после restart xray
+
+| Проверка | Результат |
+|----------|-----------|
+| `nc -zv 103.90.72.46 443 -w 5` | **succeeded** |
+| `curl` через SOCKS после `systemctl restart xray` | снова **000** |
+| `curl -v` через SOCKS | `SOCKS5 request granted` → TLS Client Hello → **timeout 15s, 0 bytes** |
+| journalctl prod | `from tcp:127.0.0.1 accepted tcp:api.telegram.org:443` и частые `…149.154.167.41:443` |
+
+Частые обращения к `149.154.167.41` — Madeline/cron бьётся в мёртвый туннель.  
+Строки `from tcp:127.0.0.1 accepted` на **prod** = только локальный SOCKS, **не** успех VLESS.
+
+### D. Состояние VPS
+
+| Проверка | Результат |
+|----------|-----------|
+| xray | active (до рестарта uptime с **2026-07-06**) |
+| `ss -lntp \| grep 443` | LISTEN `*:443` |
+| `curl` (без прокси) `https://api.telegram.org` | **302** |
+| journalctl: последний `from 77.222.58.189 accepted` | **Jul 09 07:06:29** (`tcp:149.154.167.50:443`) |
+| после этого до 05.08 | новых `accepted` с prod **нет** |
+
+### E. Рестарт VPS + сверка ключей (выполнено)
+
+- `sudo systemctl restart xray` на VPS — OK (Active since Wed 2026-08-05 15:06:06 CEST)
+- `xray x25519 -i "mCanpwQG5U5_6OmIHri-Qc6E4I06xkIPtd5WEbaJnGM"`  
+  → Password (PublicKey): **`l_JN1lPlyZShBATsDXQKT4B_XCMTSurcyTpvYYV4ZV8`** — совпадает с эталоном июля
+- grep конфига на VPS показал server-side поля (`port` 443, UUID, `flow`); **полный client config на prod ещё не снят**
+
+### F. Live-тест (оба хоста одновременно) — критический результат
+
+**Prod:**
+```bash
+curl -x socks5h://127.0.0.1:10808 -m 15 -s -o /dev/null -w '%{http_code}\n' https://api.telegram.org
+# → 000
+```
+
+**VPS** (`journalctl -u xray -f` в тот же момент):  
+**тишина** — нет новой строки `from 77.222.58.189 … accepted`.
+
+**Заключение:** VLESS/Reality хендшейк не устанавливается. TCP:443 жив, ключи совпадают, выход VPS в Telegram жив → нужен разбор Reality/пакетов/конфигов (не код приложения).
+
+---
+
+## Текущий checkpoint (2026-08-05, вечер)
+
+| Компонент | Статус |
+|-----------|--------|
+| VPS xray running (после restart) | ✅ |
+| VPS :443 listen | ✅ |
+| VPS → Telegram | ✅ (302) |
+| Reality private→public | ✅ совпадает |
+| prod nc → VPS:443 | ✅ |
+| prod SOCKS inbound | ✅ |
+| prod VLESS → VPS | ❌ live-curl: 000 + нет accepted на VPS |
+| MadelineProto парсинг | ❌ ждёт VPN |
+| Полные config.json (prod + VPS) | ⏳ не сняты |
+| tcpdump prod→VPS:443 | ⏳ не сделан |
+| debug loglevel на prod | ⏳ не сделан |
+
+**Эталон параметров (из июля, проверять по полным JSON):**
+
+| Параметр | Значение |
+|----------|----------|
+| VPS | `103.90.72.46:443` |
+| UUID | `0b7460af-59f1-403a-806b-63ea01be97a1` |
+| flow | `xtls-rprx-vision` |
+| serverName / dest | `www.microsoft.com` |
+| publicKey | `l_JN1lPlyZShBATsDXQKT4B_XCMTSurcyTpvYYV4ZV8` |
+| privateKey (VPS) | `mCanpwQG5U5_6OmIHri-Qc6E4I06xkIPtd5WEbaJnGM` |
+| shortId | `6ba85179e30d4fc2` |
+| fingerprint | `chrome` |
+| SOCKS | `127.0.0.1:10808` |
+
+---
+
+## СЛЕДУЮЩИЕ ШАГИ — начать отсюда (пункты 1, 2, 3)
+
+> Выполнять по порядку. После каждого — фиксировать вывод в этот файл или в чат.
+
+### 1. Оба конфига целиком
+
+**Prod:**
+```bash
+sudo cat /usr/local/etc/xray/config.json
+```
+
+**VPS:**
+```bash
+sudo cat /usr/local/etc/xray/config.json
+```
+
+Сверить глазами: UUID, flow, shortId ↔ shortIds[], serverName ↔ serverNames[], publicKey/privateKey, address `103.90.72.46:443`, listen `:443`.
+
+### 2. Видит ли VPS TCP с prod во время curl
+
+**VPS** (одно окно):
+```bash
+sudo tcpdump -ni any host 77.222.58.189 and port 443 -c 20
+```
+
+**Prod** (в тот же момент):
+```bash
+curl -x socks5h://127.0.0.1:10808 -m 15 -s -o /dev/null -w '%{http_code}\n' https://api.telegram.org
+```
+
+| tcpdump | Вывод |
+|---------|-------|
+| есть пакеты `77.222.58.189 → VPS:443` | TCP доходит → ломается Reality/конфиг |
+| пусто | фильтрация / не тот маршрут (редко при живом `nc`) |
+
+### 3. Debug на prod + проверка camouflage dest на VPS
+
+**Prod:**
+```bash
+sudo python3 - <<'PY'
+import json
+p="/usr/local/etc/xray/config.json"
+c=json.load(open(p))
+c.setdefault("log",{})["loglevel"]="debug"
+json.dump(c, open(p,"w"), indent=2)
+print("ok")
+PY
+sudo systemctl restart xray
+# окно 1:
+sudo journalctl -u xray -f --no-pager
+# окно 2:
+curl -x socks5h://127.0.0.1:10808 -m 15 -v https://api.telegram.org -o /dev/null
+```
+
+Искать в debug: `failed` / `reality` / `rejected` / `dial` / `timeout`.  
+После диагностики вернуть `"loglevel": "warning"` и `systemctl restart xray`.
+
+**VPS:**
+```bash
+curl -m 10 -s -o /dev/null -w '%{http_code}\n' https://www.microsoft.com
+```
+
+### После пунктов 1–3 (если туннель всё ещё мёртв)
+
+Возможные направления (не делать вслепую до 1–3):
+- явный `tag` + `routing` на prod (см. шаг 2 июля выше);
+- смена SNI/dest / перегенерация Reality shortId+ключей;
+- проверка с другой сети тем же VLESS-клиентом (исключить DPI хостера prod);
+- смена VPS/транспорта.
+
+### Когда туннель оживёт (критерии)
+
+1. На VPS при curl с prod: `from 77.222.58.189:… accepted tcp:api.telegram.org:443` (или DC IP)
+2. На prod: `curl -x socks5h://127.0.0.1:10808 …` → **200 / 301 / 302**
+3. Затем smoke:
+```bash
+# prod, ~/www/progs.com
+pkill -f "MadelineProto worker" 2>/dev/null
+rm -f session.madeline.22885091/ipcState.php
+find session.madeline.22885091 -maxdepth 1 \( -name 'ipc' -o -name 'callback.ipc' \) -delete
+php artisan config:clear
+php artisan app:tg_parse:builder
+```
+4. Если VPN OK, а парсинг всё ещё падает с `DC -1` / битой сессией → `app:tg_auth --api-id=22885091 --api-hash=… --qr --reset` (TECHDOC §6.9). **Не** FLUSHDB Redis, **не** подменять старый `safe.php`.
+
+---
+
+## Что не делать
+
+- Не править Laravel/IPC «вслепую», пока SOCKS curl ≠ 200/301/302
+- Не включать `SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED` на prod
+- Не путать prod-лог `from tcp:127.0.0.1 accepted` с успехом туннеля
+- Не считать рестарт xray достаточным без live-теста на VPS
+
+---
+
+*Обновлено 2026-08-05 для handoff между машинами Cursor. Продолжать с пунктов 1–3.*
