@@ -1,0 +1,56 @@
+VK-сообщества — источники сообщений (строительные биржи)
+Источник: database/seeders/VkConstructionGroupsChannelSeeder.php
+Тип выборки: строители (Builder)
+Всего: 13
+
+1. Строители МСК
+   https://vk.com/stroiteli_msk
+   Регион: Москва
+
+2. Бригады строителей
+   https://vk.com/brigadastroitelei
+   Регион: Москва
+
+3. Стройбиржа
+   https://vk.com/stroybirzharu
+   Регион: Москва
+
+4. Сообщество club164811551
+   https://vk.com/club164811551
+   Регион: Москва
+
+5. Стройка City
+   https://vk.com/stroykacity
+   Регион: Москва
+
+6. Строим Москва
+   https://vk.com/stroim.moscow
+   Регион: Москва
+
+7. Строители
+   https://vk.com/stroitelli
+   Регион: Москва
+
+8. trip_road
+   https://vk.com/trip_road
+   Регион: Москва
+
+9. Сообщество club153705757
+   https://vk.com/club153705757
+   Регион: Москва
+
+10. Сообщество club191907267
+    https://vk.com/club191907267
+    Регион: Москва
+
+11. Сообщество club172567924
+    https://vk.com/club172567924
+    Регион: Москва
+
+12. Сообщество club153705922
+    https://vk.com/club153705922
+    Регион: Москва
+
+13. Строй Питер
+    https://vk.com/stroypiter
+    Регион: Санкт-Петербург
