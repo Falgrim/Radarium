@@ -73,4 +73,33 @@ final class AiProviderHealthAlertServiceTest extends TestCase
         $cacheKey = 'ai_provider_down_alert:'.hash('sha256', mb_strtolower('http://127.0.0.1:11434'));
         $this->assertFalse(Cache::has($cacheKey));
     }
+
+    public function test_health_banner_view_auto_hides_after_five_seconds(): void
+    {
+        $html = view('moonshine.components.ai-provider-health-banner', [
+            'banners' => [[
+                'provider_label' => 'Ollama Qwen',
+                'endpoint' => 'http://127.0.0.1:11434',
+                'detail' => 'cURL error 7',
+                'posts_in_queue' => 3,
+                'since' => now()->toIso8601String(),
+                'updated_at' => now()->toIso8601String(),
+            ]],
+            'apiAiUrl' => 'http://localhost/admin/resource/api-ai-resource/api-ai-index-page',
+        ])->render();
+
+        $this->assertStringContainsString('data-autohide-ms="5000"', $html);
+        $this->assertStringContainsString('sessionStorage', $html);
+        $this->assertStringContainsString('ИИ недоступен', $html);
+    }
+
+    public function test_health_banner_view_is_empty_without_banners(): void
+    {
+        $html = view('moonshine.components.ai-provider-health-banner', [
+            'banners' => [],
+            'apiAiUrl' => 'http://localhost/admin',
+        ])->render();
+
+        $this->assertSame('', trim($html));
+    }
 }

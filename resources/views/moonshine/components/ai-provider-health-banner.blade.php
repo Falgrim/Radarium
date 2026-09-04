@@ -1,5 +1,18 @@
 @if ($banners !== [])
-    <div class="ai-provider-health-banner" role="alert" aria-live="assertive">
+    @php
+        $bannerSignature = collect($banners)
+            ->map(fn (array $banner): string => ($banner['endpoint'] ?? '').'|'.($banner['since'] ?? ''))
+            ->implode(';');
+    @endphp
+    <div
+        id="ai-provider-health-banner"
+        class="ai-provider-health-banner"
+        role="alert"
+        aria-live="assertive"
+        hidden
+        data-autohide-ms="5000"
+        data-session-key="moonshine-ai-provider-health-banner:{{ md5($bannerSignature) }}"
+    >
         @foreach ($banners as $banner)
             <div class="ai-provider-health-banner__item">
                 <div class="ai-provider-health-banner__title">
@@ -26,16 +39,27 @@
 
     <style>
         .ai-provider-health-banner {
-            position: sticky;
-            top: 0;
-            z-index: 1200;
-            margin: 0 0 1rem;
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            z-index: 10050;
+            width: min(42rem, calc(100vw - 2rem));
+            margin: 0;
             border: 3px solid #b91c1c;
             border-radius: 0.75rem;
             background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 45%, #991b1b 100%);
             color: #fff;
             box-shadow: 0 12px 32px rgba(185, 28, 28, 0.45);
+            transform: translateX(-50%);
             animation: ai-provider-health-banner-pulse 1.6s ease-in-out infinite;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        .ai-provider-health-banner--hiding {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-12px);
+            pointer-events: none;
+            animation: none;
         }
 
         .ai-provider-health-banner__item {
@@ -108,4 +132,38 @@
             }
         }
     </style>
+
+    <script>
+        (function () {
+            var banner = document.getElementById('ai-provider-health-banner');
+            if (!banner) {
+                return;
+            }
+
+            var storageKey = banner.getAttribute('data-session-key') || 'moonshine-ai-provider-health-banner';
+            var hideMs = parseInt(banner.getAttribute('data-autohide-ms') || '5000', 10);
+            if (isNaN(hideMs) || hideMs < 0) {
+                hideMs = 5000;
+            }
+
+            try {
+                if (window.sessionStorage.getItem(storageKey) === '1') {
+                    banner.remove();
+                    return;
+                }
+                window.sessionStorage.setItem(storageKey, '1');
+            } catch (e) {
+                // sessionStorage может быть недоступен — показываем баннер один раз на этой загрузке
+            }
+
+            banner.hidden = false;
+
+            window.setTimeout(function () {
+                banner.classList.add('ai-provider-health-banner--hiding');
+                window.setTimeout(function () {
+                    banner.remove();
+                }, 400);
+            }, hideMs);
+        })();
+    </script>
 @endif
