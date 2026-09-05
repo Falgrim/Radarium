@@ -1056,9 +1056,8 @@ AI-команды создают доменные сущности и затем
   - выбирают `api_channel_posts.ai_parse_status = InQueue`
   - создают `specialists` / `builders` / `company_jobs`
   - переводят пост в `Complete`/`Error`/`DontMatch`/`Empty` (в зависимости от ветки)
-- `app:ai_parse:reset-builder-queue` (`AiResetBuilderQueue`): массовый возврат builder-постов в `InQueue` за период (по дате и провайдеру; есть `--dry-run`; при requeue удаляются старые `Builder` с тем же `api_channel_post_id`).
+- `app:ai_parse:requeue` (`AiRequeuePosts`): единая команда возврата сообщений в `InQueue` и немедленного запуска обработки. Опции: `--type=all|specialist|builder|company`, `--status=unprocessed|all|список`, `--from`/`--to` + `--date-field`, `--provider`, `--keep-metadata`, `--no-dispatch`, `--dry-run`. Логика вынесена в `AiReprocessService`, тот же сервис используют кнопки админки. При возврате в очередь удаляются карточки каталога с тем же `api_channel_post_id`. Заменяет прежние `app:ai_parse:reset-builder-queue` и `app:ai_parse:reset-specialist-queue`.
 - `app:ai_parse:requeue-builder-missing-visible-posts` (`AiRequeueBuilderMissingVisiblePosts`): выборочный requeue для авторов каталога без «видимого» Complete-поста (`--dry-run` / `--apply`).
-- `app:ai_parse:reset-specialist-queue` (`AiResetSpecialistQueue`): то же для каналов проектировщиков (default `--provider` пустой = любой; при apply удаляются связанные `Specialist`).
 - `app:ai_parse:requeue-specialist-missing-visible-posts` (`AiRequeueSpecialistMissingVisiblePosts`): requeue для авторов каталога «Проектирование» без видимого Complete-поста (`PublicSpecialistCatalogScope`).
 - `app:channels:enable-specialists` (`EnableSpecialistChannelsCommand`): инвентаризация/включение disabled specialist-каналов (`--dry-run` / `--apply`). Runbook: `docs/specialist-ops-phase1.md`.
 - `app:builders:rematch_specialities` (`RematchBuilderSpecialities`): пересчёт `builder_specialities` по тексту поста и сохранённому JSON ИИ (с cap специализаций и `AuthorCatalogSpecialitiesSync`).

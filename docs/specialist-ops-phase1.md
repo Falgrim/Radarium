@@ -56,16 +56,18 @@ Runbook для включения каналов, smoke-парсинга и ops-
 8. Массовый reset очереди за период (осторожно — удаляет связанные `specialists`):
 
    ```bash
-   php artisan app:ai_parse:reset-specialist-queue 2026-07-01 2026-08-07 --dry-run
-   php artisan app:ai_parse:reset-specialist-queue 2026-07-01 2026-08-07 --provider=yandexgtp4
+   php artisan app:ai_parse:requeue --type=specialist --status=all --from=2026-07-01 --to=2026-08-07 --dry-run
+   php artisan app:ai_parse:requeue --type=specialist --status=all --from=2026-07-01 --to=2026-08-07 --provider=yandexgtp4
    ```
+
+   Обработка стартует сразу в фоне (нужен запущенный `queue:work`); для прежнего поведения добавьте `--no-dispatch`.
 
 ## Критерии готовности фазы 1
 
 - Disabled specialist-каналы включены (или оставлены выключенными осознанно после dry-run)
 - `tg_parse:specialist` без ошибок shared Madeline
 - AI остаётся на YandexGPT (исключения только в отчёте)
-- Доступны `reset-specialist-queue` и `requeue-specialist-missing-visible-posts`
+- Доступны `app:ai_parse:requeue` и `requeue-specialist-missing-visible-posts`
 - **Не** переносились two-pass Ollama и hiring-эвристики builders
 
 ## Фаза 2 (позже)

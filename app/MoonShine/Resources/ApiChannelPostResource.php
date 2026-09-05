@@ -11,6 +11,7 @@ use App\Enum\ApiDataTypeEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Enum\CompanyJobStatusEnum;
 use App\Models\ApiChannelPost;
+use App\Services\AiReprocessService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -119,13 +120,17 @@ class ApiChannelPostResource extends ModelResource
                 'updated_at' => now(),
             ]);
 
+        $message = $updated > 0
+            ? "Статус ИИ обновлён у {$updated} сообщ."
+            : 'Записи не обновлены';
+
+        if ($updated > 0 && $status === ApiChannelPostStatusEnum::InQueue) {
+            $pending = app(AiReprocessService::class)->dispatchProcessing();
+            $message .= " Запущена фоновая обработка, сообщений в очереди: {$pending}";
+        }
+
         return MoonShineJsonResponse::make()
-            ->toast(
-                $updated > 0
-                    ? "Статус ИИ обновлён у {$updated} сообщ."
-                    : 'Записи не обновлены',
-                $updated > 0 ? ToastType::SUCCESS : ToastType::WARNING
-            )
+            ->toast($message, $updated > 0 ? ToastType::SUCCESS : ToastType::WARNING)
             ->redirect(to_page(resource: self::class));
     }
 

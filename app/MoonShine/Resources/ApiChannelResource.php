@@ -9,6 +9,7 @@ use App\Enum\ApiChannelStatusEnum;
 use App\Enum\ApiDataTypeEnum;
 use App\Models\ApiAi;
 use App\Models\ApiChannel;
+use App\Services\AiReprocessService;
 use App\Services\AiSystemPromptAdminService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,7 @@ use MoonShine\Fields\Enum;
 use MoonShine\Fields\Field;
 use MoonShine\Fields\ID;
 use MoonShine\Fields\Json;
+use MoonShine\Fields\Preview;
 use MoonShine\Fields\Relationships\BelongsTo;
 use MoonShine\Fields\Select;
 use MoonShine\Fields\Text;
@@ -78,7 +80,7 @@ class ApiChannelResource extends ModelResource
     }
 
     /**
-     * Кнопки на странице индекса (массовое переключение сервиса ИИ).
+     * Кнопки массового управления ИИ на странице индекса.
      *
      * @return list<ActionButton>
      */
@@ -107,6 +109,26 @@ class ApiChannelResource extends ModelResource
                         ->submit('Применить для всех источников'),
                     isLeft: false
                 ),
+            ActionButton::make('Обработать необработанные сообщения', '#')
+                ->icon('heroicons.arrow-path')
+                ->warning()
+                ->inOffCanvas(
+                    fn () => 'Повторная обработка сообщений',
+                    fn () => FormBuilder::make()
+                        ->name('requeue-unprocessed-ai-messages-form')
+                        ->fields([
+                            Preview::make(
+                                '',
+                                'requeue_hint',
+                                static fn (): string => 'Сообщения со статусами «Ошибка обработки» и «Нет данных» '
+                                    .'будут возвращены в очередь. Все сообщения со статусом «В очереди» '
+                                    .'будут обработаны назначенными источникам сервисами ИИ.'
+                            ),
+                        ])
+                        ->asyncMethod('requeueUnprocessedAiMessages')
+                        ->submit('Запустить обработку'),
+                    isLeft: false
+                ),
         ];
     }
 
@@ -116,16 +138,39 @@ class ApiChannelResource extends ModelResource
     public function massUpdateAiService(MoonShineRequest $request): MoonShineJsonResponse
     {
         $apiAiId = $request->integer('api_ai_id');
-        if (! $apiAiId || ! ApiAi::query()->where('id', $apiAiId)->exists()) {
+        $apiAi = $apiAiId ? ApiAi::query()->find($apiAiId) : null;
+
+        if (! $apiAi) {
             return MoonShineJsonResponse::make()
                 ->toast('Выберите корректный сервис ИИ', ToastType::ERROR);
         }
 
         $updated = ApiChannel::query()->update(['api_ai_id' => $apiAiId]);
+        $pending = app(AiReprocessService::class)->dispatchProcessing();
 
         return MoonShineJsonResponse::make()
             ->toast(
-                "Сервис ИИ обновлён для всех источников ({$updated} шт.)",
+                "Сервис «{$apiAi->title}» назначен всем источникам ({$updated} шт.). "
+                    ."Необработанные сообщения поставлены в фоновую обработку ({$pending} шт.)",
+                ToastType::SUCCESS
+            )
+            ->redirect(to_page(resource: self::class));
+    }
+
+    /**
+     * Возвращает неуспешно обработанные сообщения в очередь и запускает ИИ.
+     */
+    public function requeueUnprocessedAiMessages(): MoonShineJsonResponse
+    {
+        $service = app(AiReprocessService::class);
+
+        $requeued = $service->requeue();
+        $pending = $service->dispatchProcessing();
+
+        return MoonShineJsonResponse::make()
+            ->toast(
+                "Фоновая обработка запущена для {$pending} сообщ. "
+                    ."Возвращено в очередь после ошибок или отсутствия данных: {$requeued}",
                 ToastType::SUCCESS
             )
             ->redirect(to_page(resource: self::class));
