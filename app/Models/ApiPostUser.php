@@ -9,6 +9,7 @@ use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Services\ReadTelegramChats;
+use App\Support\CatalogLastMessage;
 use App\Support\TelegramPostUrl;
 use App\Traits\ModelTableName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -327,12 +328,36 @@ class ApiPostUser extends Model
     }
 
     /**
+     * Последнее сообщение среди постов, по которым созданы записи проектировщиков (specialists).
+     * По этой же дате каталог проектировщиков сортирует авторов.
+     */
+    public function lastSpecialistPost(): ?ApiChannelPost
+    {
+        return $this->lastCardPost(CatalogLastMessage::SPECIALIST_RELATION, fn (): HasMany => $this->specialists());
+    }
+
+    /**
      * Последнее сообщение среди постов, по которым созданы записи строителей (builders).
      * Используется на странице поиска строителей.
      */
     public function lastBuilderPost(): ?ApiChannelPost
     {
-        $postIds = $this->builders()
+        return $this->lastCardPost(CatalogLastMessage::BUILDER_RELATION, fn (): HasMany => $this->builders());
+    }
+
+    /**
+     * Запасной путь для одиночной модели: в списках каталога значение уже подложено
+     * пачкой в {@see CatalogLastMessage}, чтобы не делать запросы на каждую строку.
+     *
+     * @param  callable(): HasMany  $cards
+     */
+    private function lastCardPost(string $preloadedRelation, callable $cards): ?ApiChannelPost
+    {
+        if ($this->relationLoaded($preloadedRelation)) {
+            return $this->getRelation($preloadedRelation);
+        }
+
+        $postIds = $cards()
             ->where('status', ApiPostAiStatusEnum::Active)
             ->pluck('api_channel_post_id')
             ->filter(fn ($id) => $id !== null && (int) $id > 0)
@@ -345,6 +370,7 @@ class ApiPostUser extends Model
         return ApiChannelPost::whereIn('id', $postIds)
             ->where('ai_parse_status', ApiChannelPostStatusEnum::Complete)
             ->orderByDesc('post_date')
+            ->orderByDesc('id')
             ->first();
     }
 

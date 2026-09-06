@@ -2391,6 +2391,10 @@ figure.pers figcaption {
   color: var(--color-grey97);
 }
 
+.par2cols.post-other-catalog {
+  opacity: .55;
+}
+
 .date-name {
   width: 100%;
   display: flex;

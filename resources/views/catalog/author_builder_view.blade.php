@@ -1,6 +1,8 @@
 @php
     $specialtiesWithShortName = $author->builderSpecialtiesWithShortName();
     $builderData = $author->builderData();
+    $lastPost = $author->lastBuilderPost();
+    $ownPostIds = \App\Support\CatalogLastMessage::builderCardPostIdsFor($author->id);
 @endphp
 
 <x-global-layout>
@@ -89,7 +91,7 @@
                                 <a class="btn btn-color btn-accent" role="button" href="{{ $postUrl }}" target="_blank" rel="noopener noreferrer">Перейти к сообщению в Telegram</a>
                             @endif
 
-                            <button class="btn w-100 btn-trans moderation-alert" type="button" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}" data-api-channel-post-id="{{ $author->lastBuilderPost()?->id }}">Сообщить об ошибке</button>
+                            <button class="btn w-100 btn-trans moderation-alert" type="button" data-bs-toggle="modal" data-bs-target="#moderationAlert" data-type="ApiPostUser" data-id="{{ $author->id }}" data-api-channel-post-id="{{ $lastPost?->id }}">Сообщить об ошибке</button>
                         </div>
                     </div>
                     <div class="col">
@@ -113,10 +115,10 @@
                             <article class="rd-card rd-card-blue">
                                 <h4 class="rd-card-title">Последнее сообщение</h4>
                                 <div class="rd-card-body">
-                                    @if($author->lastBuilderPost()?->post)
+                                    @if($lastPost?->post)
                                     <p class="par2cols">
-                                        <span>{{ $author->lastBuilderPost()?->post }}</span>
-                                        <span>{{ $author->lastBuilderPost()?->post_date->format("d.m.Y") }}</span>
+                                        <span>{{ $lastPost->post }}</span>
+                                        <span>{{ $lastPost->post_date->format("d.m.Y") }}</span>
                                     </p>
                                     @endif
                                 </div>
@@ -151,7 +153,8 @@
                                         <div class="rd-card-body">
                                             @if($author->postsComplete->count())
                                                 @foreach ($author->postsComplete as $post)
-                                                    <p class="par2cols">
+                                                    @php $fromOtherCatalog = !in_array((int) $post->id, $ownPostIds, true); @endphp
+                                                    <p class="par2cols @if($fromOtherCatalog) post-other-catalog @endif" @if($fromOtherCatalog) title="Сообщение из другого раздела каталога" @endif>
                                                         <span>{{ $post->post }}</span>
                                                         <span><span>{{ $post->post_date->format("d.m.Y") }}</span></span>
                                                     </p>

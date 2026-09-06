@@ -15,6 +15,7 @@ use App\Models\DictionarySpeciality;
 use App\Models\UserOpenContact;
 use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
+use App\Support\CatalogLastMessage;
 use App\Support\CatalogRegionOptions;
 use App\Support\PublicBuilderCatalogScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -162,13 +163,26 @@ class BuilderController extends Controller
         $sortDirection = $validated['direction'] ?? 'desc';
 
         $authors = $authors
+            ->select('api_post_users.*')
+            ->addSelect([CatalogLastMessage::SORT_ALIAS => CatalogLastMessage::builderSortKey()])
             ->with(['builderReviews'])
             ->withAvg(['builderReviews' => function ($query) {
                 $query->where('rating', '>', 0);
-            }], 'rating')
-            ->orderBy($sortField, $sortDirection)
+            }], 'rating');
+
+        if ($sortField === 'builder_reviews_avg_rating') {
+            $authors->orderBy($sortField, $sortDirection)
+                ->orderByDesc(CatalogLastMessage::SORT_ALIAS);
+        } else {
+            $authors->orderBy(CatalogLastMessage::SORT_ALIAS, $sortDirection);
+        }
+
+        $authors = $authors
+            ->orderByDesc('api_post_users.id')
             ->paginate($this->onPage)
             ->withQueryString();
+
+        CatalogLastMessage::attachToBuilderAuthors($authors);
 
         $userOpenLog = $this->tariffService->getAllContactsByUser(Auth::user());
 

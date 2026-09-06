@@ -19,15 +19,14 @@ use App\Models\SpecialistSpeciality;
 use App\Models\UserOpenContact;
 use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
+use App\Support\CatalogLastMessage;
 use App\Support\CatalogRegionOptions;
 use App\Support\PublicSpecialistCatalogScope;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -41,56 +40,6 @@ class CatalogController extends Controller
     public function __construct(protected Tariff $tariffService)
     {
 
-    }
-
-    /**
-     * Одна лёгкая выборка последних постов для текущей страницы пагинации.
-     * Eloquent latestOfMany() при eager load даёт тяжёлый SQL на больших таблицах.
-     */
-    private function attachLatestCompletePostsToAuthorsPaginator(LengthAwarePaginator $authors): void
-    {
-        $rows = $authors->getCollection();
-        if ($rows->isEmpty()) {
-            return;
-        }
-
-        $userIds = $rows->pluck('id')->all();
-        $complete = ApiChannelPostStatusEnum::Complete->value;
-        $postsTable = (new ApiChannelPost())->getTable();
-
-        $maxDatePerUser = DB::table($postsTable)
-            ->select('api_post_user_id', DB::raw('MAX(post_date) as max_post_date'))
-            ->where('ai_parse_status', $complete)
-            ->whereIn('api_post_user_id', $userIds)
-            ->groupBy('api_post_user_id');
-
-        $postIdByUser = DB::query()
-            ->from($postsTable.' as p')
-            ->joinSub($maxDatePerUser, 'mx', function ($join) {
-                $join->on('p.api_post_user_id', '=', 'mx.api_post_user_id')
-                    ->on('p.post_date', '=', 'mx.max_post_date');
-            })
-            ->where('p.ai_parse_status', $complete)
-            ->groupBy('p.api_post_user_id')
-            ->select('p.api_post_user_id', DB::raw('MAX(p.id) as post_id'))
-            ->pluck('post_id', 'api_post_user_id');
-
-        if ($postIdByUser->isEmpty()) {
-            foreach ($rows as $author) {
-                $author->setRelation('latestCompletePost', null);
-            }
-
-            return;
-        }
-
-        $posts = ApiChannelPost::query()
-            ->whereIn('id', $postIdByUser->values())
-            ->get()
-            ->keyBy('api_post_user_id');
-
-        foreach ($rows as $author) {
-            $author->setRelation('latestCompletePost', $posts->get($author->id));
-        }
     }
 
     /**
@@ -259,6 +208,8 @@ class CatalogController extends Controller
         $sortDirection = $validated['direction'] ?? 'desc';
 
         $authors = $authors
+            ->select('api_post_users.*')
+            ->addSelect([CatalogLastMessage::SORT_ALIAS => CatalogLastMessage::specialistSortKey()])
             ->with([
                 'specialists' => static function ($query): void {
                     $query->where('status', ApiPostAiStatusEnum::Active)
@@ -270,12 +221,21 @@ class CatalogController extends Controller
             ])
             ->withAvg(['specialistReviews' => function ($query) {
                 $query->where('rating', '>', 0);
-            }], 'rating')
-            ->orderBy($sortField, $sortDirection)
+            }], 'rating');
+
+        if ($sortField === 'specialist_reviews_avg_rating') {
+            $authors->orderBy($sortField, $sortDirection)
+                ->orderByDesc(CatalogLastMessage::SORT_ALIAS);
+        } else {
+            $authors->orderBy(CatalogLastMessage::SORT_ALIAS, $sortDirection);
+        }
+
+        $authors = $authors
+            ->orderByDesc('api_post_users.id')
             ->paginate($this->onPage)
             ->withQueryString();
 
-        $this->attachLatestCompletePostsToAuthorsPaginator($authors);
+        CatalogLastMessage::attachToSpecialistAuthors($authors);
 
         $userOpenLog = $this->tariffService->getAllContactsByUser(Auth::user());
 

@@ -1,5 +1,5 @@
 @php
-    $lastPost = $author->lastPost();
+    $lastPost = $author->lastSpecialistPost();
     $specialties = $author->specialtiesWithShortName(15);
     $checkOpenContact = isset($userOpenLog[$author->id]);
     $specialistData = $author->specialistData();
