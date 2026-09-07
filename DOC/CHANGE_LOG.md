@@ -6,6 +6,20 @@
 
 ## 2026-09-07
 
+### AI / очередь разбора сообщений (каталог строителей стоял на 18.06)
+- **Причина простоя:** очередь разбиралась от самых старых сообщений (`post_date ASC`) партиями по 100. К 07.09 в очереди строителей скопилось 14 835 постов, самый старый — 12.02.2025, и при пропускной способности ~1300 постов в сутки ИИ разбирал архив 2023–2025 годов. За июль–сентябрь ни один пост не получил финального статуса, карточек с датой июля и позже не создавалось вообще. Парсинг Telegram, провайдер `Yandex GPT 5` и сама витрина при этом работали исправно.
+- `app:ai_parse:builder` — свежие сообщения вперёд (`post_date DESC`).
+- `ProcessPendingAiPosts` — порядок партии синхронизирован с командами (`ASC` только для проектировщиков), иначе проверка прогресса останавливала цепочку на первой же партии.
+- `app:ai_parse:archive-stale-queue` (`AiArchiveStaleQueue`) — новая команда: убирает из очереди сообщения глубже `--months` (по умолчанию 6) в `DontMatch` с маркером `archived_stale_queue`, `--dry-run` / `--apply`, JSON-снимок id для отката. Тесты: `tests/Feature/Console/AiArchiveStaleQueueTest.php`.
+- `scripts/diag_builders_catalog.php` — read-only диагностика свежести каталога по стадиям: источники → очередь ИИ → результат ИИ → статус карточки → витрина.
+
+### AI / устойчивость разбора ответа модели
+- `App\Services\AiModelValueNormalizer` — приведение значений JSON-ответа к типу поля карточки. Модель не держит форму из промпта, и на таких ответах разбор падал, а пост уходил в `Error`:
+  - по полю `contact_info` (тип `array_string`) приходила строка — прежний код брал её первый символ и отдавал в `foreach` («foreach() argument must be of type array|object, string given»);
+  - по скалярным полям (`experience`, `soft_experience`) приходили вложенные структуры, по ценам — массивы («Array to string conversion»).
+- `ApiAIYandex` и `ApiAIOllama` переведены на нормализатор (дублирующий код разбора убран). Тесты: `tests/Unit/Services/AiModelValueNormalizerTest.php`, `tests/Unit/ApiAIOllamaTest.php`.
+- `AiBuilderPosts` — добавлен отсутствующий `use App\Services\SpecialistPostImporter`: каждый пост, попадавший в ветку переноса в каталог проектировщиков, падал с `Class "App\Console\Commands\SpecialistPostImporter" not found`.
+
 ### Публичные каталоги / порядок списка авторов
 - `App\Support\CatalogLastMessage` — одно определение «последнего сообщения» для порядка строк и для колонки «Последнее сообщение»: дата берётся по постам активных карточек своей витрины.
 - `/specialists` и `/builders` сортируются по этой дате (`catalog_last_post_date`) вместо `api_post_users.last_post_date`, добавлен тай-брейк по `id` — пагинация перестала «терять» и дублировать авторов при совпадающих датах. Значения `sort=last_post_date` в URL остались рабочими.

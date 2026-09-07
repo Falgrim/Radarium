@@ -36,10 +36,12 @@ final class ProcessPendingAiPosts implements ShouldBeUniqueUntilProcessing, Shou
 
     public function handle(): void
     {
+        // Порядок обязан совпадать с выборкой в app:ai_parse:*, иначе партия останется
+        // необработанной и проверка прогресса ниже остановит цепочку.
         $batchIds = $this->pendingQuery()
             ->orderBy(
                 'api_channel_posts.post_date',
-                $this->dataType === ApiDataTypeEnum::Company ? 'desc' : 'asc'
+                $this->dataType === ApiDataTypeEnum::Specialist ? 'asc' : 'desc'
             )
             ->limit(100)
             ->pluck('api_channel_posts.id');

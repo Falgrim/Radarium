@@ -30,6 +30,7 @@ use App\Services\CatalogPublicationGate;
 use App\Services\Dictionary;
 use App\Services\ModerationAlertService;
 use App\Services\RussianRegionNormalizer;
+use App\Services\SpecialistPostImporter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -55,11 +56,13 @@ class AiBuilderPosts extends Command
      */
     public function handle()
     {
+        // Свежие сообщения вперёд: при разборе от старых накопленный архив занимает все 100 мест
+        // каждого запуска, и публичный каталог неделями не видит новых постов.
         $posts = ApiChannelPost::select('api_channel_posts.*')
             ->where('api_channel_posts.ai_parse_status', ApiChannelPostStatusEnum::InQueue)
             ->leftJoin(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
             ->where('api_channels.is_company', ApiDataTypeEnum::Builder)
-            ->orderBy('api_channel_posts.post_date', 'asc')
+            ->orderBy('api_channel_posts.post_date', 'desc')
             ->take(100)
             ->get();
 
