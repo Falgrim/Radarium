@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ParsesDateOption;
 use App\Models\Builder as BuilderCard;
 use App\Models\Specialist;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\File;
-use Throwable;
 
 /**
  * Мягко удаляет карточки каталога, созданные из сообщений старше указанной даты.
@@ -25,6 +25,8 @@ use Throwable;
  */
 class CatalogPurgeStaleCards extends Command
 {
+    use ParsesDateOption;
+
     /** @var array<string, class-string<BuilderCard|Specialist>> */
     private const CARD_MODELS = [
         'builder' => BuilderCard::class,
@@ -107,32 +109,15 @@ class CatalogPurgeStaleCards extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * Дата принимается только полным днём: диапазон чистки должен читаться из команды однозначно.
-     */
     private function parseBefore(string $raw): ?CarbonImmutable
     {
-        $raw = trim($raw);
-        if ($raw === '') {
+        if (trim($raw) === '') {
             $this->error('Укажите дату отсечения: --before=Y-m-d (например --before=2026-03-01).');
 
             return null;
         }
 
-        try {
-            $date = CarbonImmutable::createFromFormat('!Y-m-d', $raw);
-        } catch (Throwable) {
-            $date = null;
-        }
-
-        // Carbon переполняет невозможные даты («2026-13-45» → следующий год), поэтому сверяем обратное представление.
-        if ($date === null || $date->format('Y-m-d') !== $raw) {
-            $this->error('Параметр --before должен быть датой в формате Y-m-d, получено: '.$raw);
-
-            return null;
-        }
-
-        return $date;
+        return $this->parseDateOption('before', $raw);
     }
 
     /**
