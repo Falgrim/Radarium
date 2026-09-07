@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Собрать app/Data/builder_speciality_dictionary.json из DOC/builder_specialities_updated.xlsx + словари key_words.
+"""Собрать app/Data/builder_speciality_dictionary.json из docs/reference/builder_specialities_updated.xlsx + словари key_words.
 Запуск: python scripts/build_builder_speciality_json.py
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from pathlib import Path
 
 NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 ROOT = Path(__file__).resolve().parents[1]
-XLSX = ROOT / "DOC" / "builder_specialities_updated.xlsx"
+XLSX = ROOT / "docs" / "reference" / "builder_specialities_updated.xlsx"
 OUT = ROOT / "app" / "Data" / "builder_speciality_dictionary.json"
 
 

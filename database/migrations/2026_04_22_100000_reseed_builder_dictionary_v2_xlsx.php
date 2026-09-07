@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
-     * Пересид справочника builder по DOC/builder_specialities_updated.xlsx (лист «Специализации»).
+     * Пересид справочника builder по docs/reference/builder_specialities_updated.xlsx (лист «Специализации»).
      * Очищает связи builder_specialities, заново вставляет dictionary_specialities.
      */
     public function up(): void

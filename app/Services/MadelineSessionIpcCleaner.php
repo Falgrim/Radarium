@@ -5,7 +5,7 @@ namespace App\Services;
 class MadelineSessionIpcCleaner
 {
     /**
-     * Сброс stale IPC MadelineProto (runbook §6.9 RADARIUM_TECHDOC, madelineproto-vpn-routing.md).
+     * Сброс stale IPC MadelineProto (docs/RADARIUM_TECHDOC.md §6.9, docs/runbooks/madelineproto-vpn-routing.md).
      * Нужен после переавторизации и при «The endpoint does not exist!».
      */
     public static function clear(string $sessionName): void

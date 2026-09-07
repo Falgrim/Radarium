@@ -1,6 +1,6 @@
 # Radarium — журнал изменений
 
-> Период: **с 08.04.2026** по состояние репозитория на **11.08.2026**.
+> Период: **с 06.04.2026** по состояние репозитория на **07.09.2026**.
 
 ---
 
@@ -13,11 +13,18 @@
 - `app:ai_parse:archive-stale-queue` (`AiArchiveStaleQueue`) — новая команда: убирает из очереди сообщения глубже `--months` (по умолчанию 6) в `DontMatch` с маркером `archived_stale_queue`, `--dry-run` / `--apply`, JSON-снимок id для отката. Тесты: `tests/Feature/Console/AiArchiveStaleQueueTest.php`.
 - Read-only диагностика свежести каталога по стадиям (источники → очередь ИИ → результат ИИ → статус карточки → витрина) — сначала скриптом `scripts/diag_builders_catalog.php`, в тот же день перенесена в команду `app:catalog:diagnose-builders` (см. ниже).
 
+### Документация / единый каталог docs/
+- Вся документация собрана в `docs/`: справочники в корне (`ARTISAN_COMMANDS.md`, `CHANGE_LOG.md`, `RADARIUM_TECHDOC.md`, `RADARIUM_OVERVIEW.md`), пошаговые инструкции в `docs/runbooks/`, планы в `docs/plans/`, данные и архивные промпты в `docs/reference/`. Каталог `DOC/` удалён, файлы перенесены через `git mv` с сохранением истории.
+- Появился индекс `docs/README.md` и пояснение `docs/reference/README.md` о том, что архивные промпты кодом не читаются (рабочие живут в `api_channels.ai_promt`, `admin_system_prompt_presets` и `config/builder_ai_pipeline.php`).
+- Удалены дублирующие выгрузки апреля: `CHANGELOG_LAST_48H.md` (подмножество 72H), `CHANGELOG_LAST_72H.md` и два `gitlog_last_72h_*.txt` (сырые данные для них). Уникальные факты за 06–08.04 перенесены в этот журнал отдельными записями.
+- Переименованы для единообразия: `tg_connection_problem_july09.md` → `runbooks/telegram-connection-incident-2026-07.md`, `BUILDERS_SPECIALITIES_ROLLOUT.md` → `runbooks/builders-specialities-rollout.md`.
+- Обновлены все завязки на пути: правило `.cursor/rules/artisan-commands-doc.mdc`, `.gitignore` (включая игнорирование локального `docs/env` с секретами), рабочий путь к xlsx в `scripts/build_builder_speciality_json.py`, докблоки `BuilderSpecialityDictionaryData`, миграции пересида справочника, `MadelineSessionIpcCleaner` и комментарий в `config/services.php`.
+
 ### Эксплуатация / диагностика и документация
 - `app:catalog:diagnose-builders` (`DiagnoseBuildersCatalog`) — диагностика каталога переехала из разового скрипта в artisan-команду; `scripts/diag_builders_catalog.php` удалён. В скрипте были захардкожены числовые значения статусов, а голова очереди читалась в порядке `post_date ASC` — после смены приоритета очереди эта секция показывала не ту партию, которую реально забирает ИИ. В команде статусы берутся из enum'ов, порядок совпадает с `app:ai_parse:builder`, месячные разрезы и глубина головы очереди настраиваются (`--since`, `--head`). Тесты: `tests/Feature/Console/DiagnoseBuildersCatalogTest.php`.
 - `App\Console\Concerns\ParsesDateOption` — общий разбор опции-даты (`Y-m-d` с проверкой переполнения) для `app:catalog:purge-stale-cards` и `app:catalog:diagnose-builders`.
-- `docs/diag-builders-catalog.md` — запуск, назначение всех 12 секций вывода, таблица «что видно → диагноз → действие» и разбор инцидента 07.09.
-- `docs/queue-worker.md` — как поднимать `queue:work` на проде (cron + `flock` либо systemd) и обязательные таймауты: у задания `ProcessPendingAiPosts` `timeout = 3600`, тогда как у `queue:work` по умолчанию 60 с, а у database-очереди `retry_after = 90` — без `DB_QUEUE_RETRY_AFTER=3700` очередь выдаёт ещё выполняющееся задание второму воркеру. Ранее способ запуска воркера в проекте нигде не был зафиксирован.
+- `docs/runbooks/diag-builders-catalog.md` — запуск, назначение всех 12 секций вывода, таблица «что видно → диагноз → действие» и разбор инцидента 07.09.
+- `docs/runbooks/queue-worker.md` — как поднимать `queue:work` на проде (cron + `flock` либо systemd) и обязательные таймауты: у задания `ProcessPendingAiPosts` `timeout = 3600`, тогда как у `queue:work` по умолчанию 60 с, а у database-очереди `retry_after = 90` — без `DB_QUEUE_RETRY_AFTER=3700` очередь выдаёт ещё выполняющееся задание второму воркеру. Ранее способ запуска воркера в проекте нигде не был зафиксирован.
 
 ### Каталог / чистка карточек по устаревшим сообщениям
 - `app:catalog:purge-stale-cards` (`CatalogPurgeStaleCards`) — новая ручная команда: мягко удаляет карточки строителей или проектировщиков по сообщениям старше `--before=Y-m-d`. Понадобилась как следствие разбора архива: пока очередь шла от старых сообщений, ИИ успел создать сотни карточек по сообщениям 2023–2025 годов. Даты по умолчанию нет, режимы `--dry-run` / `--apply`, JSON-снимок id в `storage/app/catalog-purge` и готовая строка отката через `withTrashed()->restore()`. Посты-источники остаются `Complete`, поэтому карточки не пересоздаются. Тесты: `tests/Feature/Console/CatalogPurgeStaleCardsTest.php`.
@@ -57,8 +64,8 @@
 - `app:ai:yandex-health-check` (`AiYandexHealthCheck`) — проверка доступности YandexGPT живым minimal-completion запросом по активным `api_ais` (`yandexgtp4`); интеграция с `AiProviderHealthAlertService` (баннер/алерт, endpoint `yandex.cloud`); в scheduler каждые 15 минут рядом с `app:ai:health-check` (Ollama). Тесты: `tests/Unit/Console/AiYandexHealthCheckTest.php`.
 
 ### Документация / Telegram VPN
-- `DOC/RADARIUM_TECHDOC.md` §6.9 синхронизирован с итогом инцидента **2026-08-06**: Reality dest `dl.google.com` + `fingerprint: firefox`, диагностика SOCKS `000` до правок Laravel, переавторизация после простоя.
-- `docs/madelineproto-vpn-routing.md` — актуальный пример Reality SNI/fingerprint; ссылка на handoff.
+- `docs/RADARIUM_TECHDOC.md` §6.9 синхронизирован с итогом инцидента **2026-08-06**: Reality dest `dl.google.com` + `fingerprint: firefox`, диагностика SOCKS `000` до правок Laravel, переавторизация после простоя.
+- `docs/runbooks/madelineproto-vpn-routing.md` — актуальный пример Reality SNI/fingerprint; ссылка на handoff.
 
 ---
 
@@ -69,7 +76,7 @@
 - `PublicSpecialistCatalogScope` — общий scope каталога проектировщиков (Complete-посты); `CatalogController` переведён на него.
 - `app:ai_parse:reset-specialist-queue` — зеркало builder reset (default provider — любой / обычно yandexgtp4).
 - `app:ai_parse:requeue-specialist-missing-visible-posts` — requeue постов авторов без видимого Complete-сообщения.
-- Runbook: `docs/specialist-ops-phase1.md`, `docs/specialist-channels-enable.md`, `docs/specialist-ai-requeue-missing-visible.md`.
+- Runbook: `docs/runbooks/specialist-ops-phase1.md`, `docs/runbooks/specialist-channels-enable.md`, `docs/runbooks/specialist-ai-requeue-missing-visible.md`.
 - **Вне скоупа фазы 1:** two-pass Ollama, hiring-эвристики builders, перевод каналов на локальный ИИ.
 
 ---
@@ -78,17 +85,17 @@
 
 ### Telegram / MadelineProto — профилактика гонок рассылки
 - `SendMessageTelegram::send()`: настройки через `MadelineConnectionConfigurator::buildSettings()`; корректный shutdown (`unset` + `API::finalize()` вместо `gc_collect_cycles()`).
-- Документация: обновлён §6.5.2 в `DOC/RADARIUM_TECHDOC.md`.
+- Документация: обновлён §6.5.2 в `docs/RADARIUM_TECHDOC.md`.
 
 ---
 
 ## 2026-07-08
 
 ### Production / доступ к GitLab (progs.com)
-- Задокументирован runbook обновления кода на production: `docs/production-git-pull.md`.
+- Задокументирован runbook обновления кода на production: `docs/runbooks/production-git-pull.md`.
 - Зафиксирован рабочий способ: **HTTPS** + **Deploy Token** (`read_repository`), username вида `gitlab+deploy-token-...`, сохранение через `git config --global credential.helper store`.
 - Описаны типовые ошибки: SSH `Permission denied (publickey)`, `Fingerprint sha256 has already been taken`, 403 для classic PAT (нужен fine-grained с **Code: Download** или deploy token).
-- В `DOC/RADARIUM_TECHDOC.md` добавлен §15 со ссылкой на runbook.
+- В `docs/RADARIUM_TECHDOC.md` добавлен §15 со ссылкой на runbook.
 
 ---
 
@@ -98,7 +105,7 @@
 - **`app:tg_auth`**: опции `--api-id`, `--api-hash`, `--qr`, `--reset`; QR-вход и 2FA; `api_hash` из `api_channels` при явном `--api-id`.
 - **`MadelineConnectionConfigurator::buildSettings()`** — единые настройки для парсинга и авторизации.
 - **`SCHEDULE_TG_CHAT_SEND_COMPANY_ENABLED`** — временное отключение cron-рассылки `app:tg_chat:send_company`.
-- Документация: §6.9 runbook в `DOC/RADARIUM_TECHDOC.md`, раздел «Восстановление сессии» в `docs/madelineproto-vpn-routing.md`.
+- Документация: §6.9 runbook в `docs/RADARIUM_TECHDOC.md`, раздел «Восстановление сессии» в `docs/runbooks/madelineproto-vpn-routing.md`.
 
 ---
 
@@ -182,7 +189,7 @@
 ## 2026-05-06
 
 ### Документация
-- Обновлён `DOC/RADARIUM_TECHDOC.md`: двухэтапный Builder AI pipeline (Ollama/Qwen), anti-hallucination, runtime-настройки через `configurations`.
+- Обновлён `docs/RADARIUM_TECHDOC.md`: двухэтапный Builder AI pipeline (Ollama/Qwen), anti-hallucination, runtime-настройки через `configurations`.
 
 ### Каталог
 - `PublicBuilderCatalogScope` / контроллеры: в выдаче строителей и специалистов учитываются только посты с **`ai_parse_status = Complete`**.
@@ -316,6 +323,43 @@
 
 ### Админка
 - Mass edit AI-полей и mass delete для сообщений (`ApiChannelPostResource`).
+
+### Каталог / контакты
+- Обработка контактных данных в тексте последнего сообщения: декодирование HTML-сущностей и уточнённые регулярные выражения под телефоны и Telegram-упоминания.
+
+---
+
+## 2026-04-07
+
+### Каталог / производительность
+- Ускорены выборки каталога проектировщиков (`CatalogController`, `ApiPostUser`), миграция `2026_04_07_120000_add_catalog_performance_indexes` с индексами под `/specialists`; отдельным коммитом устранена ошибка 500, появившаяся после оптимизации.
+
+### Каталог / последнее сообщение и размытие контактов
+- В списках проектировщиков и строителей последнее целевое сообщение показывается целиком, без усечения по строкам и символам.
+- `ApiPostUser::prepareLastPostText()` и `wrapContactDataWithBlur()`: нормализация строки (UTF-8, `html_entity_decode`, удаление невидимых символов) и набор регулярных выражений (телефоны, `tg:`/`telegram:`, e-mail, ссылки мессенджеров, `@username`). Распознанные контакты оборачиваются в `<span class="last-post-contact-blur">` и размываются, пока контакт не открыт.
+- Компоненты `author-row.blade.php`, `author-builder-row.blade.php`, стили `.author-last-post-full` и `.last-post-contact-blur`.
+
+### UI / лендинг
+- Переключение «Строители / Проектировщики» табами: компонент `catalog-search-tabs.blade.php`, правки форм поиска и подключение в layout `global`/`landing`.
+- Версия `v2/css/styles.css` в query-параметре берётся из `filemtime`, поэтому после деплоя клиент получает актуальный CSS без ручного изменения `?v=`.
+- Скрыт блок «Создатель Радарума» на главной.
+- Исправлены ошибка экрана входа и зависание popup SIGN IN.
+
+### AI / разбор ответа модели
+- `AiModelJsonReplyDecoder` — декодирование JSON-ответов ИИ и выравнивание контракта `parseResponse()` в `ApiAIOllama` и `ApiAIYandex` (возврат `null` ломал тип). Тесты: `tests/Unit/AiModelJsonReplyDecoderTest.php`.
+
+### Админка
+- Новому каналу-источнику автоматически подставляется актуальный системный промпт (`ApiChannelResource`, `AiSystemPromptAdminService`).
+
+---
+
+## 2026-04-06
+
+### Админка / системные промпты (MoonShine)
+- Управление системными промптами по областям: `AdminSystemPromptScope`, `AdminSystemPromptPreset`, страницы `SystemPromptPage`, `BuilderSystemPromptPage`, `SpecialistSystemPromptPage`, сервис `AiSystemPromptAdminService`, миграции `create_admin_system_prompts_table` и `create_admin_system_prompt_presets_table`, представления редактора и списка промптов. Далее — серия правок совместимости с текущей версией MoonShine, набора моделей ИИ и дизайна.
+
+### Инфраструктура
+- В репозиторий попали полные дампы БД (`backup.sql`, `backup_before_restore.sql`, `backup/radarium_2026*.sql`) при подготовке к восстановлению. Хранить дампы в git не следует: растёт размер репозитория и появляется риск утечки продакшен-данных.
 
 ---
 

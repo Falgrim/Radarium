@@ -131,4 +131,4 @@ ssh -T git@gitlab.com -v
 
 ---
 
-**См. также:** `DOC/RADARIUM_TECHDOC.md` §15, `gitupdate.sh`, `docs/madelineproto-vpn-routing.md` (сеть/VPN на проде).
+**См. также:** `docs/RADARIUM_TECHDOC.md` §15, `gitupdate.sh`, `docs/runbooks/madelineproto-vpn-routing.md` (сеть/VPN на проде).

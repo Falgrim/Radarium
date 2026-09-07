@@ -16,9 +16,11 @@
 # Любые «дополнительные» .env.* кроме шаблона для репозитория
 .env.*
 !.env.example
-# Копия продового .env в DOC (не коммитить)
-/DOC/env
-/DOC/.env
+# Копия продового .env в docs (не коммитить)
+/docs/env
+/docs/.env
+__pycache__/
+*.pyc
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -35,6 +37,6 @@ yarn-error.log
 /session.madeline
 /session.madeline.*
 /*.log
-# Диагностика с сервера (см. DOC/Logs/.gitignore)
-/DOC/Logs/*
-!/DOC/Logs/.gitignore
+# Диагностика с сервера (см. docs/Logs/.gitignore)
+/docs/Logs/*
+!/docs/Logs/.gitignore

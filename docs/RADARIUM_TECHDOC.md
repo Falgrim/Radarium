@@ -4,7 +4,7 @@
 >
 > Ядро: Laravel 11 + MariaDB (по умолчанию используется в производстве) + доменная модель “посты из источников (Telegram / ВКонтакте) → AI → каталоги”.
 >
-> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-08-06** (см. также `DOC/CHANGE_LOG.md`): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов, восстановление TG-сессий и `app:tg_auth --qr`, runbook `git pull` на production, инцидент VPN Reality / MadelineProto (июль–август 2026, §6.9).
+> **Актуализация:** первоначальная версия файла — 2026-03-26; ниже учтены изменения репозитория по состоянию на **2026-08-06** (см. также `docs/CHANGE_LOG.md`): VK-импорт, `CatalogPublicationGate`, двухэтапный Builder AI pipeline, эвристики найма/спама, MadelineProto shared session, модерация постов, регионы, сессии/CSRF, отчёт активных авторов, восстановление TG-сессий и `app:tg_auth --qr`, runbook `git pull` на production, инцидент VPN Reality / MadelineProto (июль–август 2026, §6.9).
 
 ## 1. Общее описание
 
@@ -468,7 +468,7 @@ php artisan app:tg_parse:builder
 
 > При `--api-id` без `--api-hash` hash берётся из **первого активного** `api_channels` с тем же `api_id`, а не из `TG_APP_HASH` (иначе возможна ошибка `API_ID_INVALID`).
 
-Подробный runbook сбоев — §6.9 и `docs/madelineproto-vpn-routing.md` (раздел «Восстановление сессии»).
+Подробный runbook сбоев — §6.9 и `docs/runbooks/madelineproto-vpn-routing.md` (раздел «Восстановление сессии»).
 
 ### 6.7. Модуль ВКонтакте (стены сообществ)
 
@@ -499,8 +499,8 @@ php artisan app:tg_parse:builder
 
 ### 6.9. Восстановление сессии и типовые сбои MadelineProto
 
-> Подробнее про SOCKS/VPN: `docs/madelineproto-vpn-routing.md`.  
-> Развёрнутый handoff инцидента: `DOC/tg_connection_problem_july09.md` (решено **2026-08-06**).
+> Подробнее про SOCKS/VPN: `docs/runbooks/madelineproto-vpn-routing.md`.  
+> Развёрнутый handoff инцидента: `docs/runbooks/telegram-connection-incident-2026-07.md` (решено **2026-08-06**).
 
 **Инциденты на prod:**
 
@@ -556,7 +556,7 @@ php artisan app:tg_parse:builder
 
 2. **Сеть (обязательно до IPC/сессии)**
    - `curl -x socks5h://127.0.0.1:10808 -m 10 -s -o /dev/null -w '%{http_code}' https://api.telegram.org` → `200` / `301` / `302`.
-   - При `000`: чинить Reality/xray (актуальный dest — `dl.google.com`, fingerprint на prod — `firefox`); см. `DOC/tg_connection_problem_july09.md`.
+   - При `000`: чинить Reality/xray (актуальный dest — `dl.google.com`, fingerprint на prod — `firefox`); см. `docs/runbooks/telegram-connection-incident-2026-07.md`.
    - `php artisan config:clear`.
 
 3. **IPC** (для сессии парсинга, напр. `22885091`)
@@ -1059,7 +1059,7 @@ AI-команды создают доменные сущности и затем
 - `app:ai_parse:requeue` (`AiRequeuePosts`): единая команда возврата сообщений в `InQueue` и немедленного запуска обработки. Опции: `--type=all|specialist|builder|company`, `--status=unprocessed|all|список`, `--from`/`--to` + `--date-field`, `--provider`, `--keep-metadata`, `--no-dispatch`, `--dry-run`. Логика вынесена в `AiReprocessService`, тот же сервис используют кнопки админки. При возврате в очередь удаляются карточки каталога с тем же `api_channel_post_id`. Заменяет прежние `app:ai_parse:reset-builder-queue` и `app:ai_parse:reset-specialist-queue`.
 - `app:ai_parse:requeue-builder-missing-visible-posts` (`AiRequeueBuilderMissingVisiblePosts`): выборочный requeue для авторов каталога без «видимого» Complete-поста (`--dry-run` / `--apply`).
 - `app:ai_parse:requeue-specialist-missing-visible-posts` (`AiRequeueSpecialistMissingVisiblePosts`): requeue для авторов каталога «Проектирование» без видимого Complete-поста (`PublicSpecialistCatalogScope`).
-- `app:channels:enable-specialists` (`EnableSpecialistChannelsCommand`): инвентаризация/включение disabled specialist-каналов (`--dry-run` / `--apply`). Runbook: `docs/specialist-ops-phase1.md`.
+- `app:channels:enable-specialists` (`EnableSpecialistChannelsCommand`): инвентаризация/включение disabled specialist-каналов (`--dry-run` / `--apply`). Runbook: `docs/runbooks/specialist-ops-phase1.md`.
 - `app:builders:rematch_specialities` (`RematchBuilderSpecialities`): пересчёт `builder_specialities` по тексту поста и сохранённому JSON ИИ (с cap специализаций и `AuthorCatalogSpecialitiesSync`).
 - `app:catalog:disable-active-builders-hiring-text` (`DisableActiveBuildersHiringTextCommand`): перевод активных карточек строителей с текстом найма/не-услуги в `InModeration` по `CatalogPublicationBuilderNonServiceSignals` (`--dry-run`).
 - `app:regions:normalize_stored` (`NormalizeStoredRegions`): нормализация поля `region` у существующих builders/specialists.
@@ -1447,4 +1447,4 @@ flowchart TD
 3. Чтобы не вводить credentials каждый раз: `git config --global credential.helper store` (файл `~/.git-credentials`, права `600`).
 4. После pull: `sh gitupdate.sh` (права storage/MadelineProto, `artisan optimize`, `schedule:interrupt`).
 
-Полный runbook, диагностика SSH/deploy key и разбор ошибок 403 — **`docs/production-git-pull.md`**.
+Полный runbook, диагностика SSH/deploy key и разбор ошибок 403 — **`docs/runbooks/production-git-pull.md`**.

@@ -914,7 +914,7 @@ protected function logError(string $context, \Exception $e): void
 
 #### Шаг 9.1: Добавить диаграмму последовательности AI pipeline (1 час)
 
-Вставить в конец файла `DOC/RADARIUM_TECHDOC.md`:
+Вставить в конец файла `docs/RADARIUM_TECHDOC.md`:
 
 ```markdown
 ## 📊 Диаграмма последовательности AI Pipeline

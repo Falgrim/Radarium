@@ -20,7 +20,7 @@
 
 Логгер и соединение задаются в объекте `Settings` до вызова `new \danog\MadelineProto\API($session, $settings)`. После конструктора **`updateSettings` не вызывается** — иначе при IPC возможна гонка (`MTProto::$logger must not be accessed before initialization`); MadelineProto сам ставит merge настроек в очередь при подключении.
 
-**Патч vendor (автоматически):** скрипт [`scripts/patch-madelineproto-connection.php`](../scripts/patch-madelineproto-connection.php) удаляет из `vendor/danog/madelineproto/src/Connection.php` строку `$this->API->logger = $this->API->logger` (ошибка «Typed property … `$logger` must not be accessed before initialization» на PHP 8.3). Скрипт вызывается из **`composer.json` → `post-autoload-dump`**, то есть после каждого `composer install` / `composer update` на любом окружении.
+**Патч vendor (автоматически):** скрипт [`scripts/patch-madelineproto-connection.php`](../../scripts/patch-madelineproto-connection.php) удаляет из `vendor/danog/madelineproto/src/Connection.php` строку `$this->API->logger = $this->API->logger` (ошибка «Typed property … `$logger` must not be accessed before initialization» на PHP 8.3). Скрипт вызывается из **`composer.json` → `post-autoload-dump`**, то есть после каждого `composer install` / `composer update` на любом окружении.
 
 ## Этап 1. Поднять xray-клиент на проде
 
@@ -76,7 +76,7 @@
 
 **Prod (актуально с 2026-08-06):** Reality `serverName` / на VPS `dest`+`serverNames` = **`dl.google.com`**, на клиенте `fingerprint: firefox`.  
 Не использовать `www.microsoft.com` (сертификат Akamai ломает Reality handshake → SOCKS curl `000`).  
-Handoff: `DOC/tg_connection_problem_july09.md`; runbook: `DOC/RADARIUM_TECHDOC.md` §6.9.
+Handoff: `docs/runbooks/telegram-connection-incident-2026-07.md`; runbook: `docs/RADARIUM_TECHDOC.md` §6.9.
 
 Проверки:
 
@@ -297,7 +297,7 @@ tail -n 120 storage/logs/MadelineProto.log
 
 ## Восстановление сессии (runbook)
 
-См. также §6.9 в `DOC/RADARIUM_TECHDOC.md`. Краткая последовательность при сбое парсинга **без изменений кода**:
+См. также §6.9 в `docs/RADARIUM_TECHDOC.md`. Краткая последовательность при сбое парсинга **без изменений кода**:
 
 ### 1. Изоляция
 

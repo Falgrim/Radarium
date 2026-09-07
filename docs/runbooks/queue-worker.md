@@ -113,4 +113,4 @@ php artisan queue:clear database --queue=default
 
 ---
 
-**См. также:** `docs/production-git-pull.md` (деплой), `docs/diag-builders-catalog.md` (диагностика пайплайна), `DOC/ARTISAN_COMMANDS.md` (реестр команд).
+**См. также:** `docs/runbooks/production-git-pull.md` (деплой), `docs/runbooks/diag-builders-catalog.md` (диагностика пайплайна), `docs/ARTISAN_COMMANDS.md` (реестр команд).

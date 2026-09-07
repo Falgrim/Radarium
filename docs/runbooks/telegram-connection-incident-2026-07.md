@@ -239,7 +239,7 @@ tail -n 50 storage/logs/post_parser.log
 Тогда смотреть нашу сторону (не VPN):
 
 - сессия `session.madeline.22885091` — переавторизация `app:tg_auth --qr --reset`
-- runbook: `DOC/RADARIUM_TECHDOC.md` §6.9, `docs/madelineproto-vpn-routing.md`
+- runbook: `docs/RADARIUM_TECHDOC.md` §6.9, `docs/runbooks/madelineproto-vpn-routing.md`
 - IPC-правки в коде **не деплоились** — обсуждать заново только при подтверждённом VPN
 
 ---
@@ -300,8 +300,8 @@ Test-NetConnection 103.90.72.46 -Port 443
 
 ## Ссылки в проекте
 
-- `docs/madelineproto-vpn-routing.md` — VPN/SOCKS runbook
-- `DOC/RADARIUM_TECHDOC.md` §6.9 — восстановление MadelineProto
+- `docs/runbooks/madelineproto-vpn-routing.md` — VPN/SOCKS runbook
+- `docs/RADARIUM_TECHDOC.md` §6.9 — восстановление MadelineProto
 - `app/Services/ReadTelegramChats.php` — парсинг
 - `app/Services/MadelineConnectionConfigurator.php` — `MPROTO_*`
 - `bootstrap/app.php` — cron `app:tg_parse:specialist|builder|company`
@@ -319,7 +319,7 @@ Test-NetConnection 103.90.72.46 -Port 443
 # Продолжение: инцидент 2026-08-05 (05082026)
 
 **Дата:** 2026-08-05 (решено 2026-08-06)  
-**Статус:** ✅ Решено — см. **«Итог (2026-08-06)»** в начале файла и `DOC/RADARIUM_TECHDOC.md` §6.9  
+**Статус:** ✅ Решено — см. **«Итог (2026-08-06)»** в начале файла и `docs/RADARIUM_TECHDOC.md` §6.9  
 **Цель:** восстановить VLESS/Reality prod → VPS, затем smoke `app:tg_parse:builder`
 
 > Ниже — архив диагностики на момент паузы 05.08. Пункты 1–3 выполнены на другой машине; фикс — смена Reality dest на `dl.google.com` + переавторизация MadelineProto.
@@ -331,7 +331,7 @@ Test-NetConnection 103.90.72.46 -Port 443
 ```
 Продолжаем задачу по восстановлению доступа Radarium → Telegram через Xray VPN.
 
-Полный контекст: DOC/tg_connection_problem_july09.md
+Полный контекст: docs/runbooks/telegram-connection-incident-2026-07.md
 (блок «Продолжение: инцидент 2026-08-05» + исходный handoff июля).
 
 Симптом приложения (не корневая причина):

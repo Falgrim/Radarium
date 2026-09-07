@@ -22,7 +22,7 @@
 
 ## Рекомендуемый порядок на проде
 
-1. Задеплоить код (см. `docs/production-git-pull.md`).
+1. Задеплоить код (см. `docs/runbooks/production-git-pull.md`).
 2. Проверка без записи:
 
    ```bash

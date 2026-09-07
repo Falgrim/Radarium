@@ -54,7 +54,7 @@ return [
 
     /*
     | MadelineProto (ReadTelegramChats): повторы при Amp\CancelledException на getHistory.
-    | См. MPROTO_* в .env и docs/madelineproto-vpn-routing.md
+    | См. MPROTO_* в .env и docs/runbooks/madelineproto-vpn-routing.md
     */
     'madeline_proto' => [
         'get_history_max_attempts' => (int) env('MPROTO_GETHISTORY_MAX_ATTEMPTS', 3),

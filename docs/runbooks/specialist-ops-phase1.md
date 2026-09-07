@@ -2,7 +2,7 @@
 
 Runbook для включения каналов, smoke-парсинга и ops-команд (YandexGPT, без two-pass/эвристик).
 
-См. также: [`specialist-channels-enable.md`](specialist-channels-enable.md), [`specialist-ai-requeue-missing-visible.md`](specialist-ai-requeue-missing-visible.md), [`DOC/tg_connection_problem_july09.md`](../DOC/tg_connection_problem_july09.md).
+См. также: [`specialist-channels-enable.md`](specialist-channels-enable.md), [`specialist-ai-requeue-missing-visible.md`](specialist-ai-requeue-missing-visible.md), [`telegram-connection-incident-2026-07.md`](telegram-connection-incident-2026-07.md).
 
 ## Порядок на production
 
