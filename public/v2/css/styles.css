@@ -1951,6 +1951,10 @@ a:has(.social) {
   max-width: 260px;
 }
 
+.tbl-builders .def-cell-04 p.ellipse {
+  max-width: 220px;
+}
+
 .tbl-builders .def-cell-05 {
   width: auto;
   max-width: none;

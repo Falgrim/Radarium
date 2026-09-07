@@ -1,7 +1,7 @@
 @php
     $lastPost = $author->lastBuilderPost();
     $checkOpenContact = isset($userOpenLog[$author->id]);
-    $builderSpecialties = $author->builderSpecialtiesWithShortName(15);
+    $builderSpecialties = $author->builderSpecialtiesWithShortName();
     $regionLabel = $author->builderCatalogRegionLabel();
 @endphp
 
