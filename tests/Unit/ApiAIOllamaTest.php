@@ -111,6 +111,59 @@ class ApiAIOllamaTest extends TestCase
         $this->assertSame('резюме', $result['json']['ai_type']);
     }
 
+    /**
+     * Модель отвечает не в обещанной промптом форме: строка по contact_info, вложенный список по
+     * скалярному полю, массив по цене. Раньше на таком ответе разбор поста падал и пост уходил в Error.
+     */
+    public function test_get_result_survives_unexpected_value_shapes(): void
+    {
+        $payload = [
+            'type' => 'резюме',
+            'reason' => 'тест',
+            'experience' => [
+                ['role' => 'прораб', 'years' => 5],
+            ],
+            'soft_experience' => ['ArchiCAD', 'AutoCAD'],
+            'education' => '',
+            'work_schedule' => '',
+            'total_work_project' => '',
+            'type_of_work' => '',
+            'price_by_hour' => ['500'],
+            'price_by_project' => '',
+            'price_by_month' => '',
+            'about' => 'Описание',
+            'spec_requirements' => '',
+            'link_resume' => '',
+            'contact_info' => '@ivan',
+        ];
+
+        Http::fake([
+            'localhost:11434/*' => Http::response([
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->service->setConfig([
+            'host' => 'http://localhost:11434',
+            'model' => 'test-model',
+        ]);
+        $this->service->setPromt('Ты извлекаешь структурированные данные.');
+        $this->service->setText('Исходный текст поста');
+
+        $result = $this->service->getResult(ApiDataTypeEnum::Specialist);
+
+        $this->assertSame('прораб; 5', $result['json']['experience']);
+        $this->assertSame('ArchiCAD; AutoCAD', $result['json']['soft_experience']);
+        $this->assertSame('@ivan', $result['json']['contact_info']);
+        $this->assertSame(500, $result['json']['price_by_hour']);
+    }
+
     public function test_prompt_generation(): void
     {
         $this->assertTrue(true);

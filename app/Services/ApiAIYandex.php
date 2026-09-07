@@ -180,28 +180,19 @@ class ApiAIYandex
             }
 
             if ($row['type'] == 'price') {
-                $modelRows[$row['id']] = BuilderNormalizer::cleanPrice((string)$modelRows[$row['id']]);
+                $modelRows[$row['id']] = BuilderNormalizer::cleanPrice(
+                    AiModelValueNormalizer::toText($modelRows[$row['id']])
+                );
             } elseif ($row['type'] == 'integer') {
                 $modelRows[$row['id']] = (int)$modelRows[$row['id']];
             } elseif ($row['type'] == 'array') {
-                $modelRows[$row['id']] = $modelRows[$row['id']];
+                // Оставляем как есть: поля с cast array (object_types, service_types, equipment_skills_json).
             } elseif ($row['type'] == 'array_string') {
-                $tmp = [];
-                $arr = $modelRows[$row['id']][0] ?? $modelRows[$row['id']];
-
-                foreach ($arr as $key => $val) {
-                    if ($val) {
-                        $tmp[] = $key.': '.(is_array($val) ? implode('; ', $val) : $val);
-                    }
-                }
-                $modelRows[$row['id']] = implode('; ', $tmp);
+                $modelRows[$row['id']] = AiModelValueNormalizer::toContactText($modelRows[$row['id']]);
             } elseif ($row['type'] == 'bool') {
                 $modelRows[$row['id']] = (bool)$modelRows[$row['id']];
             } else {
-                if (is_array($modelRows[$row['id']])) {
-                    $modelRows[$row['id']] = implode('; ', $modelRows[$row['id']]);
-                }
-                $modelRows[$row['id']] = trim($modelRows[$row['id']]);
+                $modelRows[$row['id']] = AiModelValueNormalizer::toText($modelRows[$row['id']]);
             }
         }
 
