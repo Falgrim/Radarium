@@ -179,9 +179,96 @@ table('7. Топ-10 авторов каталога по дате последн
     LIMIT 10
 "));
 
+// 9. Провайдеры ИИ строительных каналов: отключённый провайдер — это вечный InQueue без ai_date.
+table('9. Провайдеры ИИ, привязанные к каналам строителей', DB::select("
+    SELECT
+        ai.id                                                       AS ai_id,
+        LEFT(ai.title, 24)                                          AS ai_title,
+        ai.api_source                                               AS api_source,
+        CASE ai.status WHEN 1 THEN 'Active' ELSE 'DISABLED' END     AS ai_status,
+        COUNT(DISTINCT c.id)                                        AS builder_channels,
+        (
+            SELECT COUNT(*)
+            FROM api_channel_posts p2
+            JOIN api_channels c2 ON c2.id = p2.api_channel_id AND c2.is_company = ".BUILDER_CHANNEL."
+            WHERE c2.api_ai_id = ai.id AND p2.ai_parse_status = ".POST_IN_QUEUE."
+        )                                                           AS posts_in_queue
+    FROM api_ais ai
+    JOIN api_channels c ON c.api_ai_id = ai.id AND c.is_company = ".BUILDER_CHANNEL."
+    GROUP BY ai.id, ai.title, ai.api_source, ai.status
+    ORDER BY posts_in_queue DESC
+"));
+
+// 10. Голова очереди: ровно те 100 постов, что забирает команда (post_date ASC, take(100)).
+//     Если они из каналов с отключённым ИИ, команда пропускает их через continue и до свежих не доходит.
+$headOfQueue = "
+    SELECT
+        p.id            AS post_id,
+        p.post_date     AS post_date,
+        c.id            AS channel_id,
+        ai.id           AS ai_id,
+        ai.status       AS ai_status,
+        ai.api_source   AS api_source
+    FROM api_channel_posts p
+    JOIN api_channels c ON c.id = p.api_channel_id AND c.is_company = ".BUILDER_CHANNEL."
+    LEFT JOIN api_ais ai ON ai.id = c.api_ai_id
+    WHERE p.ai_parse_status = ".POST_IN_QUEUE."{$postAlive}
+    ORDER BY p.post_date ASC
+    LIMIT 100
+";
+
+table('10. Голова очереди (первые 100 постов): дойдёт ли команда до обработки', DB::select("
+    SELECT
+        CASE
+            WHEN h.ai_id IS NULL                                        THEN 'нет api_ai'
+            WHEN h.ai_status <> 1                                       THEN 'ИИ отключён (continue)'
+            WHEN h.api_source NOT IN ('yandexgtp4', 'ollama_qwen')      THEN 'неизвестный источник (continue)'
+            ELSE 'ИИ активен (обрабатывается)'
+        END                     AS head_reason,
+        COUNT(*)                AS posts_of_100,
+        MIN(h.post_date)        AS oldest,
+        MAX(h.post_date)        AS newest
+    FROM ({$headOfQueue}) h
+    GROUP BY head_reason
+    ORDER BY posts_of_100 DESC
+"));
+
+table('10б. Голова очереди по каналам', DB::select("
+    SELECT
+        h.channel_id            AS channel_id,
+        h.api_source            AS api_source,
+        CASE WHEN h.ai_status = 1 THEN 'Active' WHEN h.ai_status IS NULL THEN '-' ELSE 'DISABLED' END AS ai_status,
+        COUNT(*)                AS posts_of_100,
+        MIN(h.post_date)        AS oldest
+    FROM ({$headOfQueue}) h
+    GROUP BY h.channel_id, h.api_source, h.ai_status
+    ORDER BY posts_of_100 DESC
+"));
+
+// 11. Реальная пропускная способность ИИ за сутки: сколько постов получили финальный статус.
+table('11. Обработано ИИ за последние 24 часа (по ai_date)', DB::select("
+    SELECT
+        CASE p.ai_parse_status
+            WHEN 0 THEN 'InQueue'
+            WHEN 1 THEN 'Complete'
+            WHEN 2 THEN 'Error'
+            WHEN 3 THEN 'Empty'
+            WHEN 4 THEN 'DontMatch'
+            WHEN 5 THEN 'Duplicate'
+        END                     AS status,
+        COUNT(*)                AS posts,
+        MIN(p.post_date)        AS oldest_post,
+        MAX(p.post_date)        AS newest_post
+    FROM api_channel_posts p
+    JOIN api_channels c ON c.id = p.api_channel_id AND c.is_company = ".BUILDER_CHANNEL."
+    WHERE p.ai_date >= DATE_SUB(NOW(), INTERVAL 24 HOUR){$postAlive}
+    GROUP BY p.ai_parse_status
+    ORDER BY posts DESC
+"));
+
 // 8. Фоновая очередь Laravel: нужна только для ручного requeue, но зависшие джобы тоже симптом.
 if (Schema::hasTable('jobs')) {
-    table('8. Очередь Laravel', DB::select('
+    table('12. Очередь Laravel', DB::select('
         SELECT
             (SELECT COUNT(*) FROM jobs)         AS jobs_pending,
             (SELECT COUNT(*) FROM failed_jobs)  AS jobs_failed,
