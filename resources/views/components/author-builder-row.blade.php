@@ -3,6 +3,7 @@
     $checkOpenContact = isset($userOpenLog[$author->id]);
     $builderData = $author->builderData();
     $builderSpecialties = $author->builderSpecialtiesWithShortName(15);
+    $regionLabel = $author->builderCatalogRegionLabel();
 @endphp
 
 <tr id="author-id-{{ $author->id }}">
@@ -31,23 +32,24 @@
         </div>
     </td>
     <td class="def-cell-03">
+        <p>{{ $regionLabel }}</p>
+    </td>
+    <td class="def-cell-04">
         @if(count($builderSpecialties))
             @foreach($builderSpecialties as $spec)
                 <p class="ellipse" title="{{ $spec['name'] }}">{!! $spec['name'] !!}</p>
             @endforeach
         @endif
     </td>
-    <td class="def-cell-04">
+    <td class="def-cell-05">
         <p>
             <span class="pro-tag">{!! implode('</span> <span class="pro-tag">', \App\Models\ApiPostUser::profileSkillsFront($builderData['soft_experience'], $builderSpecialties)) !!}</span>
         </p>
     </td>
-    <td class="def-cell-05">
+    <td class="def-cell-06">
         @if($lastPost?->post)
             <p class="author-last-post-full"><span class="txt-date">{{ $lastPost->post_date->format('d.m.Y') }}</span>{!! \App\Models\ApiPostUser::prepareLastPostText($lastPost->post, $checkOpenContact)->toHtml() !!}</p>
         @endif
-    </td>
-    <td class="def-cell-06">
     </td>
 </tr>
 <tr>

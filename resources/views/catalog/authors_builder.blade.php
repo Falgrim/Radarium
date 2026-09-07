@@ -36,15 +36,15 @@
         <div class="container">
             <div class="table-box">
                 <div class="table-responsive text-start">
-                    <table class="table table-borderless tbl-default">
+                    <table class="table table-borderless tbl-default tbl-builders">
                         <thead>
                         <tr>
                             <th class="def-cell-01">&nbsp;</th>
                             <th class="def-cell-02">Открытые данные</th>
-                            <th class="def-cell-03">Специализация</th>
-                            <th class="def-cell-04">Профильные навыки</th>
-                            <th class="def-cell-05">Последнее сообщение</th>
-                            <th class="def-cell-06">Последний комментарий</th>
+                            <th class="def-cell-03">Регион</th>
+                            <th class="def-cell-04">Специализация</th>
+                            <th class="def-cell-05">Профильные навыки</th>
+                            <th class="def-cell-06">Последнее сообщение</th>
                         </tr>
                         </thead>
                         <tbody>

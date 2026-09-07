@@ -9,6 +9,7 @@ use App\Enum\ApiPostUserMailingStatusEnum;
 use App\Enum\ReviewStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Services\ReadTelegramChats;
+use App\Support\CatalogBuilderRegionDisplay;
 use App\Support\CatalogLastMessage;
 use App\Support\TelegramPostUrl;
 use App\Traits\ModelTableName;
@@ -313,6 +314,34 @@ class ApiPostUser extends Model
         }
 
         return $result;
+    }
+
+    /**
+     * Подпись региона для строки публичного каталога строителей.
+     * Берётся с самой свежей активной карточки, у которой удалось определить географию.
+     */
+    public function builderCatalogRegionLabel(): string
+    {
+        if ($this->relationLoaded('builders')) {
+            $builders = $this->builders
+                ->where('status', ApiPostAiStatusEnum::Active)
+                ->sortByDesc(static fn (Builder $b) => $b->post_date?->timestamp ?? 0)
+                ->values();
+        } else {
+            $builders = $this->builders()
+                ->where('status', ApiPostAiStatusEnum::Active)
+                ->orderByDesc('post_date')
+                ->get();
+        }
+
+        foreach ($builders as $builder) {
+            $label = CatalogBuilderRegionDisplay::labelForBuilder($builder);
+            if ($label !== CatalogBuilderRegionDisplay::MISSING) {
+                return $label;
+            }
+        }
+
+        return CatalogBuilderRegionDisplay::MISSING;
     }
 
     public function lastPost(): ?ApiChannelPost
