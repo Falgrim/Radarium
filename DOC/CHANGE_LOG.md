@@ -13,6 +13,9 @@
 - `app:ai_parse:archive-stale-queue` (`AiArchiveStaleQueue`) — новая команда: убирает из очереди сообщения глубже `--months` (по умолчанию 6) в `DontMatch` с маркером `archived_stale_queue`, `--dry-run` / `--apply`, JSON-снимок id для отката. Тесты: `tests/Feature/Console/AiArchiveStaleQueueTest.php`.
 - `scripts/diag_builders_catalog.php` — read-only диагностика свежести каталога по стадиям: источники → очередь ИИ → результат ИИ → статус карточки → витрина.
 
+### Каталог / чистка карточек по устаревшим сообщениям
+- `app:catalog:purge-stale-cards` (`CatalogPurgeStaleCards`) — новая ручная команда: мягко удаляет карточки строителей или проектировщиков по сообщениям старше `--before=Y-m-d`. Понадобилась как следствие разбора архива: пока очередь шла от старых сообщений, ИИ успел создать сотни карточек по сообщениям 2023–2025 годов. Даты по умолчанию нет, режимы `--dry-run` / `--apply`, JSON-снимок id в `storage/app/catalog-purge` и готовая строка отката через `withTrashed()->restore()`. Посты-источники остаются `Complete`, поэтому карточки не пересоздаются. Тесты: `tests/Feature/Console/CatalogPurgeStaleCardsTest.php`.
+
 ### AI / устойчивость разбора ответа модели
 - `App\Services\AiModelValueNormalizer` — приведение значений JSON-ответа к типу поля карточки. Модель не держит форму из промпта, и на таких ответах разбор падал, а пост уходил в `Error`:
   - по полю `contact_info` (тип `array_string`) приходила строка — прежний код брал её первый символ и отдавал в `foreach` («foreach() argument must be of type array|object, string given»);
