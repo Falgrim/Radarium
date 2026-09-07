@@ -1117,7 +1117,7 @@ AI-команды создают доменные сущности и затем
   - аналогично для строителей (поиск/страницы/отзывы)
   - общий scope выдачи: **`PublicBuilderCatalogScope`** (`app/Support/PublicBuilderCatalogScope.php`) — только карточки с `api_channel_post_id > 0` и связанным постом в статусе `Complete`
 
-**Регионы в UI:** выпадающий список строится через **`CatalogRegionOptions`** — канонические имена из БД, отсечение junk-значений (`null`, `undefined` и т.п.); нормализация — `RussianRegionNormalizer::normalize`.
+**Регионы в UI:** фильтр поиска — **`CatalogRegionFilter`** (`config/catalog_region_filter.php`): по умолчанию режим `aggregated` (три корзины: Москва и МО / СПб и ЛО / все кроме МСК и СПБ; учёт `region` карточки и региона/названия источника). Откат на длинный канонический список: `CATALOG_REGION_FILTER_MODE=legacy` (`CatalogRegionOptions::catalogCanonicalChoicesFromDistinctRaw`). Нормализация сырых строк — `RussianRegionNormalizer::normalize`. Колонка «Регион» у строителей — `CatalogBuilderRegionDisplay`.
 
 **Производительность:** для тяжёлых выборок каталога добавлены индексы (см. миграции вида `*_add_catalog_performance_indexes.php`); после деплоя выполнять `php artisan migrate`.
 

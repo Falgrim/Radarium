@@ -16,6 +16,7 @@ use App\Models\UserOpenContact;
 use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use App\Support\CatalogLastMessage;
+use App\Support\CatalogRegionFilter;
 use App\Support\CatalogRegionOptions;
 use App\Support\PublicBuilderCatalogScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -99,13 +100,9 @@ class BuilderController extends Controller
             )
             : [];
 
-        [$regionsList, $hasNullRegion] = $this->builderCatalogRegionOptions($validated, $specialityFilterIds);
+        [$regionsList, $hasNullRegion] = $this->resolveBuilderRegionDropdown($validated, $specialityFilterIds);
 
-        $allowedRegions = array_merge([''], array_keys($regionsList));
-        if ($hasNullRegion) {
-            $allowedRegions[] = 'none';
-            $allowedRegions = array_values(array_unique($allowedRegions));
-        }
+        $allowedRegions = CatalogRegionFilter::allowedRequestValues($regionsList, $hasNullRegion);
 
         Validator::make($request->all(), [
             'region' => ['nullable', 'string', 'max:100', Rule::in($allowedRegions)],
@@ -119,13 +116,7 @@ class BuilderController extends Controller
             PublicBuilderCatalogScope::restrictBuilderCardsToCompleteSourcePosts($query);
 
             if (! empty($validated['region'])) {
-                if ($validated['region'] === 'none') {
-                    $query->where(function (Builder $inner) {
-                        CatalogRegionOptions::applyRegionMissingConstraint($inner);
-                    });
-                } else {
-                    $query->where('region', $validated['region']);
-                }
+                CatalogRegionFilter::applyToCardQuery($query, $validated['region']);
             }
 
             if (! empty($validated['key_word_tags'])) {
@@ -426,14 +417,29 @@ class BuilderController extends Controller
     }
 
     /**
-     * Регионы для выпадающего списка: только те значения region, по которым есть строители,
-     * удовлетворяющие текущим фильтрам каталога (без учёта выбранного региона).
+     * Выпадающий список регионов: aggregated (3 корзины) или legacy (канонический список).
      *
      * @param  array<string, mixed>  $validated
      * @param  list<int>  $specialityFilterIds
      * @return array{0: array<string, string>, 1: bool}
      */
-    private function builderCatalogRegionOptions(array $validated, array $specialityFilterIds): array
+    private function resolveBuilderRegionDropdown(array $validated, array $specialityFilterIds): array
+    {
+        if (CatalogRegionFilter::isAggregatedMode()) {
+            return CatalogRegionFilter::dropdownForAggregated();
+        }
+
+        return $this->builderCatalogRegionOptionsLegacy($validated, $specialityFilterIds);
+    }
+
+    /**
+     * Legacy: регионы из distinct(region) карточек в scope каталога.
+     *
+     * @param  array<string, mixed>  $validated
+     * @param  list<int>  $specialityFilterIds
+     * @return array{0: array<string, string>, 1: bool}
+     */
+    private function builderCatalogRegionOptionsLegacy(array $validated, array $specialityFilterIds): array
     {
         $base = $this->buildersMatchingCatalogScope($validated, $specialityFilterIds);
 
@@ -451,12 +457,11 @@ class BuilderController extends Controller
             ->pluck('region')
             ->all();
 
-        $regionsList = CatalogRegionOptions::catalogCanonicalChoicesFromDistinctRaw(
+        return CatalogRegionFilter::dropdownForLegacy(
             app(RussianRegionNormalizer::class),
-            $names
+            $names,
+            $hasNullRegion
         );
-
-        return [$regionsList, $hasNullRegion];
     }
 
     /**

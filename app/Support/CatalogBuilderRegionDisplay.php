@@ -17,23 +17,9 @@ final class CatalogBuilderRegionDisplay
 {
     public const MISSING = 'Регион не указан';
 
-    public const MOSCOW_AGGLOMERATION = 'Москва и МО';
+    public const MOSCOW_AGGLOMERATION = CatalogRegionBuckets::LABEL_MOSCOW;
 
-    public const SPB_AGGLOMERATION = 'Санкт-Петербург и ЛО';
-
-    /** @var list<string> */
-    private const MOSCOW_CANONICAL = [
-        'Москва',
-        'Московская область',
-        self::MOSCOW_AGGLOMERATION,
-    ];
-
-    /** @var list<string> */
-    private const SPB_CANONICAL = [
-        'Санкт-Петербург',
-        'Ленинградская область',
-        self::SPB_AGGLOMERATION,
-    ];
+    public const SPB_AGGLOMERATION = CatalogRegionBuckets::LABEL_SPB;
 
     public static function labelForBuilder(?Builder $builder, ?RussianRegionNormalizer $normalizer = null): string
     {
@@ -80,11 +66,11 @@ final class CatalogBuilderRegionDisplay
             return self::MISSING;
         }
 
-        if (in_array($canonical, self::MOSCOW_CANONICAL, true)) {
+        if (CatalogRegionBuckets::isMoscowCanonical($canonical)) {
             return self::MOSCOW_AGGLOMERATION;
         }
 
-        if (in_array($canonical, self::SPB_CANONICAL, true)) {
+        if (CatalogRegionBuckets::isSpbCanonical($canonical)) {
             return self::SPB_AGGLOMERATION;
         }
 

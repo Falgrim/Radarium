@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * Нормализация значений region для каталога: отсечение мусорных строк из ИИ/JSON в выпадающем списке
  * и единая трактовка «география не указана» для фильтра «без указания географии».
+ *
+ * Актуальный UI-фильтр каталога — {@see CatalogRegionFilter} (режим aggregated).
+ * Методы ниже — legacy (режим CATALOG_REGION_FILTER_MODE=legacy): длинный список
+ * субъектов РФ + городов ≥100 тыс. из distinct(region) и опция «none».
  */
 final class CatalogRegionOptions
 {
@@ -51,7 +55,9 @@ final class CatalogRegionOptions
     }
 
     /**
-     * Опции выпадающего списка: только канон из справочника регионов, после {@see RussianRegionNormalizer::normalize()}.
+     * Опции выпадающего списка (legacy): только канон из справочника регионов, после {@see RussianRegionNormalizer::normalize()}.
+     *
+     * @deprecated Используется только при catalog_region_filter.mode=legacy; актуальный список — {@see CatalogRegionBuckets::aggregatedSelectOptions()}.
      *
      * @param  array<string, string>|null  $allowedRegionsWhitelist  Если null — используется config('regions').
      * @param  list<mixed>  $rawDistinctFromDatabase

@@ -20,6 +20,7 @@ use App\Models\UserOpenContact;
 use App\Services\RussianRegionNormalizer;
 use App\Services\Tariff;
 use App\Support\CatalogLastMessage;
+use App\Support\CatalogRegionFilter;
 use App\Support\CatalogRegionOptions;
 use App\Support\PublicSpecialistCatalogScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,13 +44,27 @@ class CatalogController extends Controller
     }
 
     /**
-     * Регионы для выпадающего списка каталога проектировщиков: только значения, по которым есть записи
-     * при текущих фильтрах (без учёта выбранного региона).
+     * Выпадающий список регионов: aggregated или legacy.
      *
      * @param  array<string, mixed>  $validated
      * @return array{0: array<string, string>, 1: bool}
      */
-    private function specialistCatalogRegionOptions(array $validated): array
+    private function resolveSpecialistRegionDropdown(array $validated): array
+    {
+        if (CatalogRegionFilter::isAggregatedMode()) {
+            return CatalogRegionFilter::dropdownForAggregated();
+        }
+
+        return $this->specialistCatalogRegionOptionsLegacy($validated);
+    }
+
+    /**
+     * Legacy: канонические region из карточек проектировщиков в scope.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array{0: array<string, string>, 1: bool}
+     */
+    private function specialistCatalogRegionOptionsLegacy(array $validated): array
     {
         $base = PublicSpecialistCatalogScope::specialistsMatchingCatalogScope($validated, $this->onlyActive);
 
@@ -67,12 +82,11 @@ class CatalogController extends Controller
             ->pluck('region')
             ->all();
 
-        $regionsList = CatalogRegionOptions::catalogCanonicalChoicesFromDistinctRaw(
+        return CatalogRegionFilter::dropdownForLegacy(
             app(RussianRegionNormalizer::class),
-            $names
+            $names,
+            $hasNullRegion
         );
-
-        return [$regionsList, $hasNullRegion];
     }
 
     /**
@@ -142,13 +156,9 @@ class CatalogController extends Controller
             ],
         ]);
 
-        [$regionsList, $hasNullRegion] = $this->specialistCatalogRegionOptions($validated);
+        [$regionsList, $hasNullRegion] = $this->resolveSpecialistRegionDropdown($validated);
 
-        $allowedRegions = array_merge([''], array_keys($regionsList));
-        if ($hasNullRegion) {
-            $allowedRegions[] = 'none';
-            $allowedRegions = array_values(array_unique($allowedRegions));
-        }
+        $allowedRegions = CatalogRegionFilter::allowedRequestValues($regionsList, $hasNullRegion);
 
         Validator::make($request->all(), [
             'region' => ['nullable', 'string', 'max:100', Rule::in($allowedRegions)],
@@ -161,13 +171,7 @@ class CatalogController extends Controller
             PublicSpecialistCatalogScope::restrictSpecialistCardsToCompleteSourcePosts($query);
 
             if (!empty($validated['region'])) {
-                if ($validated['region'] === 'none') {
-                    $query->where(function (Builder $inner) {
-                        CatalogRegionOptions::applyRegionMissingConstraint($inner);
-                    });
-                } else {
-                    $query->where('region', $validated['region']);
-                }
+                CatalogRegionFilter::applyToCardQuery($query, $validated['region']);
             }
 
             if (!empty($validated['key_word_tags'])) {
