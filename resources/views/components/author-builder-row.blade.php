@@ -1,7 +1,6 @@
 @php
     $lastPost = $author->lastBuilderPost();
     $checkOpenContact = isset($userOpenLog[$author->id]);
-    $builderData = $author->builderData();
     $builderSpecialties = $author->builderSpecialtiesWithShortName(15);
     $regionLabel = $author->builderCatalogRegionLabel();
 @endphp
@@ -42,18 +41,13 @@
         @endif
     </td>
     <td class="def-cell-05">
-        <p>
-            <span class="pro-tag">{!! implode('</span> <span class="pro-tag">', \App\Models\ApiPostUser::profileSkillsFront($builderData['soft_experience'], $builderSpecialties)) !!}</span>
-        </p>
-    </td>
-    <td class="def-cell-06">
         @if($lastPost?->post)
             <p class="author-last-post-full"><span class="txt-date">{{ $lastPost->post_date->format('d.m.Y') }}</span>{!! \App\Models\ApiPostUser::prepareLastPostText($lastPost->post, $checkOpenContact)->toHtml() !!}</p>
         @endif
     </td>
 </tr>
 <tr>
-    <td class="row-divider" colspan="6">
+    <td class="row-divider" colspan="5">
         <div></div>
     </td>
 </tr>

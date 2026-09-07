@@ -1940,23 +1940,18 @@ a:has(.social) {
   max-width: 165px;
 }
 
-/* каталог строителей: регион вместо «последний комментарий», сообщение — широкая колонка */
+/* каталог строителей: регион вместо профильных навыков и последнего комментария */
 .tbl-builders .def-cell-03 {
   width: 140px;
   max-width: 140px;
 }
 
 .tbl-builders .def-cell-04 {
-  width: 180px;
-  max-width: 180px;
+  width: 260px;
+  max-width: 260px;
 }
 
 .tbl-builders .def-cell-05 {
-  width: 180px;
-  max-width: 180px;
-}
-
-.tbl-builders .def-cell-06 {
   width: auto;
   max-width: none;
 }
