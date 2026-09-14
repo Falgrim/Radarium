@@ -32,7 +32,15 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Login::class, function (Login $event): void {
             $user = $event->user;
             if ($user instanceof User) {
-                $user->forceFill(['last_login_at' => now()])->saveQuietly();
+                $updates = ['last_login_at' => now()];
+                if (is_null($user->first_login_at)) {
+                    $updates['first_login_at'] = now();
+                }
+                $user->forceFill($updates)->saveQuietly();
+
+                if ($user->isTrialExpired() && !$user->hasActivePaidTariff()) {
+                    session()->flash('show_trial_expired_modal', true);
+                }
             }
         });
 
