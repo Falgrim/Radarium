@@ -30,11 +30,21 @@ class Tariff
             return true;
         }
 
-        if ($this->user->free_contacts) {
+        if ($this->canUseFreeContacts()) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Пользователю доступны бесплатные (тест-драйв) контакты только пока
+     * тест-драйв не истёк по времени (3 дня с первого входа) — даже если
+     * счётчик free_contacts ещё не обнулился.
+     */
+    protected function canUseFreeContacts(): bool
+    {
+        return (bool) $this->user->free_contacts AND !$this->user->isTrialExpired();
     }
 
     /**
@@ -86,7 +96,7 @@ class Tariff
 
     protected function freeContactsMinus(ApiPostUser $postUser)
     {
-        if (!$this->user->free_contacts) {
+        if (!$this->canUseFreeContacts()) {
             return false;
         }
 
@@ -136,7 +146,7 @@ class Tariff
             return true;
         }
 
-        if ($this->user->free_contacts) {
+        if ($this->canUseFreeContacts()) {
             return true;
         }
 
