@@ -374,6 +374,38 @@
     </div>
 </div>
 
+<div class="modal fade modal-registr modal-centered" role="dialog" tabindex="-1" id="rd-trial-expired">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header head-empty"><button class="btn btn-primary btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"><img class="img-fluid" width="24" height="24" src="{{ asset('v2/img/icon-close-dark.svg') }}"></button></div>
+            <div class="modal-body">
+                <form>
+                    <div class="registration-form">
+                        <h4 class="tarif-name">Тест-Драйв завершён</h4>
+                        <div>
+                            <p>
+                                Ваш бесплатный тест-драйв закончился. Чтобы продолжить открывать контакты
+                                специалистов и&nbsp;подрядчиков, выберите подходящий тариф.
+                            </p>
+                        </div>
+                        <div class="box-btn-line">
+                            <a class="btn btn-normal btn-color" href="{{ route('index') }}#buy_tariff" data-bs-dismiss="modal">Выбрать тариф</a>
+                            <a class="btn btn-trans btn-link" href="{{ route('profile.edit') }}" data-bs-dismiss="modal">Личный кабинет</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@if (session('show_trial_expired_modal'))
+    <script>
+        $(document).ready(function () {
+            rdModalShow('rd-trial-expired');
+        });
+    </script>
+@endif
+
 <!-- Модальное окно для видео урока -->
 <div class="modal fade modal-registr" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
