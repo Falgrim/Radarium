@@ -26,6 +26,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected const FREE_CONTACTS = 3;
 
+    /** Сколько дней действует тест-драйв с момента первого входа в систему. */
+    public const TRIAL_DAYS = 3;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -63,6 +66,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'first_login_at' => 'datetime',
             'password' => 'hashed',
             'phone' => RawPhoneNumberCast::class.':RU',
         ];
@@ -96,6 +100,58 @@ class User extends Authenticatable implements MustVerifyEmail
             ->first();
     }
 
+    public function hasActivePaidTariff(): bool
+    {
+        return !is_null($this->getFirstActiveTariff());
+    }
+
+    /**
+     * Дата и время окончания тест-драйва (первый вход + TRIAL_DAYS).
+     * Возвращает null, если пользователь ещё ни разу не входил в систему —
+     * в этом случае тест-драйв ещё не начался и не может считаться истёкшим.
+     */
+    public function getTrialEndsAt(): ?Carbon
+    {
+        if (is_null($this->first_login_at)) {
+            return null;
+        }
+
+        return $this->first_login_at->copy()->addDays(self::TRIAL_DAYS);
+    }
+
+    public function isTrialExpired(): bool
+    {
+        $endsAt = $this->getTrialEndsAt();
+
+        if (is_null($endsAt)) {
+            return false;
+        }
+
+        return Carbon::now()->gte($endsAt);
+    }
+
+    public function isTrialActive(): bool
+    {
+        return !$this->isTrialExpired();
+    }
+
+    /**
+     * Сколько дней тест-драйва осталось (для отображения в интерфейсе).
+     */
+    public function getTrialDaysLeft(): int
+    {
+        $endsAt = $this->getTrialEndsAt();
+
+        if (is_null($endsAt)) {
+            return self::TRIAL_DAYS;
+        }
+
+        $today = Carbon::today();
+        $end = $endsAt->copy()->startOfDay();
+
+        return $end >= $today ? $today->diffInDays($end) : 0;
+    }
+
     public function getLeftContacts(): array
     {
         $contacts = $this->hasMany(UserTariff::class)
@@ -122,10 +178,12 @@ class User extends Authenticatable implements MustVerifyEmail
                 'days_left' => $daysDiff,
             ];
         } else {
+            $trialExpired = $this->isTrialExpired();
+
             return [
-                'count_contacts_left' => $this->free_contacts,
+                'count_contacts_left' => $trialExpired ? 0 : $this->free_contacts,
                 'count_contacts' => self::FREE_CONTACTS,
-                'days_left' => $this->free_contacts ? 30 : 0,
+                'days_left' => $trialExpired ? 0 : $this->getTrialDaysLeft(),
             ];
         }
     }
