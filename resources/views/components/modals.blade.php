@@ -389,8 +389,8 @@
                             </p>
                         </div>
                         <div class="box-btn-line">
-                            <a class="btn btn-normal btn-color" href="{{ route('index') }}#buy_tariff" data-bs-dismiss="modal">Выбрать тариф</a>
-                            <a class="btn btn-trans btn-link" href="{{ route('profile.edit') }}" data-bs-dismiss="modal">Личный кабинет</a>
+                            <button class="btn btn-normal btn-color" type="button" id="rd-trial-expired-tariff-btn">Выбрать тариф</button>
+                            <button class="btn btn-trans btn-link" type="button" id="rd-trial-expired-profile-btn">Личный кабинет</button>
                         </div>
                     </div>
                 </form>
@@ -513,6 +513,14 @@
             setTimeout(function() {
                 rdModalShow('rd-registr');
             }, 400);
+        });
+
+        $(document).on('click', '#rd-trial-expired-tariff-btn', function() {
+            window.location.href = @json(route('index') . '#buy_tariff');
+        });
+
+        $(document).on('click', '#rd-trial-expired-profile-btn', function() {
+            window.location.href = @json(route('profile.edit'));
         });
     });
 

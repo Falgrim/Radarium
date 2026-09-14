@@ -62,5 +62,9 @@ class TrialExpiredNoticeTest extends TestCase
         $response = $this->actingAs($user)->get(route('catalog.builders'));
 
         $response->assertSee('id="rd-trial-expired"', false);
+        $response->assertSee('id="rd-trial-expired-tariff-btn"', false);
+        $response->assertSee('id="rd-trial-expired-profile-btn"', false);
+        $response->assertSee('#rd-trial-expired-tariff-btn', false);
+        $response->assertSee('#rd-trial-expired-profile-btn', false);
     }
 }
