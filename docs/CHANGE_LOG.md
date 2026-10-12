@@ -1,8 +1,19 @@
 # Radarium — журнал изменений
 
-> Период: **с 06.04.2026** по состояние репозитория на **07.09.2026**.
+> Период: **с 06.04.2026** по состояние репозитория на **13.10.2026**.
 
 ---
+
+## 2026-10-13
+
+### Каталог builders / профиль специализаций автора
+- Вместо склейки всех текстов автора и топ-3 по длине ключевых слов: **доказательства на пост** (`builder_post_speciality_evidence`) + **взвешенный профиль автора** (`author_speciality_scores`, `AuthorSpecialityProfiler`).
+- Leaf-first: в каталог пишутся листовые специализации (группы не занимают слоты); фильтр каталога по-прежнему раскрывает группу через `expandBuilderSearchSpecialityIds`.
+- Веса: частота, свежесть (полупериод ~12 мес.), дедуп репостов по хешу текста, IDF ключей словаря, `weak_key_words` / `negative_key_words`.
+- Конфиг: `config/author_speciality_profile.php`, флаги `AUTHOR_SPECIALITY_PROFILE_ENABLED` / `SHADOW`, версия `AUTHOR_SPECIALITY_MATCHER_VERSION`.
+- Команды: `app:builders:backfill_speciality_evidence`, `app:builders:rebuild_author_specialities`, `app:builders:author_specialities_export`, `app:builders:specialities_lint_dictionary`, `app:builders:speciality_keyword_candidates`; обновлён `app:builders:rematch_specialities`.
+- Отображение чипов: `ApiPostUser::builderSpecialtiesWithShortName` сортирует по `rank` из scores.
+- Тесты: `BuilderSpecialityMatcherTest`, `AuthorSpecialitySelectionTest`. Runbook: `docs/runbooks/builders-specialities-rollout.md`.
 
 ## 2026-09-07
 

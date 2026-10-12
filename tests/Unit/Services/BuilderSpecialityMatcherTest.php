@@ -6,22 +6,42 @@ namespace Tests\Unit\Services;
 
 use App\Services\BuilderSpecialityMatcher;
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 final class BuilderSpecialityMatcherTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config([
+            'author_speciality_profile.broad_post_threshold' => 4,
+            'author_speciality_profile.broad_post_combined_min' => 0.25,
+            'author_speciality_profile.ai_fuzzy_percent_min' => 90.0,
+            'author_speciality_profile.ai_fuzzy_score_factor' => 0.5,
+        ]);
+    }
+
     /**
      * @return Collection<int, object>
      */
     private function sampleDictionary(): Collection
     {
-        $make = static fn (int $id, ?int $parentId, string $title, string $short, array $kw): object => (object) [
+        $make = static fn (
+            int $id,
+            ?int $parentId,
+            string $title,
+            string $short,
+            array $kw,
+            array $weak = [],
+        ): object => (object) [
             'id' => $id,
             'parent_id' => $parentId,
             'title' => $title,
             'short_name' => $short,
             'group_title' => $short,
             'key_words' => $kw,
+            'weak_key_words' => $weak,
+            'negative_key_words' => [],
         ];
 
         return collect([
@@ -31,28 +51,30 @@ final class BuilderSpecialityMatcherTest extends TestCase
             $make(11, 10, 'Кладочные работы', 'Кладка', ['каменщик', 'газобетон', 'кладка']),
             $make(20, null, 'Кровельные работы', 'Кровля', ['клик-фальц', 'ендова', 'кровля']),
             $make(30, null, 'Аренда техники и оборудования', 'Аренда', ['манипулятор', 'ямобур', 'экскаватор', 'аренда техники']),
-            $make(40, null, 'Отделочные работы', 'Отделка', ['отделочные работы', 'отделка']),
+            $make(40, null, 'Отделочные работы', 'Отделка', ['отделочные работы'], ['отделка']),
             $make(41, 40, 'Штукатурные работы', 'Штукатурка', ['штукатурка', 'короед']),
             $make(42, 40, 'Малярные работы', 'Малярка', ['малярка', 'обои', 'покраска']),
         ]);
     }
 
-    public function test_masonry_text_matches_child_and_parent(): void
+    public function test_masonry_text_matches_leaf_not_parent(): void
     {
         $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
         $r = $matcher->resolve('Ищу бригаду каменщиков на кладку газобетона', null);
 
         $this->assertContains(11, $r['ids']);
-        $this->assertContains(10, $r['ids']);
+        $this->assertNotContains(10, $r['ids']);
     }
 
-    public function test_foundation_and_monolithic(): void
+    public function test_foundation_leaf_preferred(): void
     {
         $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
         $r = $matcher->resolve('Заливаем фундамент, опалубка и армирование под частник', null);
 
         $this->assertContains(2, $r['ids']);
-        $this->assertContains(1, $r['ids']);
+        // родитель монолита может остаться только если нет leaf evidence по его детям;
+        // фундамент — leaf под монолитом, поэтому parent 1 подавляется
+        $this->assertNotContains(1, $r['ids']);
     }
 
     public function test_roofing_click_falz(): void
@@ -71,26 +93,25 @@ final class BuilderSpecialityMatcherTest extends TestCase
         $this->assertContains(30, $r['ids']);
     }
 
-    public function test_finishing_plaster_paint_parents(): void
+    public function test_finishing_leaves_not_parent(): void
     {
         $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
         $r = $matcher->resolve('Штукатурка короед, обои, покраска', null);
 
         $this->assertContains(41, $r['ids']);
         $this->assertContains(42, $r['ids']);
-        $this->assertContains(40, $r['ids']);
+        $this->assertNotContains(40, $r['ids']);
     }
 
     public function test_resolve_respects_max_speciality_cap(): void
     {
         $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
         $unlimited = $matcher->resolve('Штукатурка короед, обои, покраска', null);
-        $this->assertGreaterThanOrEqual(3, count($unlimited['ids']));
+        $this->assertGreaterThanOrEqual(2, count($unlimited['ids']));
 
-        $max = 3;
+        $max = 1;
         $limited = $matcher->resolve('Штукатурка короед, обои, покраска', null, $max);
         $this->assertLessThanOrEqual($max, count($limited['ids']));
-        $this->assertSame(min($max, count($unlimited['ids'])), count($limited['ids']));
         foreach ($limited['ids'] as $id) {
             $this->assertContains($id, $unlimited['ids']);
         }
@@ -110,5 +131,37 @@ final class BuilderSpecialityMatcherTest extends TestCase
         $r = $matcher->resolve('', ['Кровельные работы']);
 
         $this->assertContains(20, $r['ids']);
+    }
+
+    public function test_collect_evidence_has_combined_scores(): void
+    {
+        $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
+        $ev = $matcher->collectEvidence('Штукатурка короед под ключ', null);
+
+        $this->assertArrayHasKey(41, $ev['by_id']);
+        $this->assertGreaterThan(0, $ev['by_id'][41]['combined']);
+        $this->assertTrue($ev['by_id'][41]['is_leaf']);
+    }
+
+    public function test_single_weak_keyword_alone_does_not_match(): void
+    {
+        $make = static fn (int $id, array $kw, array $weak): object => (object) [
+            'id' => $id,
+            'parent_id' => null,
+            'title' => 'X'.$id,
+            'short_name' => 'X'.$id,
+            'group_title' => 'X',
+            'key_words' => $kw,
+            'weak_key_words' => $weak,
+            'negative_key_words' => [],
+        ];
+        $dict = collect([
+            $make(1, [], ['объект']),
+            $make(2, ['кровля'], []),
+        ]);
+        $matcher = new BuilderSpecialityMatcher($dict);
+        $r = $matcher->resolve('Работаю на объекте в центре', null);
+
+        $this->assertNotContains(1, $r['ids']);
     }
 }

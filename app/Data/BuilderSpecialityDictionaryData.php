@@ -13,7 +13,7 @@ use JsonException;
  * Данные собраны из docs/reference/builder_specialities_updated.xlsx (лист «Специализации») и
  * доп. ключей (scripts/build_builder_speciality_json.py). При смене xlsx: обновить JSON.
  *
- * @return list<array{slug: string, parent_slug: ?string, title: string, short_name: string, group_title: string, key_words: list<string>}>
+ * @return list<array{slug: string, parent_slug: ?string, title: string, short_name: string, group_title: string, key_words: list<string>, weak_key_words?: list<string>, negative_key_words?: list<string>}>
  */
 final class BuilderSpecialityDictionaryData
 {

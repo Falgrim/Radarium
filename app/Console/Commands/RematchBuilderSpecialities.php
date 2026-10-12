@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Enum\DictionaryEnum;
 use App\Models\Builder;
 use App\Services\AuthorCatalogSpecialitiesSync;
-use App\Services\BuilderSpecialityMatcher;
-use App\Services\Dictionary;
+use App\Services\BuilderPostSpecialityEvidenceWriter;
 use Illuminate\Console\Command;
 
 class RematchBuilderSpecialities extends Command
@@ -19,9 +17,9 @@ class RematchBuilderSpecialities extends Command
                             {--only-empty : Только builders без связей specialities}
                             {--builder= : Только указанный id builder}';
 
-    protected $description = 'Пересчитать специализации builders по тексту поста и (если есть) сохранённому JSON ответа ИИ';
+    protected $description = 'Пересчитать evidence постов и профили специализаций авторов builders';
 
-    public function handle(Dictionary $dictionary, BuilderSpecialityMatcher $matcher): int
+    public function handle(BuilderPostSpecialityEvidenceWriter $evidenceWriter, AuthorCatalogSpecialitiesSync $sync): int
     {
         $dryRun = (bool) $this->option('dry-run');
         $chunk = max(1, (int) $this->option('chunk'));
@@ -40,8 +38,7 @@ class RematchBuilderSpecialities extends Command
         }
 
         $processed = 0;
-        $changed = 0;
-        $idsSum = 0;
+        $evidenceWritten = 0;
         $touchedUserIds = [];
 
         foreach ($query->lazyById($chunk) as $builder) {
@@ -53,71 +50,44 @@ class RematchBuilderSpecialities extends Command
             }
 
             $text = (string) ($post->post ?? '');
-            $aiList = $this->extractAiSpecialitiesFromPost($post->ai_result);
+            $aiList = BuilderPostSpecialityEvidenceWriter::extractAiSpecialitiesFromPostJson($post->ai_result);
 
-            $resolved = $matcher->resolve($text, $aiList, AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR);
-            $newIds = $resolved['ids'];
-            sort($newIds);
-
-            $oldIds = $builder->specialities()->pluck('dictionary_speciality_id')->map('intval')->sort()->values()->all();
-
-            if ($oldIds === $newIds) {
-                continue;
+            if (! $dryRun) {
+                $written = $evidenceWriter->writeForPost(
+                    (int) $post->id,
+                    $text,
+                    $aiList === [] ? null : $aiList
+                );
+                $evidenceWritten += $written['written'];
             }
 
-            ++$changed;
-            $idsSum += count($newIds);
-
-            if ($dryRun) {
-                $this->line("Builder {$builder->id}: было [".implode(',', $oldIds).'] → станет ['.implode(',', $newIds).']');
-                continue;
-            }
-
-            $dictionary->updateRelations(DictionaryEnum::Speciality, 'builder', (int) $builder->id, $newIds);
             $touchedUserIds[] = (int) $builder->api_post_user_id;
         }
 
-        if (! $dryRun && $touchedUserIds !== []) {
-            $sync = app(AuthorCatalogSpecialitiesSync::class);
-            foreach (array_values(array_unique($touchedUserIds)) as $userId) {
-                $sync->syncBuildersForUser($userId, AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR, false);
-            }
-        }
+        $touchedUserIds = array_values(array_unique(array_filter($touchedUserIds)));
+        $changedAuthors = 0;
 
-        $this->info("Обработано: {$processed}, изменено: {$changed}".($dryRun ? ' (dry-run)' : ''));
-        if (! $dryRun && $changed > 0) {
-            $this->info('Среднее число специализаций на изменённую запись: '.round($idsSum / $changed, 2));
-        }
-
-        return self::SUCCESS;
-    }
-
-    /**
-     * @return list<string>|null
-     */
-    private function extractAiSpecialitiesFromPost(mixed $aiResult): ?array
-    {
-        if (! is_string($aiResult) || $aiResult === '') {
-            return null;
-        }
-
-        $decoded = json_decode($aiResult, true);
-        if (! is_array($decoded)) {
-            return null;
-        }
-
-        $out = [];
-        foreach (['specialities', 'service_types'] as $key) {
-            if (! isset($decoded[$key]) || ! is_array($decoded[$key])) {
-                continue;
-            }
-            foreach ($decoded[$key] as $v) {
-                if (is_string($v) && $v !== '') {
-                    $out[] = $v;
+        foreach ($touchedUserIds as $userId) {
+            $r = $sync->syncBuildersForUser(
+                $userId,
+                AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR,
+                $dryRun
+            );
+            if ($r['changed']) {
+                ++$changedAuthors;
+                if ($dryRun) {
+                    $this->line(
+                        "api_post_user_id={$userId}: → [".implode(',', $r['top_speciality_ids']).']'
+                    );
                 }
             }
         }
 
-        return $out === [] ? null : array_values(array_unique($out));
+        $this->info(
+            "Обработано builders: {$processed}, evidence записей: {$evidenceWritten}, авторов с изменениями: {$changedAuthors}"
+            .($dryRun ? ' (dry-run)' : '')
+        );
+
+        return self::SUCCESS;
     }
 }

@@ -53,6 +53,12 @@
                                             {{ __('Новая ссылка для подтверждения была выслана на вашу почту.') }}
                                         </p>
                                     @endif
+
+                                    @if (session('status') === 'verification-link-failed')
+                                        <p class="mt-2 font-medium text-sm text-danger">
+                                            {{ __('Не удалось отправить письмо. Попробуйте позже или обратитесь в поддержку.') }}
+                                        </p>
+                                    @endif
                                 </div>
                             @endif
                         </div>

@@ -20,6 +20,8 @@ class DictionarySpeciality extends Model
         'title',
         'short_name',
         'key_words',
+        'weak_key_words',
+        'negative_key_words',
         'api_data_type_id',
         'created_at',
         'updated_at',
@@ -40,7 +42,9 @@ class DictionarySpeciality extends Model
         return [
             'created_at' => 'datetime:Y-m-d H:i:s',
             'updated_at' => 'datetime:Y-m-d H:i:s',
-            'key_words'  => 'array',
+            'key_words' => 'array',
+            'weak_key_words' => 'array',
+            'negative_key_words' => 'array',
         ];
     }
 

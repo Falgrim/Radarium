@@ -746,7 +746,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 4. **Эвристика подработки/найма:** если тип похож на услугу/резюме, но текст поста удовлетворяет `BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy()`, тип принудительно меняется на `вакансия` (логируется в канал `builder_type_override`).
 5. Тип приводится к `BuilderTypeEnum` через `BuilderNormalizer::normalizeType(...)`. Для каталога «строительные услуги» допускается в итоге только **`BuilderTypeEnum::Service`**; иначе пост получает `DontMatch` и `Builder` не создаётся.
 6. Нормализуются поля карточки: `performer_type`, `legal_form`, `object_types`, `equipment_skills_json` и др. (`BuilderNormalizer`, `BuilderNormalizer::cleanEquipmentSkills`).
-7. Специализации: объединение подсказок ИИ (`service_types` / `specialities` в JSON) и текстового матчинга через **`BuilderSpecialityMatcher`** (`resolve` по тексту поста + AI), с ограничением **`AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR` (3)** — при превышении остаются top-N по score; затем `Dictionary::updateRelations` для `builder_specialities` и **`AuthorCatalogSpecialitiesSync::syncBuildersForUser`** для согласования специализаций автора.
+7. Специализации: **`BuilderSpecialityMatcher::collectEvidence`** / `resolve` по тексту поста + AI (leaf-first, IDF/`weak_key_words`); запись строк в **`builder_post_speciality_evidence`**; затем **`AuthorCatalogSpecialitiesSync::syncBuildersForUser`** → при `AUTHOR_SPECIALITY_PROFILE_ENABLED` — **`AuthorSpecialityProfiler`** (агрегация по корпусу автора: свежесть, дедуп репостов, пороги → до 3 листьев в `author_speciality_scores` и во все активные `builder_specialities`). Shadow-режим пишет только scores.
 8. Регион: `RussianRegionNormalizer::normalize` по полю из ответа ИИ или `api_channels.region` (только канон из справочника; нераспознанное — `null`).
 9. **`CatalogPublicationGate`** (см. §7.8) выставляет `status` создаваемого `Builder` (`Active` или `InModeration`, если нет ни одной сопоставленной специализации при включённой политике).
 10. `Builder::create(...)`, пост → `Complete`, расширенный лог в `ai_debug`.
@@ -822,7 +822,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 - `specialist_specialities` (`SpecialistSpeciality`)
 - `company_job_specialities` (`CompanyJobSpeciality`)
 
-Для **строителей** после ответа ИИ дополнительно используется **`BuilderSpecialityMatcher`** (`app/Services/BuilderSpecialityMatcher.php`): объединяются совпадения по тексту поста и списки специализаций из JSON модели; опциональный cap `maxSpecialityIds` (по умолчанию **3** на автора). Синхронизация агрегированных специализаций автора — **`AuthorCatalogSpecialitiesSync`**. Результат участвует в `CatalogPublicationGate` и в `Dictionary::updateRelations` для `builder`.
+Для **строителей** после ответа ИИ используется **`BuilderSpecialityMatcher`** (`collectEvidence` / `resolve`): текстовый матчинг с IDF и `weak_key_words`/`negative_key_words`, строгий матч списка ИИ, leaf-first (группы не занимают слоты, если есть лист). Доказательства по посту сохраняются в **`builder_post_speciality_evidence`**. Профиль автора — **`AuthorSpecialityProfiler`** / **`AuthorSpecialitySelection`** (конфиг `config/author_speciality_profile.php`): взвешенная сумма `combined` по постам, отбор до **3** листьев с порогами уверенности, запись в **`author_speciality_scores`** и синхронизация pivot через **`AuthorCatalogSpecialitiesSync`**. UI чипов читает порядок из `rank` scores (`ApiPostUser::builderSpecialtiesWithShortName`). Результат участвует в `CatalogPublicationGate`. Команды: `app:builders:backfill_speciality_evidence`, `app:builders:rebuild_author_specialities`, `app:builders:rematch_specialities` (см. runbook `docs/runbooks/builders-specialities-rollout.md`).
 
 Ключевые элементы реализации:
 
@@ -864,6 +864,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 
 - `group_title` — “группа специализаций”
 - `title` — название “элемента” специализации
+- `key_words` / `weak_key_words` / `negative_key_words` — сильные, слабые (нужны 2+ или сильный сигнал) и негативные ключи матчера builders
 - `short_name` — короткое имя (генерируется/обновляется в миграциях)
 - `key_words` — JSON-массив ключевых слов/вариантов
 - `api_data_type_id` — для каких доменных типов актуально (Specialist/Builder/Company)
@@ -1060,7 +1061,9 @@ AI-команды создают доменные сущности и затем
 - `app:ai_parse:requeue-builder-missing-visible-posts` (`AiRequeueBuilderMissingVisiblePosts`): выборочный requeue для авторов каталога без «видимого» Complete-поста (`--dry-run` / `--apply`).
 - `app:ai_parse:requeue-specialist-missing-visible-posts` (`AiRequeueSpecialistMissingVisiblePosts`): requeue для авторов каталога «Проектирование» без видимого Complete-поста (`PublicSpecialistCatalogScope`).
 - `app:channels:enable-specialists` (`EnableSpecialistChannelsCommand`): инвентаризация/включение disabled specialist-каналов (`--dry-run` / `--apply`). Runbook: `docs/runbooks/specialist-ops-phase1.md`.
-- `app:builders:rematch_specialities` (`RematchBuilderSpecialities`): пересчёт `builder_specialities` по тексту поста и сохранённому JSON ИИ (с cap специализаций и `AuthorCatalogSpecialitiesSync`).
+- `app:builders:rematch_specialities` (`RematchBuilderSpecialities`): пересчёт evidence постов и профилей авторов (`AuthorCatalogSpecialitiesSync` / `AuthorSpecialityProfiler`).
+- `app:builders:backfill_speciality_evidence` / `app:builders:rebuild_author_specialities` / `app:builders:author_specialities_export` — backfill evidence, rebuild профилей, золотой набор.
+- `app:builders:specialities_lint_dictionary` / `app:builders:speciality_keyword_candidates` — гигиена словаря и кандидаты ключей.
 - `app:catalog:disable-active-builders-hiring-text` (`DisableActiveBuildersHiringTextCommand`): перевод активных карточек строителей с текстом найма/не-услуги в `InModeration` по `CatalogPublicationBuilderNonServiceSignals` (`--dry-run`).
 - `app:regions:normalize_stored` (`NormalizeStoredRegions`): нормализация поля `region` у существующих builders/specialists.
 - `app:sync_channel_region_to_posts` (`SyncChannelRegionToPosts`): проставить `region` канала в карточки без региона.

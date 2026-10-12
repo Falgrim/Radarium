@@ -22,6 +22,7 @@ use App\Services\BuilderNormalizer;
 use App\Services\BuilderAiPipelineRuntimeConfig;
 use App\Services\BuilderServiceOfferClassifier;
 use App\Services\BuilderSpecialityMatcher;
+use App\Services\BuilderPostSpecialityEvidenceWriter;
 use App\Services\AiParsePostExceptionHandler;
 use App\Services\BuilderNonFieldSpecialistRedirect;
 use App\Services\BuilderVacancyGigHeuristic;
@@ -256,6 +257,19 @@ class AiBuilderPosts extends Command
                     $mergedSpecialities = $resolved['ids'];
                     $fromText = $resolved['log']['text_match_ids'] ?? [];
                     $fromAi = $resolved['log']['ai_match_ids'] ?? [];
+
+                    try {
+                        app(BuilderPostSpecialityEvidenceWriter::class)->writeForPost(
+                            (int) $post->id,
+                            (string) $post->post,
+                            $aiSpecialities === [] ? null : $aiSpecialities
+                        );
+                    } catch (\Throwable $e) {
+                        Log::channel('ai_debug')->warning('[Builder] evidence write failed', [
+                            'post_id' => $post->id,
+                            'message' => $e->getMessage(),
+                        ]);
+                    }
 
                     $rawRegion = ! empty($result['json']['location_region'])
                         ? trim((string) $result['json']['location_region'])

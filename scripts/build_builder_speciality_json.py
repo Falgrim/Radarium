@@ -732,8 +732,22 @@ def main() -> None:
     gslug = _map_group_to_parent_slug()
     title_by_pslug = {sl: t for sl, t, _, _ in pdefs}
 
+    # Сохранить weak/negative из предыдущего JSON (скрипт не перетирает ручную гигиену).
+    prev_extra: dict[str, dict] = {}
+    if OUT.is_file():
+        try:
+            prev = json.loads(OUT.read_text(encoding="utf-8"))
+            for r in prev.get("rows") or []:
+                prev_extra[str(r.get("slug") or "")] = {
+                    "weak_key_words": list(r.get("weak_key_words") or []),
+                    "negative_key_words": list(r.get("negative_key_words") or []),
+                }
+        except (OSError, json.JSONDecodeError):
+            prev_extra = {}
+
     out: list[dict] = []
     for slug, title, kws, short in pdefs:
+        extra = prev_extra.get(slug, {})
         out.append(
             {
                 "slug": slug,
@@ -742,6 +756,8 @@ def main() -> None:
                 "short_name": short,
                 "group_title": title,
                 "key_words": kws,
+                "weak_key_words": extra.get("weak_key_words", []),
+                "negative_key_words": extra.get("negative_key_words", []),
             }
         )
 
@@ -769,6 +785,7 @@ def main() -> None:
         )
         if pslug is None:
             raise SystemExit(f"Неизвестная группа: {g!r}")
+        extra = prev_extra.get(slug, {})
         out.append(
             {
                 "slug": slug,
@@ -777,6 +794,8 @@ def main() -> None:
                 "short_name": sname,
                 "group_title": title_by_pslug[pslug],
                 "key_words": kws,
+                "weak_key_words": extra.get("weak_key_words", []),
+                "negative_key_words": extra.get("negative_key_words", []),
             }
         )
 

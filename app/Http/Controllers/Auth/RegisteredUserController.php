@@ -13,11 +13,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Symfony\Component\Mailer\Exception\UnexpectedResponseException;
-
 class RegisteredUserController extends Controller
 {
     private function checkAllowRegistrations(): bool
@@ -69,8 +68,20 @@ class RegisteredUserController extends Controller
 
             try {
                 event(new Registered($user));
-            } catch (UnexpectedResponseException $e) {
-                // Игнорим ошибку отправки письма, если введенная почта с проблемой валидации
+            } catch (\Throwable $e) {
+                // Сбой отправки письма (SMTP недоступен, неверные учётные данные,
+                // проблемный адрес получателя и т.п.) не должен ломать регистрацию.
+                // Пользователь уже создан, письмо подтверждения можно отправить повторно.
+                Log::warning('Не удалось отправить письмо подтверждения при регистрации', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'exception' => $e::class,
+                    'message' => $e->getMessage(),
+                ]);
+
+                // Флаг для страницы verify-email: показать честное сообщение,
+                // что письмо не отправлено, вместо «письмо отправлено».
+                $request->session()->put('verification_mail_failed', true);
             }
 
             Auth::login($user);

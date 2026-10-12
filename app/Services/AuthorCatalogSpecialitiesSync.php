@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Log;
  * текстов сообщений с завершённой ИИ-обработкой оставляет не более N наиболее релевантных
  * и записывает один и тот же набор во все активные карточки этого пользователя.
  * Фактически может быть 1–N записей: меньше, если по тексту уверенно определено меньше совпадений.
+ *
+ * Для builders при AUTHOR_SPECIALITY_PROFILE_ENABLED делегирует в AuthorSpecialityProfiler.
  */
 final class AuthorCatalogSpecialitiesSync
 {
@@ -26,6 +28,7 @@ final class AuthorCatalogSpecialitiesSync
     public function __construct(
         private readonly Dictionary $dictionary,
         private readonly BuilderSpecialityMatcher $builderMatcher,
+        private readonly AuthorSpecialityProfiler $profiler,
     ) {
     }
 
@@ -94,6 +97,27 @@ final class AuthorCatalogSpecialitiesSync
      * @return array{changed: bool, specialist_ids: list<int>, builder_ids: list<int>, top_speciality_ids: list<int>}
      */
     public function syncBuildersForUser(int $apiPostUserId, int $maxSpecialities = self::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR, bool $dryRun = false): array
+    {
+        if ((bool) config('author_speciality_profile.enabled', true)) {
+            $result = $this->profiler->profileBuildersForUser($apiPostUserId, $maxSpecialities, $dryRun, true);
+
+            return [
+                'changed' => $result['changed'],
+                'specialist_ids' => [],
+                'builder_ids' => $result['builder_ids'],
+                'top_speciality_ids' => $result['top_speciality_ids'],
+            ];
+        }
+
+        return $this->syncBuildersForUserLegacy($apiPostUserId, $maxSpecialities, $dryRun);
+    }
+
+    /**
+     * Прежняя логика: склейка текстов + resolve с cap.
+     *
+     * @return array{changed: bool, specialist_ids: list<int>, builder_ids: list<int>, top_speciality_ids: list<int>}
+     */
+    private function syncBuildersForUserLegacy(int $apiPostUserId, int $maxSpecialities, bool $dryRun): array
     {
         $builders = Builder::query()
             ->where('api_post_user_id', $apiPostUserId)
@@ -171,7 +195,7 @@ final class AuthorCatalogSpecialitiesSync
             ];
         }
 
-        Log::channel('ai_debug')->info('[AuthorCatalogSpecialitiesSync] syncBuildersForUser', [
+        Log::channel('ai_debug')->info('[AuthorCatalogSpecialitiesSync] syncBuildersForUser legacy', [
             'api_post_user_id' => $apiPostUserId,
             'dry_run' => $dryRun,
             'max_specialities' => $maxSpecialities,
@@ -179,9 +203,7 @@ final class AuthorCatalogSpecialitiesSync
             'builder_ids' => $builderIds,
             'combined_text_char_length' => mb_strlen($combined),
             'ai_speciality_strings_merged' => $aiMerged,
-            'ai_speciality_strings_count' => count($aiMerged),
             'resolved_top_dictionary_speciality_ids' => $top,
-            'resolved_top_count' => count($top),
             'matcher_log' => $resolved['log'] ?? [],
             'any_builder_row_changed' => $changed,
             'per_builder' => $perBuilder,
@@ -225,27 +247,6 @@ final class AuthorCatalogSpecialitiesSync
      */
     private function extractAiSpecialitiesFromPostJson(mixed $aiResult): array
     {
-        if (! is_string($aiResult) || $aiResult === '') {
-            return [];
-        }
-
-        $decoded = json_decode($aiResult, true);
-        if (! is_array($decoded)) {
-            return [];
-        }
-
-        $out = [];
-        foreach (['specialities', 'service_types'] as $key) {
-            if (! isset($decoded[$key]) || ! is_array($decoded[$key])) {
-                continue;
-            }
-            foreach ($decoded[$key] as $v) {
-                if (is_string($v) && $v !== '') {
-                    $out[] = $v;
-                }
-            }
-        }
-
-        return array_values(array_unique($out));
+        return BuilderPostSpecialityEvidenceWriter::extractAiSpecialitiesFromPostJson($aiResult);
     }
 }

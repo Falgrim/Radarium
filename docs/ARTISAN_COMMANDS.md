@@ -3,7 +3,7 @@
 Справочник по всем собственным консольным командам проекта (`app/Console/Commands`).
 Стандартные команды Laravel (`migrate`, `queue:work`, `auth:clear-resets` и т. п.) здесь не описываются.
 
-**Актуально на:** 2026-09-07 · **Всего команд:** 33
+**Актуально на:** 2026-10-13 · **Всего команд:** 38
 
 > **Правило сопровождения:** файл обновляется при каждом создании, изменении (сигнатура, опции, поведение) или удалении команды.
 > Порядок обновления описан в разделе [Регламент обновления документа](#регламент-обновления-документа).
@@ -211,14 +211,45 @@
 ### `app:catalog:sync_author_specialities`
 
 - **Класс:** `SyncCatalogAuthorSpecialities`
-- **Назначение:** пересчитывает специализации авторов публичного каталога по совокупности всех их сообщений с завершённой ИИ-обработкой, оставляя не более N специализаций на автора.
+- **Назначение:** пересчитывает специализации авторов публичного каталога. Для **builders** при `AUTHOR_SPECIALITY_PROFILE_ENABLED=true` делегирует в `AuthorSpecialityProfiler` (evidence постов → взвешенный профиль автора, до N листьев). Для specialists — прежняя склейка текстов + `Dictionary::scoreSpecialistMatchesByList`.
 - **Опции:** `--dry-run`, `--only=both|specialists|builders`, `--max=3`.
 
 ### `app:builders:rematch_specialities`
 
 - **Класс:** `RematchBuilderSpecialities`
-- **Назначение:** пересчитывает специализации карточек `Builder` по тексту поста и (если сохранён) JSON-ответу ИИ через `BuilderSpecialityMatcher`. Изменённые записи затем синхронизируются на уровне автора.
+- **Назначение:** пересчитывает `builder_post_speciality_evidence` по тексту поста и JSON ИИ, затем профили авторов через `AuthorCatalogSpecialitiesSync`.
 - **Опции:** `--dry-run`, `--chunk=500`, `--only-empty` (только карточки без специализаций), `--builder=<id>` (одна карточка).
+
+### `app:builders:backfill_speciality_evidence`
+
+- **Класс:** `BackfillBuilderSpecialityEvidence`
+- **Назначение:** заполняет таблицу `builder_post_speciality_evidence` для Complete-постов активных builders (без LLM).
+- **Опции:** `--dry-run`, `--chunk=200`, `--force` (перезаписать уже существующий evidence текущей `matcher_version`).
+
+### `app:builders:rebuild_author_specialities`
+
+- **Класс:** `RebuildAuthorSpecialities`
+- **Назначение:** пересчёт `author_speciality_scores` и (если не shadow) `builder_specialities` для всех авторов builders. Удобно после backfill и калибровки порогов.
+- **Опции:** `--dry-run`, `--chunk=100`, `--compare-csv=<path>` (CSV: старый pivot vs новый профиль), `--user=<api_post_user_id>`.
+- **Конфиг:** `AUTHOR_SPECIALITY_PROFILE_SHADOW=true` пишет только scores, не трогает pivot.
+
+### `app:builders:author_specialities_export`
+
+- **Класс:** `ExportAuthorSpecialitiesGoldset`
+- **Назначение:** стратифицированный экспорт авторов (1 / 2–5 / 6+ постов) в CSV для ручной разметки золотого набора и калибровки порогов.
+- **Опции:** `--out=storage/app/author_specialities_goldset.csv`, `--limit=200`, `--dry-run`.
+
+### `app:builders:specialities_lint_dictionary`
+
+- **Класс:** `LintBuilderSpecialityDictionary`
+- **Назначение:** линтер справочника: дубли ключей между листьями, лист=группа по title, слишком общие сильные ключи, высокий DF ключа по корпусу постов (кандидат в `weak_key_words`).
+- **Опции:** `--sample=2000`, `--df-threshold=0.12`.
+
+### `app:builders:speciality_keyword_candidates`
+
+- **Класс:** `BuilderSpecialityKeywordCandidates`
+- **Назначение:** по постам с высоким `combined` в evidence считает n-граммы и PMI → CSV кандидатов новых ключей на ручной просмотр.
+- **Опции:** `--out=...`, `--min-combined=0.55`, `--limit=3000`, `--top=30`. Требует предварительно заполненный evidence.
 
 ### `app:posts:speciality`
 

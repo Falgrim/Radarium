@@ -166,11 +166,24 @@ class ApiPostUser extends Model
             return [];
         }
 
-        $max = \App\Services\AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR;
+        $max = (int) config(
+            'author_speciality_profile.max_specialities',
+            \App\Services\AuthorCatalogSpecialitiesSync::DEFAULT_MAX_SPECIALITIES_PER_AUTHOR
+        );
+        $version = (string) config('author_speciality_profile.matcher_version', 'v2');
+
+        $rankBySpecId = AuthorSpecialityScore::query()
+            ->where('api_post_user_id', $this->id)
+            ->where('matcher_version', $version)
+            ->where('is_selected', true)
+            ->orderBy('rank')
+            ->pluck('rank', 'dictionary_speciality_id')
+            ->mapWithKeys(static fn ($rank, $id): array => [(int) $id => (int) $rank])
+            ->all();
+
         $bySpecialityId = [];
         $items = BuilderSpeciality::whereIn('builder_id', $builderIds)
             ->with('dictionarySpeciality')
-            ->orderBy('dictionary_speciality_id')
             ->get();
 
         foreach ($items as $bs) {
@@ -192,8 +205,11 @@ class ApiPostUser extends Model
             $bySpecialityId[$specialityId] = [
                 'name' => $name,
                 'key_words' => $d->key_words,
+                'rank' => $rankBySpecId[$specialityId] ?? (1000 + $specialityId),
             ];
         }
+
+        uasort($bySpecialityId, static fn (array $a, array $b): int => ($a['rank'] <=> $b['rank']));
 
         if (count($bySpecialityId) > $max) {
             $bySpecialityId = array_slice($bySpecialityId, 0, $max, true);
@@ -201,7 +217,10 @@ class ApiPostUser extends Model
 
         $result = [];
         foreach ($bySpecialityId as $row) {
-            $result[$row['name']] = $row;
+            $result[$row['name']] = [
+                'name' => $row['name'],
+                'key_words' => $row['key_words'],
+            ];
         }
 
         return $result;
