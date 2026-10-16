@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Enum\ApiChannelPostStatusEnum;
 use App\Enum\ApiPostAiStatusEnum;
 use App\Models\Builder;
+use App\Models\DictionarySpeciality;
 use App\Services\AuthorSpecialityProfiler;
 use Illuminate\Console\Command;
 
@@ -16,6 +17,7 @@ class RebuildAuthorSpecialities extends Command
                             {--dry-run : Показать diff без записи}
                             {--chunk=100 : Сколько авторов обрабатывать с отчётом}
                             {--compare-csv= : Путь CSV сравнения старых pivot vs новый профиль}
+                            {--changed-only : В CSV писать только авторов с отличием от текущего pivot}
                             {--user= : Один api_post_user_id}';
 
     protected $description = 'Пересчитать профили специализаций авторов builders (scores + pivot, с учётом shadow)';
@@ -24,6 +26,7 @@ class RebuildAuthorSpecialities extends Command
     {
         $dryRun = (bool) $this->option('dry-run');
         $csvPath = $this->option('compare-csv');
+        $changedOnly = (bool) $this->option('changed-only');
         $oneUser = $this->option('user');
         $oneUserId = $oneUser !== null && $oneUser !== '' ? (int) $oneUser : null;
 
@@ -43,9 +46,20 @@ class RebuildAuthorSpecialities extends Command
 
         $this->info('Авторов: '.count($userIds));
 
+        /** @var array<int, string> $titleById */
+        $titleById = DictionarySpeciality::query()
+            ->pluck('title', 'id')
+            ->mapWithKeys(static fn ($title, $id): array => [(int) $id => (string) $title])
+            ->all();
+
         $changed = 0;
+        $csvRows = 0;
         $csvHandle = null;
         if (is_string($csvPath) && $csvPath !== '') {
+            $dir = dirname($csvPath);
+            if ($dir !== '' && $dir !== '.' && ! is_dir($dir)) {
+                mkdir($dir, 0775, true);
+            }
             $csvHandle = fopen($csvPath, 'wb');
             if ($csvHandle === false) {
                 $this->error("Не удалось открыть {$csvPath}");
@@ -54,6 +68,8 @@ class RebuildAuthorSpecialities extends Command
             }
             fputcsv($csvHandle, [
                 'api_post_user_id',
+                'old_speciality_titles',
+                'new_speciality_titles',
                 'old_speciality_ids',
                 'new_speciality_ids',
                 'changed',
@@ -71,40 +87,54 @@ class RebuildAuthorSpecialities extends Command
                 true
             );
             $newIds = $r['top_speciality_ids'];
-            $isChanged = $oldIds !== (static function () use ($newIds): array {
-                $x = $newIds;
-                sort($x);
-
-                return $x;
-            })();
+            $sortedNew = $newIds;
+            sort($sortedNew);
+            $isChanged = $oldIds !== $sortedNew;
 
             if ($isChanged) {
                 ++$changed;
             }
 
-            if ($csvHandle) {
+            $oldTitles = $this->titlesForIds($oldIds, $titleById);
+            $newTitles = $this->titlesForIds($newIds, $titleById);
+
+            if ($csvHandle && (! $changedOnly || $isChanged)) {
                 $topScores = collect($r['scores'])
                     ->take(5)
-                    ->map(static fn (array $s): string => $s['dictionary_speciality_id'].':'.$s['score'])
-                    ->implode(',');
+                    ->map(function (array $s) use ($titleById): string {
+                        $id = (int) $s['dictionary_speciality_id'];
+                        $title = $titleById[$id] ?? (string) $id;
+
+                        return $title.':'.$s['score'];
+                    })
+                    ->implode(' | ');
                 fputcsv($csvHandle, [
                     $userId,
+                    implode(' | ', $oldTitles),
+                    implode(' | ', $newTitles),
                     implode(',', $oldIds),
                     implode(',', $newIds),
                     $isChanged ? '1' : '0',
                     ($r['shadow'] ?? false) ? '1' : '0',
                     $topScores,
                 ], ';');
+                ++$csvRows;
             }
 
             if ($dryRun && $isChanged) {
-                $this->line("user={$userId}: [".implode(',', $oldIds).'] → ['.implode(',', $newIds).']');
+                $this->line(
+                    "user={$userId}: ["
+                    .implode(' | ', $oldTitles)
+                    .'] → ['
+                    .implode(' | ', $newTitles)
+                    .']'
+                );
             }
         }
 
         if ($csvHandle) {
             fclose($csvHandle);
-            $this->info("CSV: {$csvPath}");
+            $this->info("CSV: {$csvPath} (строк данных: {$csvRows}".($changedOnly ? ', только changed' : '').')');
         }
 
         $this->info(
@@ -133,7 +163,7 @@ class RebuildAuthorSpecialities extends Command
             return [];
         }
 
-        $ids = \App\Models\BuilderSpeciality::query()
+        return \App\Models\BuilderSpeciality::query()
             ->whereIn('builder_id', $builderIds)
             ->pluck('dictionary_speciality_id')
             ->map(static fn ($id): int => (int) $id)
@@ -141,7 +171,20 @@ class RebuildAuthorSpecialities extends Command
             ->sort()
             ->values()
             ->all();
+    }
 
-        return $ids;
+    /**
+     * @param  list<int>  $ids
+     * @param  array<int, string>  $titleById
+     * @return list<string>
+     */
+    private function titlesForIds(array $ids, array $titleById): array
+    {
+        $titles = [];
+        foreach ($ids as $id) {
+            $titles[] = $titleById[$id] ?? (string) $id;
+        }
+
+        return $titles;
     }
 }

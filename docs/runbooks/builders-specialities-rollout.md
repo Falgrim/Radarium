@@ -56,12 +56,14 @@ php artisan app:builders:backfill_speciality_evidence --dry-run
 php artisan app:builders:backfill_speciality_evidence
 ```
 
-4. Shadow-rebuild + CSV сравнения:
+4. Shadow-rebuild + CSV сравнения (названия «было → стало»; `--changed-only` — только изменившиеся, удобно для руководства):
 
 ```bash
-php artisan app:builders:rebuild_author_specialities --dry-run --compare-csv=storage/app/author_spec_compare.csv
-php artisan app:builders:rebuild_author_specialities --compare-csv=storage/app/author_spec_compare.csv
+php artisan app:builders:rebuild_author_specialities --dry-run --compare-csv=storage/app/author_spec_compare.csv --changed-only
+php artisan app:builders:rebuild_author_specialities --compare-csv=storage/app/author_spec_compare.csv --changed-only
 ```
+
+Колонки CSV: `old_speciality_titles`, `new_speciality_titles` (человекочитаемые), плюс id, `changed`, `top_scores` (title:score).
 
 5. Золотой набор (выборка для ручной разметки) и калибровка порогов в `config/author_speciality_profile.php`:
 

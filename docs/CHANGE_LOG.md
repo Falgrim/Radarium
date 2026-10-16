@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-10-16
+
+### Отчёт compare-csv: названия специализаций
+- `app:builders:rebuild_author_specialities --compare-csv`: в CSV добавлены `old_speciality_titles` / `new_speciality_titles` (и `top_scores` с названиями); опция `--changed-only` пишет только авторов с отличием от текущего pivot. Для таблицы «было → стало» руководству.
+
 ## 2026-10-13
 
 ### Каталог builders / профиль специализаций автора

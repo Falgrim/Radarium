@@ -3,7 +3,7 @@
 Справочник по всем собственным консольным командам проекта (`app/Console/Commands`).
 Стандартные команды Laravel (`migrate`, `queue:work`, `auth:clear-resets` и т. п.) здесь не описываются.
 
-**Актуально на:** 2026-10-13 · **Всего команд:** 38
+**Актуально на:** 2026-10-16 · **Всего команд:** 38
 
 > **Правило сопровождения:** файл обновляется при каждом создании, изменении (сигнатура, опции, поведение) или удалении команды.
 > Порядок обновления описан в разделе [Регламент обновления документа](#регламент-обновления-документа).
@@ -230,7 +230,7 @@
 
 - **Класс:** `RebuildAuthorSpecialities`
 - **Назначение:** пересчёт `author_speciality_scores` и (если не shadow) `builder_specialities` для всех авторов builders. Удобно после backfill и калибровки порогов.
-- **Опции:** `--dry-run`, `--chunk=100`, `--compare-csv=<path>` (CSV: старый pivot vs новый профиль), `--user=<api_post_user_id>`.
+- **Опции:** `--dry-run`, `--chunk=100`, `--compare-csv=<path>` (CSV: старый pivot vs новый профиль — колонки `old_speciality_titles` / `new_speciality_titles` для руководства, плюс id), `--changed-only` (в CSV только авторы с отличием), `--user=<api_post_user_id>`.
 - **Конфиг:** `AUTHOR_SPECIALITY_PROFILE_SHADOW=true` пишет только scores, не трогает pivot.
 
 ### `app:builders:author_specialities_export`
