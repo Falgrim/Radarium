@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-10-17
+
+### Экспорт авторов с обнулившейся специализацией
+- `app:builders:author_specialities_export`: опции `--lost-only` (pivot был, новый профиль пуст) и `--per-post` (1 строка = 1 сообщение: полный текст, AI specialities, evidence матчера, `empty_reason` = `no_leaf_evidence` | `below_threshold`). Для разбора кейсов перед снятием shadow.
+
 ## 2026-10-16
 
 ### Отчёт compare-csv: названия специализаций

@@ -3,7 +3,7 @@
 Справочник по всем собственным консольным командам проекта (`app/Console/Commands`).
 Стандартные команды Laravel (`migrate`, `queue:work`, `auth:clear-resets` и т. п.) здесь не описываются.
 
-**Актуально на:** 2026-10-16 · **Всего команд:** 38
+**Актуально на:** 2026-10-17 · **Всего команд:** 38
 
 > **Правило сопровождения:** файл обновляется при каждом создании, изменении (сигнатура, опции, поведение) или удалении команды.
 > Порядок обновления описан в разделе [Регламент обновления документа](#регламент-обновления-документа).
@@ -236,8 +236,15 @@
 ### `app:builders:author_specialities_export`
 
 - **Класс:** `ExportAuthorSpecialitiesGoldset`
-- **Назначение:** стратифицированный экспорт авторов (1 / 2–5 / 6+ постов) в CSV для ручной разметки золотого набора и калибровки порогов.
-- **Опции:** `--out=storage/app/author_specialities_goldset.csv`, `--limit=200`, `--dry-run`.
+- **Назначение:** экспорт авторов builders для ручной разметки / диагностики. По умолчанию — стратифицированная выборка (1 / 2–5 / 6+ постов). С `--lost-only` — все авторы, у которых текущий pivot непустой, а новый профиль пуст (`no_leaf_evidence` или `below_threshold`).
+- **Опции:**
+  - `--out=storage/app/author_specialities_goldset.csv`
+  - `--limit=200` — для обычного режима; при `--lost-only` режет выборку **только если** `--limit` передан явно
+  - `--lost-only` — только авторы с обнулившейся специализацией
+  - `--per-post` — 1 строка = 1 сообщение: полный текст, `ai_specialities_raw`, `post_evidence` (text/ai/combined), `empty_reason`, кандидаты профайлера
+  - `--dry-run`
+- **Пример (диагностика «стало пусто» перед снятием shadow):**
+  `php artisan app:builders:author_specialities_export --lost-only --per-post --out=storage/app/lost_specialities_posts.csv`
 
 ### `app:builders:specialities_lint_dictionary`
 

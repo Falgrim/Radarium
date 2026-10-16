@@ -65,10 +65,15 @@ php artisan app:builders:rebuild_author_specialities --compare-csv=storage/app/a
 
 Колонки CSV: `old_speciality_titles`, `new_speciality_titles` (человекочитаемые), плюс id, `changed`, `top_scores` (title:score).
 
-5. Золотой набор (выборка для ручной разметки) и калибровка порогов в `config/author_speciality_profile.php`:
+5. Золотой набор / диагностика обнулений и калибровка порогов в `config/author_speciality_profile.php`:
 
 ```bash
+# Стратифицированная выборка для ручной разметки
 php artisan app:builders:author_specialities_export --limit=200
+
+# Все авторы, у которых специализации «стало пусто»: 1 строка = 1 сообщение
+# (причина empty_reason, ответ ИИ, evidence матчера, полный текст)
+php artisan app:builders:author_specialities_export --lost-only --per-post --out=storage/app/lost_specialities_posts.csv
 ```
 
 6. Выключить shadow (`AUTHOR_SPECIALITY_PROFILE_SHADOW=false`), `config:clear`, затем:
