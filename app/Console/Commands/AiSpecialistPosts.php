@@ -59,6 +59,7 @@ class AiSpecialistPosts extends Command
 
         foreach ($posts as $post) {
             try {
+                $aiService = null;
                 $this->info('Анализ поста ID: '.$post->id);
                 if ($post->channel->apiAi->status !== ApiAiStatusEnum::Active) {
                     $this->error('ИИ "'.$post->channel->apiAi->title.'" (ID '.$post->channel->apiAi->id.') отключен: '.$post->id);

@@ -74,6 +74,7 @@ class AiCompanyPosts extends Command
 
         foreach ($posts as $post) {
             try {
+                $aiService = null;
                 $promt = $post->channel->ai_promt;
                 $options = $post->channel->apiAi->options;
 

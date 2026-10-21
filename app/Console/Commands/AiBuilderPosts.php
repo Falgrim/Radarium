@@ -92,6 +92,7 @@ class AiBuilderPosts extends Command
 
         foreach ($posts as $post) {
             try {
+                $aiService = null;
                 $promt = $post->channel->ai_promt;
                 $options = $post->channel->apiAi->options;
 
@@ -432,14 +433,26 @@ class AiBuilderPosts extends Command
         $result = $redirect->redirectPost($post, $trigger);
         $import = $result['import'];
 
-        if ($result['redirected'] && $import !== null) {
-            $status = (string) ($import['status'] ?? '');
-            if ($status === BuilderNonFieldSpecialistRedirect::STATUS_ALREADY_SPECIALIST) {
+        if ($result['redirected']) {
+            if (is_array($import)) {
+                $status = (string) ($import['status'] ?? '');
+                if ($status === BuilderNonFieldSpecialistRedirect::STATUS_ALREADY_SPECIALIST) {
+                    $this->info(sprintf(
+                        'Автор уже проектировщик — удалены builder (post_id=%d, removed=%d, specialist_id=%d, %s)',
+                        $post->id,
+                        (int) ($result['builders_removed'] ?? 0),
+                        (int) ($import['specialist_id'] ?? 0),
+                        $trigger
+                    ));
+
+                    return true;
+                }
+
                 $this->info(sprintf(
-                    'Автор уже проектировщик — удалены builder (post_id=%d, removed=%d, specialist_id=%d, %s)',
+                    'Перенаправление в проектировщики: post_id=%d → specialist_id=%d, removed_builders=%d (%s)',
                     $post->id,
-                    (int) ($result['builders_removed'] ?? 0),
                     (int) ($import['specialist_id'] ?? 0),
+                    (int) ($result['builders_removed'] ?? 0),
                     $trigger
                 ));
 
@@ -447,9 +460,8 @@ class AiBuilderPosts extends Command
             }
 
             $this->info(sprintf(
-                'Перенаправление в проектировщики: post_id=%d → specialist_id=%d, removed_builders=%d (%s)',
+                'Перенаправление в проектировщики выполнено без деталей import (post_id=%d, removed=%d, %s)',
                 $post->id,
-                (int) ($import['specialist_id'] ?? 0),
                 (int) ($result['builders_removed'] ?? 0),
                 $trigger
             ));
@@ -457,8 +469,13 @@ class AiBuilderPosts extends Command
             return true;
         }
 
-        $message = $import['message'] ?? 'не удалось создать карточку проектировщика';
-        $status = $import['status'] ?? 'unknown';
+        // import=null: ИИ-сервис не создан (см. BuilderNonFieldSpecialistRedirect) — не обращаемся к $import[...]
+        $message = is_array($import)
+            ? (string) ($import['message'] ?? 'не удалось создать карточку проектировщика')
+            : 'ИИ-сервис недоступен для канала поста';
+        $status = is_array($import)
+            ? (string) ($import['status'] ?? 'unknown')
+            : SpecialistPostImporter::STATUS_AI_UNAVAILABLE;
 
         if ($status === SpecialistPostImporter::STATUS_AI_UNAVAILABLE) {
             $this->warn(sprintf(
