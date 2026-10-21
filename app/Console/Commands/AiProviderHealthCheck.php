@@ -51,7 +51,9 @@ class AiProviderHealthCheck extends Command
                 }
 
                 $failures++;
-                $detail = 'HTTP '.$response->status().': '.$response->body();
+                $detail = 'HTTP '.$response->status()
+                    .' (Host: '.($item['host_header'] ?? 'не задан').'): '
+                    .$response->body();
                 $alerts->notifyUnavailable($label, $host, $detail);
                 $this->error("FAIL: {$label} ({$host}) — {$detail}");
             } catch (ConnectionException $e) {
@@ -84,7 +86,8 @@ class AiProviderHealthCheck extends Command
             }
 
             $hostHeader = ApiAIOllama::resolveHostHeader(
-                isset($options['host_header']) ? (string) $options['host_header'] : null
+                isset($options['host_header']) ? (string) $options['host_header'] : null,
+                $host
             );
 
             $items[$host.'|'.($hostHeader ?? '')] = [

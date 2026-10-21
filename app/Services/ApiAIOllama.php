@@ -119,11 +119,14 @@ class ApiAIOllama
     /**
      * Значение заголовка Host. Ollama на 127.0.0.1 отвергает публичный адрес роутера.
      */
-    public static function resolveHostHeader(?string $fromOptions = null): ?string
+    public static function resolveHostHeader(?string $fromOptions = null, ?string $requestHost = null): ?string
     {
         $value = trim((string) $fromOptions);
         if ($value === '') {
             $value = trim((string) config('services.ollama.host_header', ''));
+        }
+        if ($value === '' && str_contains((string) $requestHost, '79.175.45.41')) {
+            $value = '192.168.88.127:11434';
         }
 
         return $value === '' ? null : $value;
@@ -256,7 +259,7 @@ class ApiAIOllama
 
         try {
             $pending = Http::timeout(120);
-            $hostHeader = self::resolveHostHeader($this->hostHeader);
+            $hostHeader = self::resolveHostHeader($this->hostHeader, $this->getHost());
             if ($hostHeader !== null) {
                 $pending = $pending->withHeaders(['Host' => $hostHeader]);
             }

@@ -230,6 +230,28 @@ class ApiAIOllamaTest extends TestCase
         });
     }
 
+    public function test_router_address_sends_internal_host_without_explicit_option(): void
+    {
+        Http::fake([
+            '79.175.45.41:11434/*' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => '{"type":"мусор"}']],
+                ],
+            ], 200),
+        ]);
+
+        $this->service->setConfig([
+            'host' => 'http://79.175.45.41:11434',
+            'model' => 'qwen3.5:9b',
+        ]);
+        $this->service->setPromt('промпт');
+        $this->service->setText('текст');
+
+        $this->service->getDecodedJsonResult();
+
+        Http::assertSent(fn ($request): bool => $request->hasHeader('Host', '192.168.88.127:11434'));
+    }
+
     public function test_model_configuration(): void
     {
         $model = config('services.ollama.model');
