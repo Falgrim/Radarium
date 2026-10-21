@@ -230,13 +230,19 @@ final class ParsingAccuracyTestService
 
     public function releaseStaleRuns(): void
     {
+        $tail = $this->logTail();
+        $message = 'Фоновый процесс не стартовал.';
+        if ($tail !== '') {
+            $message .= ' '.$tail;
+        }
+
         ParsingTestRun::query()
             ->where('status', ParsingTestRunStatus::Queued)
-            ->where('created_at', '<', now()->subMinutes(3))
+            ->where('created_at', '<', now()->subMinutes(5))
             ->update([
                 'status' => ParsingTestRunStatus::Failed->value,
                 'finished_at' => now(),
-                'error_message' => 'Фоновый процесс не стартовал.',
+                'error_message' => mb_substr($message, 0, 2000),
             ]);
 
         ParsingTestRun::query()
@@ -469,39 +475,36 @@ final class ParsingAccuracyTestService
 
     private function spawn(ParsingTestRun $run): void
     {
+        $php = $this->resolvePhpCliBinary();
+        $this->appendLog('Кнопка запросила прогон '.$run->id.', php: '.$php);
+
         try {
-            $process = $this->backgroundProcess($run->id);
+            $process = $this->backgroundProcess($run->id, $php);
             $process->setTimeout(20);
             $process->run();
             if (! $process->isSuccessful()) {
                 $output = trim($process->getErrorOutput()."\n".$process->getOutput());
-                throw new RuntimeException($output !== '' ? $output : 'Фоновый процесс не запустился.');
+                throw new RuntimeException($output !== '' ? $output : 'Команда запуска вернула ошибку.');
             }
         } catch (Throwable $e) {
+            $this->appendLog('Веб-запрос не стартовал процесс: '.$e->getMessage());
             $run->update([
-                'status' => ParsingTestRunStatus::Failed,
-                'finished_at' => now(),
-                'error_message' => 'Не удалось запустить тест в фоне. Повторите кнопкой или выполните php artisan app:parsing-accuracy-test --foreground',
-                'note' => mb_substr($e->getMessage(), 0, 2000),
+                'note' => 'Сайт не открыл фоновый процесс. Планировщик подхватит тест в течение минуты.',
             ]);
-            Log::warning('[parsing-accuracy-test] не удалось стартовать процесс', [
+            Log::warning('[parsing-accuracy-test] не удалось стартовать процесс из веб-запроса', [
                 'run_id' => $run->id,
+                'php' => $php,
                 'error' => $e->getMessage(),
             ]);
-            throw new RuntimeException(
-                'Не удалось запустить тест в фоне. Команда: php artisan app:parsing-accuracy-test '.$run->id,
-                0,
-                $e
-            );
         }
     }
 
-    private function backgroundProcess(int $runId): Process
+    private function backgroundProcess(int $runId, string $php): Process
     {
         if (PHP_OS_FAMILY === 'Windows') {
             $script = sprintf(
                 'Start-Process -WindowStyle Hidden -FilePath %s -WorkingDirectory %s -ArgumentList %s,%s,%s',
-                $this->powershellQuote(PHP_BINARY),
+                $this->powershellQuote($php),
                 $this->powershellQuote(base_path()),
                 $this->powershellQuote(base_path('artisan')),
                 $this->powershellQuote('app:parsing-accuracy-test'),
@@ -517,15 +520,77 @@ final class ParsingAccuracyTestService
             ], base_path());
         }
 
-        return new Process([
-            'sh', '-c',
-            sprintf(
-                'nohup %s %s app:parsing-accuracy-test %d >/dev/null 2>&1 &',
-                escapeshellarg(PHP_BINARY),
-                escapeshellarg(base_path('artisan')),
-                $runId,
-            ),
-        ], base_path());
+        $log = $this->logPath();
+        $inner = sprintf(
+            '%s %s app:parsing-accuracy-test %d >> %s 2>&1',
+            escapeshellarg($php),
+            escapeshellarg(base_path('artisan')),
+            $runId,
+            escapeshellarg($log),
+        );
+        $script = 'cd '.escapeshellarg(base_path()).' && setsid '.$inner.' < /dev/null &';
+
+        return new Process(['sh', '-c', $script], base_path());
+    }
+
+    private function resolvePhpCliBinary(): string
+    {
+        $candidates = [];
+        if (PHP_BINARY !== '' && ! preg_match('/fpm|cgi|lsphp/i', PHP_BINARY)) {
+            $candidates[] = PHP_BINARY;
+        }
+        $candidates[] = '/usr/bin/php';
+        $candidates[] = '/usr/local/bin/php';
+        if (PHP_BINDIR !== '') {
+            $candidates[] = PHP_BINDIR.'/php';
+        }
+
+        foreach ($candidates as $candidate) {
+            if (is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return 'php';
+    }
+
+    private function logPath(): string
+    {
+        return storage_path('logs/parsing-accuracy-test.log');
+    }
+
+    private function appendLog(string $line): void
+    {
+        file_put_contents(
+            $this->logPath(),
+            '['.now()->format('Y-m-d H:i:s').'] '.$line.PHP_EOL,
+            FILE_APPEND
+        );
+    }
+
+    private function logTail(): string
+    {
+        $path = $this->logPath();
+        if (! is_file($path)) {
+            return '';
+        }
+
+        $size = filesize($path);
+        if ($size === false || $size === 0) {
+            return '';
+        }
+
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return '';
+        }
+
+        $read = (int) min($size, 1500);
+        fseek($handle, -$read, SEEK_END);
+        $text = trim((string) stream_get_contents($handle));
+        fclose($handle);
+
+        return $text === '' ? '' : mb_substr($text, -1500);
     }
 
     private function powershellQuote(string $value): string

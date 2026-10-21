@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enum\ParsingTestRunStatus;
 use App\Models\ParsingTestRun;
 use App\Services\ParsingAccuracyTestService;
 use Illuminate\Console\Command;
@@ -13,7 +14,8 @@ class ParsingAccuracyTest extends Command
 {
     protected $signature = 'app:parsing-accuracy-test
         {run? : ID уже созданного прогона}
-        {--foreground : Создать прогон и выполнить его в этом процессе}';
+        {--foreground : Создать прогон и выполнить его в этом процессе}
+        {--pending : Подхватить прогон, который кнопка админки оставила в статусе «ожидает»}';
 
     protected $description = 'Тест отбора целевых сообщений строителей локальной моделью. Не меняет посты и каталог.';
 
@@ -26,6 +28,20 @@ class ParsingAccuracyTest extends Command
             if ($this->option('foreground')) {
                 $run = $service->openRun();
                 $this->info('Прогон '.$run->id);
+
+                return $this->executeRun($service, $run);
+            }
+
+            if ($this->option('pending')) {
+                $run = ParsingTestRun::query()
+                    ->where('status', ParsingTestRunStatus::Queued)
+                    ->oldest('id')
+                    ->first();
+                if ($run === null) {
+                    return 0;
+                }
+
+                $this->info('Подхват прогона '.$run->id);
 
                 return $this->executeRun($service, $run);
             }
