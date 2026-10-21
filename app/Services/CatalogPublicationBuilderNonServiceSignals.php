@@ -396,6 +396,12 @@ final class CatalogPublicationBuilderNonServiceSignals
 
     private function matchesHiringOrStaffing(string $lower): bool
     {
+        // Кадровый аутсорс («закрою вакансию», HR) часто написан как самопрезентация.
+        // Маркер «меня зовут» не должен пропускать его в каталог строителей.
+        if ($this->matchesRecruitmentAgencyOffer($lower)) {
+            return true;
+        }
+
         if ($this->looksLikePerformerOfferOrJobSeeker($lower)) {
             return false;
         }
@@ -409,6 +415,51 @@ final class CatalogPublicationBuilderNonServiceSignals
         }
 
         return $this->matchesContextualStaffingHeuristicSignals($lower);
+    }
+
+    /**
+     * Агентство подбора персонала: закрытие вакансий, HR, рекрутинг.
+     * Это не бригада и не поставка рабочих на объект.
+     */
+    private function matchesRecruitmentAgencyOffer(string $lower): bool
+    {
+        $explicit = [
+            '/\bhr\b/u',
+            '/эйч\s*-?\s*ар\b/u',
+            '/подбор\w{0,4}\s+(?:персонал|сотрудник)/u',
+            '/кадров\w{0,6}\s+голод/u',
+            '/кадров\w{0,3}\s+агентств/u',
+            '/закро[юемт]\w{0,4}.{0,48}ваканси/u',
+            '/ваканси\w{0,8}.{0,48}закры/u',
+            '/закрыти[ея]\s+ваканси/u',
+            '/\bрекрут/u',
+            '/хедхант/u',
+            '/head\s*hunter/u',
+        ];
+
+        foreach ($explicit as $re) {
+            if (preg_match($re, $lower) === 1) {
+                return true;
+            }
+        }
+
+        if ($this->looksLikeFieldConstructionPerformer($lower)) {
+            return false;
+        }
+
+        $genericOutsourcing = [
+            '/(?:аутсорс|аутстафф|аутсорсинг)\w{0,8}.{0,48}(?:персонал|кадр|сотрудник|ваканси|кандидат)/u',
+            '/(?:персонал|кадр|сотрудник|ваканси|кандидат).{0,48}(?:аутсорс|аутстафф|аутсорсинг)/u',
+            '/за\s+(?:человека|кандидата)\b/u',
+        ];
+
+        foreach ($genericOutsourcing as $re) {
+            if (preg_match($re, $lower) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

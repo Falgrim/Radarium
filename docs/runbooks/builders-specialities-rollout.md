@@ -89,20 +89,20 @@ php artisan app:builders:rebuild_author_specialities
 php artisan app:builders:specialities_lint_dictionary
 ```
 
-### Пересчёт после правок словаря / логики матчера (v3+)
+### Пересчёт после правок словаря / логики матчера (v4+)
 
-После деплоя правок матчера/порогов/JSON ключей:
+После деплоя правок матчера/порогов/JSON ключей. С v4 специализация пишется только при текстовом попадании в справочник; если ни одно сообщение автора не попало — поле остаётся пустым.
 
 ```bash
 # .env
-AUTHOR_SPECIALITY_MATCHER_VERSION=v3
+AUTHOR_SPECIALITY_MATCHER_VERSION=v4
 # затем
 php artisan migrate
 php artisan config:clear
 php artisan app:builders:backfill_speciality_evidence --force
-php artisan app:builders:rebuild_author_specialities --compare-csv=storage/app/author_spec_compare_v3.csv --changed-only
+php artisan app:builders:rebuild_author_specialities --compare-csv=storage/app/author_spec_compare_v4.csv --changed-only
 # контроль оставшихся пустых:
-php artisan app:builders:author_specialities_export --lost-only --per-post --out=storage/app/lost_specialities_posts_v3.csv
+php artisan app:builders:author_specialities_export --lost-only --per-post --out=storage/app/lost_specialities_posts_v4.csv
 ```
 
 Либо точечно:

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\Data\BuilderSpecialityDictionaryData;
+use App\Services\AuthorSpecialitySelection;
 use App\Services\BuilderSpecialityMatcher;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
@@ -125,20 +127,15 @@ final class BuilderSpecialityMatcherTest extends TestCase
         $this->assertSame([], $r['ids']);
     }
 
-    public function test_ai_list_matches_by_title(): void
+    public function test_ai_list_does_not_assign_without_text_hit(): void
     {
         $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
-        $r = $matcher->resolve('', ['Кровельные работы']);
+        $empty = $matcher->resolve('', ['Кровельные работы', 'каменщик']);
+        $this->assertSame([], $empty['ids']);
 
-        $this->assertContains(20, $r['ids']);
-    }
-
-    public function test_ai_list_matches_by_keyword_not_only_title(): void
-    {
-        $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
-        $r = $matcher->resolve('', ['каменщик']);
-
-        $this->assertContains(11, $r['ids']);
+        $withText = $matcher->resolve('Делаем кровельные работы, нужен каменщик', ['Кровельные работы', 'каменщик']);
+        $this->assertContains(20, $withText['ids']);
+        $this->assertContains(11, $withText['ids']);
     }
 
     public function test_ai_prefers_leaf_when_title_equals_group(): void
@@ -164,7 +161,7 @@ final class BuilderSpecialityMatcherTest extends TestCase
             $make(41, 40, 'Штукатурные работы', ['штукатурка']),
         ]);
         $matcher = new BuilderSpecialityMatcher($dict);
-        $r = $matcher->resolve('', ['Отделочные работы']);
+        $r = $matcher->resolve('Нужны отделочные работы под ключ', ['Отделочные работы']);
 
         $this->assertContains(44, $r['ids']);
         $this->assertNotContains(40, $r['ids']);
@@ -200,5 +197,131 @@ final class BuilderSpecialityMatcherTest extends TestCase
         $r = $matcher->resolve('Работаю на объекте в центре', null);
 
         $this->assertNotContains(1, $r['ids']);
+    }
+
+    public function test_hr_outsourcing_post_does_not_take_unrelated_construction_specialities(): void
+    {
+        $dict = $this->realDictionary();
+        $matcher = new BuilderSpecialityMatcher($dict);
+        $staffing = $this->idBySlug($dict, 'sp_staffing');
+        $hrGroup = $this->idBySlug($dict, 'grp_hr');
+        $monolith = $this->idBySlug($dict, 'sp_monolith');
+        $foundation = $this->idBySlug($dict, 'sp_found_pile');
+        $screed = $this->idBySlug($dict, 'sp_screed');
+
+        $r = $matcher->resolve($this->hrOutsourcingPost(), [
+            'Монолитные работы \\ бетонные работы',
+            'Монолитные работы / бетонные работы',
+            'Фундаменты, свайные фундаменты',
+            'Подбор персонала, кадры, сертификация',
+        ]);
+
+        $this->assertSame([$staffing], $r['ids']);
+        $this->assertNotContains($hrGroup, $r['ids']);
+        $this->assertNotContains($monolith, $r['ids']);
+        $this->assertNotContains($foundation, $r['ids']);
+        $this->assertNotContains($screed, $r['ids']);
+
+        $evidence = $matcher->collectEvidence($this->hrOutsourcingPost(), [
+            'Монолитные работы / бетонные работы',
+            'Фундаменты, свайные фундаменты',
+        ]);
+        $agg = [];
+        foreach ($evidence['by_id'] as $id => $row) {
+            $agg[(int) $id] = [
+                'score' => (float) $row['combined'],
+                'share' => 1.0,
+                'support' => 1,
+            ];
+        }
+        $selected = AuthorSpecialitySelection::selectTop($agg, 3, 1);
+
+        $this->assertSame([$staffing], $selected);
+    }
+
+    public function test_post_without_dictionary_hits_stays_empty_even_if_ai_names_specialities(): void
+    {
+        $matcher = new BuilderSpecialityMatcher($this->realDictionary());
+        $r = $matcher->resolve(
+            'Продам iPhone, самовывоз сегодня вечером, торг уместен',
+            [
+                'Монолитные работы / бетонные работы',
+                'Фундаменты, свайные фундаменты',
+                'Кровельные работы',
+            ]
+        );
+
+        $this->assertSame([], $r['ids']);
+    }
+
+    public function test_short_stem_does_not_match_unrelated_word(): void
+    {
+        $dict = $this->realDictionary();
+        $matcher = new BuilderSpecialityMatcher($dict);
+        $screed = $this->idBySlug($dict, 'sp_screed');
+
+        $r = $matcher->resolve('Работаем по полному авансированию, гарантия результата', null);
+
+        $this->assertNotContains($screed, $r['ids']);
+    }
+
+    public function test_monolith_and_foundation_still_match_real_construction_text(): void
+    {
+        $dict = $this->realDictionary();
+        $matcher = new BuilderSpecialityMatcher($dict);
+        $r = $matcher->resolve('Выполним монолитные работы и зальём фундамент под дом', null);
+
+        $this->assertContains($this->idBySlug($dict, 'sp_monolith'), $r['ids']);
+        $this->assertContains($this->idBySlug($dict, 'sp_found_pile'), $r['ids']);
+    }
+
+    private function hrOutsourcingPost(): string
+    {
+        return 'Услуги HR на аутсорсе! Закрою любую вакансию за 1000 рублей! '
+            .'Приветствую! Меня зовут Степан, и я помогу вашему бизнесу найти идеальных сотрудников. '
+            .'Больше никакого кадрового голода! Что я предлагаю: - Подбор персонала под любые задачи и требования. '
+            .'- Работа по всему миру и любым регионам РФ. - Официальное сотрудничество с физ. и юр. лицами. '
+            .'- Стоимость — всего 1000 рублей за человека! Условия работы: Работаем по полному авансированию. '
+            .'Даём 100% гарантию результата — вакансия точно будет закрыта целевым кандидатом. '
+            .'Связаться со мной: +79069343657 (Степан)';
+    }
+
+    /**
+     * @return Collection<int, object>
+     */
+    private function realDictionary(): Collection
+    {
+        $rows = BuilderSpecialityDictionaryData::rows();
+        $idBySlug = [];
+        $i = 1;
+        foreach ($rows as $row) {
+            $idBySlug[(string) $row['slug']] = $i++;
+        }
+
+        $items = [];
+        foreach ($rows as $row) {
+            $parent = $row['parent_slug'] ?? null;
+            $items[] = (object) [
+                'id' => $idBySlug[(string) $row['slug']],
+                'parent_id' => is_string($parent) && isset($idBySlug[$parent]) ? $idBySlug[$parent] : null,
+                'title' => $row['title'],
+                'short_name' => $row['short_name'],
+                'group_title' => $row['group_title'] ?? '',
+                'key_words' => $row['key_words'] ?? [],
+                'weak_key_words' => $row['weak_key_words'] ?? [],
+                'negative_key_words' => $row['negative_key_words'] ?? [],
+                'slug' => $row['slug'],
+            ];
+        }
+
+        return collect($items);
+    }
+
+    private function idBySlug(Collection $dict, string $slug): int
+    {
+        $row = $dict->firstWhere('slug', $slug);
+        $this->assertNotNull($row, 'В справочнике нет slug '.$slug);
+
+        return (int) $row->id;
     }
 }

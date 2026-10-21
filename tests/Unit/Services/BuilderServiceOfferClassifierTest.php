@@ -7,6 +7,7 @@ namespace Tests\Unit\Services;
 use App\Services\ApiAIOllama;
 use App\Services\BuilderAiPipelineRuntimeConfig;
 use App\Services\BuilderServiceOfferClassifier;
+use App\Services\CatalogPublicationBuilderNonServiceSignals;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -30,6 +31,24 @@ final class BuilderServiceOfferClassifierTest extends TestCase
             'host' => 'http://localhost:11434',
             'model' => 'test-model',
         ]);
+    }
+
+    public function test_hard_rejects_hr_outsourcing_without_llm_call(): void
+    {
+        Http::fake();
+
+        $result = $this->classifier->classify(
+            $this->ollama,
+            'Услуги HR на аутсорсе! Меня зовут Степан. Подбор персонала, закрою любую вакансию за 1000 рублей за человека.'
+        );
+
+        $this->assertSame(BuilderServiceOfferClassifier::TYPE_JUNK, $result['type']);
+        $this->assertSame('heuristic', $result['source']);
+        $this->assertSame(
+            CatalogPublicationBuilderNonServiceSignals::REASON_HIRING,
+            $result['reason']
+        );
+        Http::assertNothingSent();
     }
 
     public function test_hard_rejects_hiring_without_llm_call(): void

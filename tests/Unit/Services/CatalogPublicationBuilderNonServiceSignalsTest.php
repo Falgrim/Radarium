@@ -30,6 +30,53 @@ final class CatalogPublicationBuilderNonServiceSignalsTest extends TestCase
         );
     }
 
+    #[DataProvider('recruitmentAgencySamples')]
+    public function test_recruitment_agency_pitch_is_hiring_even_with_self_introduction(string $text): void
+    {
+        $reasons = $this->signals->reasons($text);
+
+        $this->assertContains(
+            CatalogPublicationBuilderNonServiceSignals::REASON_HIRING,
+            $reasons,
+            'Кадровый аутсорс не должен попадать в каталог строителей: '.mb_substr($text, 0, 80)
+        );
+        $this->assertContains(
+            CatalogPublicationBuilderNonServiceSignals::REASON_HIRING,
+            CatalogPublicationBuilderNonServiceSignals::pipelineHardBlockReasonCodes()
+        );
+    }
+
+    #[DataProvider('constructionStaffingSamples')]
+    public function test_construction_labor_supply_is_not_recruitment_agency(string $text): void
+    {
+        $reasons = $this->signals->reasons($text);
+
+        $this->assertNotContains(
+            CatalogPublicationBuilderNonServiceSignals::REASON_HIRING,
+            $reasons,
+            'Поставка рабочих на объект остаётся услугой строителя: '.mb_substr($text, 0, 80)
+        );
+    }
+
+    public static function recruitmentAgencySamples(): array
+    {
+        return [
+            'hr_outsourcing_stepan' => [<<<'TXT'
+Услуги HR на аутсорсе! Закрою любую вакансию за 1000 рублей! Приветствую! Меня зовут Степан, и я помогу вашему бизнесу найти идеальных сотрудников. Больше никакого кадрового голода! Что я предлагаю: - Подбор персонала под любые задачи и требования. - Работа по всему миру и любым регионам РФ. - Официальное сотрудничество с физ. и юр. лицами. - Стоимость — всего 1000 рублей за человека! Условия работы: Работаем по полному авансированию. Даём 100% гарантию результата — вакансия точно будет закрыта целевым кандидатом. Связаться со мной: +79069343657 (Степан)
+TXT],
+            'vacancy_closing' => ['Закроем любую вакансию под ключ. Кадровое агентство, подбор сотрудников по всей РФ.'],
+            'recruiter_with_trades' => ['Подбор персонала: каменщики, прорабы, инженеры. Рекрутинг для строек, закроем вакансию за 2 недели.'],
+        ];
+    }
+
+    public static function constructionStaffingSamples(): array
+    {
+        return [
+            'crew_on_site' => ['Предоставляем разнорабочих и монтажников на объект. Аутстаффинг бригад, выезд по области.'],
+            'named_finisher' => ['Меня зовут Иван. Выполняем штукатурку и малярные работы, бригада 4 человека.'],
+        ];
+    }
+
     #[DataProvider('customerHiringSamples')]
     public function test_customer_hiring_still_detected(string $text): void
     {

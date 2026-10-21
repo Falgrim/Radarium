@@ -282,6 +282,10 @@ final class AuthorSpecialityProfiler
                 }
             } elseif ($evidenceRows->has($postId)) {
                 foreach ($evidenceRows->get($postId) as $evRow) {
+                    // Старый evidence мог сохранить специализацию только из ответа ИИ.
+                    if ((float) $evRow->text_score <= 0) {
+                        continue;
+                    }
                     $rows[(int) $evRow->dictionary_speciality_id] = (float) $evRow->combined;
                 }
             }

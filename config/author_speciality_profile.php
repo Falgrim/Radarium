@@ -16,7 +16,7 @@ return [
     'shadow' => (bool) env('AUTHOR_SPECIALITY_PROFILE_SHADOW', false),
 
     /** Версия матчера; при смене словаря/логики — увеличить и пересчитать evidence. */
-    'matcher_version' => (string) env('AUTHOR_SPECIALITY_MATCHER_VERSION', 'v3'),
+    'matcher_version' => (string) env('AUTHOR_SPECIALITY_MATCHER_VERSION', 'v4'),
 
     'max_specialities' => (int) env('AUTHOR_SPECIALITY_MAX', 3),
 

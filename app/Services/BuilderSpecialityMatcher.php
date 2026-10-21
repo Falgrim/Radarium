@@ -77,7 +77,11 @@ final class BuilderSpecialityMatcher
             $a = min(1.0, max(0.0, $row['ai_score']));
             $byId[$id]['text_score'] = $t;
             $byId[$id]['ai_score'] = $a;
-            $byId[$id]['combined'] = 1.0 - (1.0 - $t) * (1.0 - $a);
+            // Ответ модели только усиливает специализацию, которую текст уже попал в справочник.
+            // Без текстового попадания combined = 0, и специализация в каталог не пишется.
+            $byId[$id]['combined'] = $t > 0
+                ? 1.0 - (1.0 - $t) * (1.0 - $a)
+                : 0.0;
         }
 
         // Leaf-first: обнулить группу только если у ребёнка-листа достаточно сильный combined.
@@ -642,7 +646,11 @@ final class BuilderSpecialityMatcher
     private function wordBoundaryMatch(string $normalizedText, string $keywordNorm): bool
     {
         $quoted = preg_quote($keywordNorm, '/');
-        $pattern = '/(?<![\p{L}\p{N}+\\/])'.$quoted.'(?:[\p{L}\p{N}+\\/]{0,4})?(?![\p{L}\p{N}+\\/])/u';
+        // Короткий корень с хвостом до 4 букв цепляет чужие слова («пол» ⊂ «полному»).
+        // Для корня короче 5 букв хватает падежного хвоста в 2 буквы; длинные корни
+        // по-прежнему покрывают «бетон» → «бетонные», «монолит» → «монолитные».
+        $maxSuffix = mb_strlen($keywordNorm) <= 4 ? 2 : 4;
+        $pattern = '/(?<![\p{L}\p{N}+\\/])'.$quoted.'(?:[\p{L}\p{N}+\\/]{0,'.$maxSuffix.'})?(?![\p{L}\p{N}+\\/])/u';
 
         return (bool) preg_match($pattern, $normalizedText);
     }

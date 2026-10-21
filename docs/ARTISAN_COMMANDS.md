@@ -3,7 +3,7 @@
 Справочник по всем собственным консольным командам проекта (`app/Console/Commands`).
 Стандартные команды Laravel (`migrate`, `queue:work`, `auth:clear-resets` и т. п.) здесь не описываются.
 
-**Актуально на:** 2026-10-20 · **Всего команд:** 38
+**Актуально на:** 2026-10-21 · **Всего команд:** 38
 
 
 > **Правило сопровождения:** файл обновляется при каждом создании, изменении (сигнатура, опции, поведение) или удалении команды.
@@ -218,7 +218,7 @@
 ### `app:builders:rematch_specialities`
 
 - **Класс:** `RematchBuilderSpecialities`
-- **Назначение:** пересчитывает `builder_post_speciality_evidence` по тексту поста и JSON ИИ, затем профили авторов через `AuthorCatalogSpecialitiesSync`.
+- **Назначение:** пересчитывает `builder_post_speciality_evidence` по тексту поста и JSON ИИ, затем профили авторов через `AuthorCatalogSpecialitiesSync`. В каталог попадает только специализация с текстовым попаданием в справочник; ответ ИИ сам по себе специализацию не назначает. Если ни одно сообщение автора не попало в справочник, поле остаётся пустым.
 - **Опции:** `--dry-run`, `--chunk=500`, `--only-empty` (только карточки без специализаций), `--builder=<id>` (одна карточка).
 
 ### `app:builders:backfill_speciality_evidence`
@@ -230,7 +230,7 @@
 ### `app:builders:rebuild_author_specialities`
 
 - **Класс:** `RebuildAuthorSpecialities`
-- **Назначение:** пересчёт `author_speciality_scores` и (если не shadow) `builder_specialities` для всех авторов builders. Удобно после backfill и калибровки порогов.
+- **Назначение:** пересчёт `author_speciality_scores` и (если не shadow) `builder_specialities` для всех авторов builders. Удобно после backfill и калибровки порогов. Строки evidence с `text_score = 0` не попадают в профиль: специализация без текстового совпадения со справочником очищается.
 - **Опции:** `--dry-run`, `--chunk=100`, `--compare-csv=<path>` (CSV: старый pivot vs новый профиль — колонки `old_speciality_titles` / `new_speciality_titles` для руководства, плюс id), `--changed-only` (в CSV только авторы с отличием), `--user=<api_post_user_id>`.
 - **Конфиг:** `AUTHOR_SPECIALITY_PROFILE_SHADOW=true` пишет только scores, не трогает pivot.
 
@@ -268,7 +268,7 @@
 ### `app:catalog:disable-active-builders-hiring-text`
 
 - **Класс:** `DisableActiveBuildersHiringTextCommand`
-- **Назначение:** массовая чистка каталога строителей. Проходит по активным карточкам и проверяет текст поста эвристиками `CatalogPublicationBuilderNonServiceSignals` (найм, поиск исполнителя, не-услуга). Карточки с признаком «проектирование и т. п.» переносятся в каталог проектировщиков, остальные совпадения переводятся в статус «на модерации».
+- **Назначение:** массовая чистка каталога строителей. Проходит по активным карточкам и проверяет текст поста эвристиками `CatalogPublicationBuilderNonServiceSignals` (найм, кадровый аутсорс и рекрутинг, поиск исполнителя, не-услуга). Карточки с признаком «проектирование и т. п.» переносятся в каталог проектировщиков, остальные совпадения переводятся в статус «на модерации».
 - **Опции:** `--dry-run` — только список совпадений с превью текста.
 
 ### `app:catalog:redirect-non-field-builders-to-specialists`
