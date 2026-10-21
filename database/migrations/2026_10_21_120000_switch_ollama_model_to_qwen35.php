@@ -18,6 +18,9 @@ return new class extends Migration
         foreach ($rows as $row) {
             $options = $this->options($row->options);
             $options['model'] = self::NEW_MODEL;
+            if (str_contains((string) ($options['host'] ?? ''), '79.175.45.41')) {
+                $options['host_header'] = '192.168.88.127:11434';
+            }
 
             DB::table('api_ais')->where('id', $row->id)->update([
                 'title' => $this->replaceLegacyName($row->title),
@@ -36,6 +39,9 @@ return new class extends Migration
             $options = $this->options($row->options);
             if (($options['model'] ?? null) === self::NEW_MODEL) {
                 $options['model'] = self::OLD_MODEL;
+            }
+            if (($options['host_header'] ?? null) === '192.168.88.127:11434') {
+                unset($options['host_header']);
             }
 
             DB::table('api_ais')->where('id', $row->id)->update([

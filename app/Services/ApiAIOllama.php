@@ -12,6 +12,8 @@ class ApiAIOllama
 {
     protected string $host;
 
+    protected ?string $hostHeader = null;
+
     protected string $model;
 
     protected string $promt;
@@ -109,6 +111,22 @@ class ApiAIOllama
 
         $this->model = $config['model']
             ?? config('services.ollama.model', 'qwen3.5:9b');
+
+        $fromOptions = trim((string) ($config['host_header'] ?? ''));
+        $this->hostHeader = $fromOptions !== '' ? $fromOptions : null;
+    }
+
+    /**
+     * Значение заголовка Host. Ollama на 127.0.0.1 отвергает публичный адрес роутера.
+     */
+    public static function resolveHostHeader(?string $fromOptions = null): ?string
+    {
+        $value = trim((string) $fromOptions);
+        if ($value === '') {
+            $value = trim((string) config('services.ollama.host_header', ''));
+        }
+
+        return $value === '' ? null : $value;
     }
 
     public function setPromt(string $promt): void
@@ -237,7 +255,12 @@ class ApiAIOllama
         $this->logging($this->text);
 
         try {
-            $response = Http::timeout(120)->post($url, $json);
+            $pending = Http::timeout(120);
+            $hostHeader = self::resolveHostHeader($this->hostHeader);
+            if ($hostHeader !== null) {
+                $pending = $pending->withHeaders(['Host' => $hostHeader]);
+            }
+            $response = $pending->post($url, $json);
         } catch (ConnectionException $e) {
             throw new AiProviderUnavailableException($this->logPrefix.' '.$e->getMessage(), 0, $e);
         }

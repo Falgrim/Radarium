@@ -8,6 +8,7 @@ use App\Enum\ApiAiSourceEnum;
 use App\Enum\ApiAiStatusEnum;
 use App\Models\ApiAi;
 use App\Services\AiProviderHealthAlertService;
+use App\Services\ApiAIOllama;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -36,7 +37,11 @@ class AiProviderHealthCheck extends Command
             $url = $host.'/api/tags';
 
             try {
-                $response = Http::timeout((int) config('services.ai.health_check_timeout', 10))->get($url);
+                $pending = Http::timeout((int) config('services.ai.health_check_timeout', 10));
+                if ($item['host_header'] !== null) {
+                    $pending = $pending->withHeaders(['Host' => $item['host_header']]);
+                }
+                $response = $pending->get($url);
 
                 if ($response->successful()) {
                     $alerts->notifyRecovered($label, $host);
@@ -60,7 +65,7 @@ class AiProviderHealthCheck extends Command
     }
 
     /**
-     * @return list<array{label: string, host: string}>
+     * @return list<array{label: string, host: string, host_header: ?string}>
      */
     private function collectOllamaEndpoints(): array
     {
@@ -78,9 +83,14 @@ class AiProviderHealthCheck extends Command
                 continue;
             }
 
-            $items[$host] = [
+            $hostHeader = ApiAIOllama::resolveHostHeader(
+                isset($options['host_header']) ? (string) $options['host_header'] : null
+            );
+
+            $items[$host.'|'.($hostHeader ?? '')] = [
                 'label' => trim((string) $ai->title) !== '' ? (string) $ai->title : 'Ollama Qwen',
                 'host' => $host,
+                'host_header' => $hostHeader,
             ];
         }
 

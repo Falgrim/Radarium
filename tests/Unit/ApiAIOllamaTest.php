@@ -109,7 +109,8 @@ class ApiAIOllamaTest extends TestCase
             $payload = $request->data();
 
             return ($payload['model'] ?? null) === 'test-model'
-                && ($payload['think'] ?? null) === false;
+                && ($payload['think'] ?? null) === false
+                && ! $request->hasHeader('Host', '192.168.88.127:11434');
         });
 
         $this->assertIsArray($result);
@@ -201,6 +202,32 @@ class ApiAIOllamaTest extends TestCase
         ]);
 
         $this->assertTrue(true);
+    }
+
+    public function test_public_router_host_is_sent_as_internal_host_header(): void
+    {
+        Http::fake([
+            '79.175.45.41:11434/*' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => '{"type":"мусор"}']],
+                ],
+            ], 200),
+        ]);
+
+        $this->service->setConfig([
+            'host' => 'http://79.175.45.41:11434',
+            'host_header' => '192.168.88.127:11434',
+            'model' => 'qwen3.5:9b',
+        ]);
+        $this->service->setPromt('промпт');
+        $this->service->setText('текст');
+
+        $this->service->getDecodedJsonResult();
+
+        Http::assertSent(function ($request): bool {
+            return $request->url() === 'http://79.175.45.41:11434/v1/chat/completions'
+                && $request->hasHeader('Host', '192.168.88.127:11434');
+        });
     }
 
     public function test_model_configuration(): void

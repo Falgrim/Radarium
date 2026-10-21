@@ -46,6 +46,9 @@ return [
     'ollama' => [
         'host' => env('OLLAMA_HOST', 'http://localhost:11434'),
         'model' => env('OLLAMA_MODEL', 'qwen3.5:9b'),
+        // Пусто, если host в URL совпадает с адресом, который Ollama считает своим.
+        // Нужен, когда снаружи адрес роутера, а Ollama слушает внутренний IP.
+        'host_header' => env('OLLAMA_HOST_HEADER'),
     ],
 
     'tubus' => [
