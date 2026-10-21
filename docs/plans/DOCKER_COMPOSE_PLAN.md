@@ -14,7 +14,7 @@
 - PHP 8.2 + Laravel 11
 - MariaDB 10.11
 - Redis (опционально)
-- Ollama + Qwen2.5
+- Ollama + Qwen 3.5
 - MadelineProto для Telegram API
 
 **Проблемы текущего подхода:**
@@ -622,7 +622,7 @@ restore: ## Восстановить базу данных из бэкапа
 	docker-compose exec -T mysql mysql -uradarium -pradium_password radarium < $$file
 
 ollama-pull: ## Загрузить модель в Ollama
-	docker-compose exec ollama ollama pull qwen2.5:7b-instruct-q4_K_M
+	docker-compose exec ollama ollama pull qwen3.5:9b
 
 ollama-list: ## Показать загруженные модели
 	docker-compose exec ollama ollama list
@@ -706,7 +706,7 @@ docker-compose exec -T php php artisan optimize:clear
 
 # Загрузить модель Ollama
 echo "🤖 Загрузка модели Ollama..."
-docker-compose exec -T ollama ollama pull qwen2.5:7b-instruct-q4_K_M
+docker-compose exec -T ollama ollama pull qwen3.5:9b
 
 echo ""
 echo "✅ Настройка завершена!"
@@ -782,7 +782,7 @@ make backup        # Создать бэкап
 | php | 9000 | PHP-FPM процессор |
 | mysql | 3306 | База данных MariaDB |
 | redis | 6379 | Кэш и сессии |
-| ollama | 11434 | AI модель Qwen2.5 |
+| ollama | 11434 | AI модель Qwen 3.5 |
 | scheduler | - | Laravel планировщик |
 | queue | - | Обработчик очередей |
 
@@ -825,7 +825,7 @@ docker-compose exec php chown -R laravel:laravel /var/www/html/storage
 #### Ollama медленно работает
 Проверьте наличие GPU поддержки или используйте квантованную модель:
 ```bash
-make ollama-pull  # Загружает qwen2.5:7b-instruct-q4_K_M
+make ollama-pull  # Загружает qwen3.5:9b
 ```
 ```
 

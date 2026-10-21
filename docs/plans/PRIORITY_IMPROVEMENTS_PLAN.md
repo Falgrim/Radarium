@@ -77,7 +77,7 @@ TELEGRAM_API_HASH=xxx
 TELEGRAM_PHONE=xxx
 
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:7b-instruct-q4_K_M
+OLLAMA_MODEL=qwen3.5:9b
 ```
 
 #### Шаг 7.2: Тест для ApiAIYandex (2 часа)
@@ -926,7 +926,7 @@ sequenceDiagram
     participant RTC as ReadTelegramChats
     participant DB as Database
     participant AI as AI Service
-    participant Ollama as Ollama/Qwen2.5
+    participant Ollama as Ollama/Qwen 3.5
 
     TG->>MP: New message
     MP->>RTC: Parse message
@@ -960,7 +960,7 @@ sequenceDiagram
 - **Зависимости:** MadelineProto, CircuitBreaker, RetryHandler
 
 #### 3. AI Services
-- **ApiAIOllama:** Локальная модель Qwen2.5
+- **ApiAIOllama:** Локальная модель Qwen 3.5
 - **ApiAIYandex:** Яндекс GPT 4 (резервный)
 - **ApiAIE5:** E5 embeddings (будущее)
 
@@ -1027,7 +1027,7 @@ sequenceDiagram
 
 #### Ollama API
 - **URL:** `http://localhost:11434/api/generate`
-- **Model:** `qwen2.5:7b-instruct-q4_K_M`
+- **Model:** `qwen3.5:9b`
 - **Timeout:** 120 секунд
 
 #### YandexGPT API
@@ -1251,7 +1251,7 @@ AI_LOGGING=true
 
 # Ollama Configuration (Primary AI Provider)
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:7b-instruct-q4_K_M
+OLLAMA_MODEL=qwen3.5:9b
 OLLAMA_TIMEOUT=120
 OLLAMA_NUM_THREAD=4
 
@@ -1310,7 +1310,7 @@ TELEGRAM_PHONE=+79991234567
 
 # Ollama (локальный AI)
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:7b-instruct-q4_K_M
+OLLAMA_MODEL=qwen3.5:9b
 
 # База данных
 DB_DATABASE=radarium
@@ -1400,7 +1400,7 @@ php artisan migrate
 ### Added
 - Initial release Radarium
 - Интеграция с Telegram через MadelineProto
-- AI обработка сообщений через Ollama + Qwen2.5
+- AI обработка сообщений через Ollama + Qwen 3.5
 - Резервный провайдер YandexGPT 4
 - Система тарифов и подписок
 - MoonShine админ-панель

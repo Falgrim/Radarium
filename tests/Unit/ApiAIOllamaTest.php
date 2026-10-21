@@ -105,6 +105,13 @@ class ApiAIOllamaTest extends TestCase
 
         $result = $this->service->getResult(ApiDataTypeEnum::Specialist);
 
+        Http::assertSent(function ($request): bool {
+            $payload = $request->data();
+
+            return ($payload['model'] ?? null) === 'test-model'
+                && ($payload['think'] ?? null) === false;
+        });
+
         $this->assertIsArray($result);
         $this->assertArrayHasKey('origin', $result);
         $this->assertArrayHasKey('json', $result);
@@ -199,8 +206,7 @@ class ApiAIOllamaTest extends TestCase
     public function test_model_configuration(): void
     {
         $model = config('services.ollama.model');
-        $this->assertNotNull($model);
-        $this->assertIsString($model);
+        $this->assertSame('qwen3.5:9b', $model);
     }
 
     public function test_host_configuration(): void

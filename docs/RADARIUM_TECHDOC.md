@@ -681,7 +681,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 `app/Services/ApiAIOllama.php`:
 
 - endpoint: `POST {host}/v1/chat/completions`
-- модель: `config('services.ollama.model')` или `options['model']`
+- модель: `qwen3.5:9b` (`config('services.ollama.model')` или `options['model']`; в запрос передаётся `think: false`, чтобы ответ был JSON без рассуждений)
 - ожидает в ответе:
   - `choices[0].message.content`
 
@@ -715,7 +715,7 @@ AI провайдеры описаны в таблице `api_ais` (модель
 
 На этом этапе запрещены extraction, нормализация, reason и дополнительные ключи. Если модель вернула неизвестный `type` или JSON с дополнительными полями, результат считается невалидным и маршрутизируется в `DontMatch`, чтобы не повышать false positive.
 
-3. **Pass 2: extraction + normalization.** Запускается только при `{"type":"предложение услуги"}`. Сначала берётся `api_channels.ai_promt`; если он пустой — используется `builder_pass2_default_prompt` (жёсткий JSON-контракт под текущий extractor). Далее выполняется `BuilderAiPromptInjector::injectSpecialitiesList(...)`, нормализаторы, словарный matcher, `CatalogPublicationGate` и создание `Builder`.
+3. **Pass 2: extraction + normalization.** Запускается только при `{"type":"предложение услуги"}`. Сначала берётся `api_channels.ai_promt`; если он пустой — используется общий `builder_pass2_default_prompt` (его не подменяют промптом Qwen). Для локальной модели текст разбора — `App\Services\BuilderOllamaParsePrompt`, он записывается в источники и пресет `ollama_qwen`. Далее выполняется `BuilderAiPromptInjector::injectSpecialitiesList(...)`, нормализаторы, словарный matcher, `CatalogPublicationGate` и создание `Builder`.
 
 Практический контракт маршрутизации:
 

@@ -108,7 +108,7 @@ class ApiAIOllama
             ?? config('services.ollama.host', 'http://localhost:11434');
 
         $this->model = $config['model']
-            ?? config('services.ollama.model', 'qwen2.5:7b-instruct-q4_K_M');
+            ?? config('services.ollama.model', 'qwen3.5:9b');
     }
 
     public function setPromt(string $promt): void
@@ -155,6 +155,8 @@ class ApiAIOllama
             ],
             'temperature' => $this->temperature,
             'stream' => false,
+            // Qwen 3.5 по умолчанию пишет ход рассуждений; для разбора постов нужен сразу JSON.
+            'think' => false,
         ];
 
         if ($this->maxTokens !== null) {

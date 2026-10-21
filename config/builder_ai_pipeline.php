@@ -58,6 +58,9 @@ PROMPT,
     |--------------------------------------------------------------------------
     |
     | Used only when source channel has empty `ai_promt`.
+    | Shared by every builder provider, including YandexGPT. The Qwen 3.5
+    | prompt lives in App\Services\BuilderOllamaParsePrompt and is applied
+    | only to ollama_qwen channels and presets.
     | Can be overridden from MoonShine -> Настройки via
     | `builder_pass2_default_prompt` (textarea).
     |

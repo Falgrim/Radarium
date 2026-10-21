@@ -45,7 +45,7 @@ return [
 
     'ollama' => [
         'host' => env('OLLAMA_HOST', 'http://localhost:11434'),
-        'model' => env('OLLAMA_MODEL', 'qwen2.5:7b-instruct-q4_K_M'),
+        'model' => env('OLLAMA_MODEL', 'qwen3.5:9b'),
     ],
 
     'tubus' => [

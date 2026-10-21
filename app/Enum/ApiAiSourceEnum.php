@@ -10,7 +10,7 @@ enum ApiAiSourceEnum:string {
     {
         return match ($this) {
             self::YandexGTP4    => 'Яндекс GPT 4',
-            self::OllamaQwen   => 'Ollama Qwen 2.5',
+            self::OllamaQwen   => 'Ollama Qwen 3.5',
         };
     }
 

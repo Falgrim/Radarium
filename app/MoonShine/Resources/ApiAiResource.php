@@ -132,7 +132,7 @@ class ApiAiResource extends ModelResource
                 .'Для '.ApiAiSourceEnum::YandexGTP4->toString().': обязательны параметры API_KEY_TOKEN и Folder_id '
                 .'(подробнее: https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt#api_2)<br />'
                 .'Для '.ApiAiSourceEnum::OllamaQwen->toString().': параметры host (адрес сервера, по умолчанию из .env) '
-                .'и model (название модели, по умолчанию qwen2.5:7b)'
+                .'и model (название модели, по умолчанию qwen3.5:9b)'
             )
             ->keyValue();
 

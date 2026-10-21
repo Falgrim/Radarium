@@ -17,7 +17,7 @@ use Illuminate\Database\Seeder;
  * Запуск: php artisan db:seed --class=TelegramBuilderChannelsSeeder
  *
  * Записи создаются в api_channels и отображаются в Moonshine как обычные источники.
- * Сервис ИИ: запись api_ais с title = qwen2.5:7b-instruct-q4_K_M (как в выпадающем списке Moonshine).
+ * Сервис ИИ: запись api_ais с title = qwen3.5:9b (как в выпадающем списке Moonshine).
  * api_id / api_hash — учётные данные приложения Telegram (не меняются при переавторизации сессии).
  */
 class TelegramBuilderChannelsSeeder extends Seeder
@@ -27,7 +27,7 @@ class TelegramBuilderChannelsSeeder extends Seeder
     private const DESCRIPTION = 'Строители';
 
     /** Название сервиса ИИ в Moonshine (поле title в api_ais). */
-    private const AI_SERVICE_TITLE = 'qwen2.5:7b-instruct-q4_K_M';
+    private const AI_SERVICE_TITLE = 'qwen3.5:9b';
 
     private const TELEGRAM_API_ID = 22885091;
 
