@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\MoonShine\Pages\ActiveAuthorsReportPage;
 use App\MoonShine\Pages\BuilderSystemPromptPage;
+use App\MoonShine\Pages\ParsingAccuracyTestPage;
 use App\MoonShine\Pages\SpecialistSystemPromptPage;
 use App\MoonShine\Resources\ApiAiResource;
 use App\MoonShine\Resources\ApiChannelPostResource;
@@ -60,6 +61,7 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
             new BuilderSystemPromptPage,
             new SpecialistSystemPromptPage,
             new ActiveAuthorsReportPage,
+            new ParsingAccuracyTestPage,
         ];
     }
 
@@ -89,6 +91,10 @@ class MoonShineServiceProvider extends MoonShineApplicationServiceProvider
 
             MenuGroup::make('Отчёты', [
                 MenuItem::make('Активные авторы', new ActiveAuthorsReportPage, 'heroicons.document-text'),
+            ], 'heroicons.document-text'),
+
+            MenuGroup::make('Тесты парсинга', [
+                MenuItem::make('Строительство', new ParsingAccuracyTestPage, 'heroicons.document-text'),
             ], 'heroicons.document-text'),
 
             MenuGroup::make('Основное меню', [

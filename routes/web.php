@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ActiveAuthorsReportActionController;
+use App\Http\Controllers\Admin\ParsingAccuracyTestController;
 use App\Http\Controllers\BuilderController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\IndexController;
@@ -24,6 +25,8 @@ Route::middleware(['web', MoonShineAuthenticate::class])
             ->name('admin.active-authors-report.export');
         Route::post('/active-authors-report/delete', [ActiveAuthorsReportActionController::class, 'destroy'])
             ->name('admin.active-authors-report.destroy');
+        Route::post('/parsing-accuracy-test', [ParsingAccuracyTestController::class, 'start'])
+            ->name('admin.parsing-accuracy-test.start');
     });
 
 Route::get('/', [IndexController::class, 'index'])->name('index');

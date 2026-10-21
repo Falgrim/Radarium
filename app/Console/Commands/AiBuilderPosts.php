@@ -21,11 +21,11 @@ use App\Services\BuilderAiPromptInjector;
 use App\Services\BuilderNormalizer;
 use App\Services\BuilderAiPipelineRuntimeConfig;
 use App\Services\BuilderServiceOfferClassifier;
+use App\Services\BuilderTargetDecision;
 use App\Services\BuilderSpecialityMatcher;
 use App\Services\BuilderPostSpecialityEvidenceWriter;
 use App\Services\AiParsePostExceptionHandler;
 use App\Services\BuilderNonFieldSpecialistRedirect;
-use App\Services\BuilderVacancyGigHeuristic;
 use App\Services\CatalogPublicationBuilderNonServiceSignals;
 use App\Services\CatalogPublicationGate;
 use App\Services\Dictionary;
@@ -34,7 +34,6 @@ use App\Services\RussianRegionNormalizer;
 use App\Services\SpecialistPostImporter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class AiBuilderPosts extends Command
 {
@@ -182,29 +181,21 @@ class AiBuilderPosts extends Command
                     $post->ai_result = $result['origin'];
                     $post->ai_date = now();
 
-                    $rawType = Str::lower($result['json']['ai_type'] ?? '');
-                    $result['json']['ai_type'] = $rawType;
+                    $rawAiType = $result['json']['ai_type'] ?? '';
+                    $decision = BuilderTargetDecision::fromModelType(
+                        is_scalar($rawAiType) ? (string) $rawAiType : '',
+                        (string) $post->post,
+                    );
+                    $result['json']['ai_type'] = $decision['ai_type'];
+                    $rawType = $decision['ai_type'];
 
-                    $serviceLikeTypes = [
-                        'предложение услуги',
-                        'предложение услуг',
-                        'предоставление услуги',
-                        'резюме',
-                    ];
-                    $typeBeforeHeuristic = $rawType;
-                    if (
-                        in_array($rawType, $serviceLikeTypes, true)
-                        && BuilderVacancyGigHeuristic::shouldOverrideAiServiceToVacancy((string) $post->post)
-                    ) {
-                        $rawType = 'вакансия';
-                        $result['json']['ai_type'] = 'вакансия';
-
+                    if ($decision['overridden_to_vacancy']) {
                         Log::channel('builder_type_override')->info('Эвристика подработки: тип изменён', [
                             'processed_at' => now()->format('Y-m-d H:i:s'),
                             'post_date' => $post->post_date?->format('Y-m-d H:i:s'),
                             'api_channel_post_id' => $post->id,
                             'api_channel_id' => $post->api_channel_id,
-                            'ai_type_in' => $typeBeforeHeuristic,
+                            'ai_type_in' => $decision['type_in'],
                             'ai_type_out' => $rawType,
                             'post_text' => $this->truncateForOverrideLog((string) $post->post),
                         ]);
