@@ -433,10 +433,24 @@ class AiBuilderPosts extends Command
         $import = $result['import'];
 
         if ($result['redirected'] && $import !== null) {
+            $status = (string) ($import['status'] ?? '');
+            if ($status === BuilderNonFieldSpecialistRedirect::STATUS_ALREADY_SPECIALIST) {
+                $this->info(sprintf(
+                    'Автор уже проектировщик — удалены builder (post_id=%d, removed=%d, specialist_id=%d, %s)',
+                    $post->id,
+                    (int) ($result['builders_removed'] ?? 0),
+                    (int) ($import['specialist_id'] ?? 0),
+                    $trigger
+                ));
+
+                return true;
+            }
+
             $this->info(sprintf(
-                'Перенаправление в проектировщики: post_id=%d → specialist_id=%d (%s)',
+                'Перенаправление в проектировщики: post_id=%d → specialist_id=%d, removed_builders=%d (%s)',
                 $post->id,
-                (int) $import['specialist_id'],
+                (int) ($import['specialist_id'] ?? 0),
+                (int) ($result['builders_removed'] ?? 0),
                 $trigger
             ));
 

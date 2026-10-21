@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-10-20
+
+### Каталог: проектировщики/визуализаторы уходят из builders
+- `BuilderNonFieldSpecialistRedirect`: если автор уже есть в `specialists` (Active/InModeration) — soft-delete **всех** его `Builder` без повторного импорта; после успешного создания Specialist тоже чистятся все Builder автора.
+- Расширена эвристика `shouldRedirectToSpecialist`: проектировщик, архитектор, ландшафтный дизайн, Lumion/Twinmotion/SketchUp, «визуализация», дизайнер интерьера.
+- Команда `app:catalog:redirect-non-field-builders-to-specialists` учитывает `already_specialist` и считает удалённые builder-карточки.
+
+### Профиль специализаций builders: меньше «пустых» профилей
+- Причины lost: AI матчил только title (не `key_words`); leaf-first глушил группу при слабом листе; `primary_score_min=0.25` отсекал scores ~0.226; слабые ключи вроде «фасад»/«аутсорс» не давали evidence.
+- Фиксы: AI exact по `key_words`/`weak` + предпочтение листа при равном score; suppress родителя только при leaf `combined≥0.3`, иначе transfer AI на лист; `primary_score_min=0.20` + `primary_score_floor=0.15`; 1 distinctive weak (IDF) достаточен; словарь — фасад/аутсорс/поставка/синонимы электрики и сантехники.
+- Миграция `2026_10_20_100000_resync_builder_dictionary_keywords_v3`. После деплоя: `AUTHOR_SPECIALITY_MATCHER_VERSION=v3`, `migrate`, `backfill_speciality_evidence --force`, `rebuild_author_specialities`.
+
 ## 2026-10-17
 
 ### Экспорт авторов с обнулившейся специализацией

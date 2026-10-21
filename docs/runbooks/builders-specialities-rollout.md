@@ -89,13 +89,20 @@ php artisan app:builders:rebuild_author_specialities
 php artisan app:builders:specialities_lint_dictionary
 ```
 
-### Пересчёт после правок словаря
+### Пересчёт после правок словаря / логики матчера (v3+)
 
-Увеличить `AUTHOR_SPECIALITY_MATCHER_VERSION` (например `v3`), затем:
+После деплоя правок матчера/порогов/JSON ключей:
 
 ```bash
+# .env
+AUTHOR_SPECIALITY_MATCHER_VERSION=v3
+# затем
+php artisan migrate
+php artisan config:clear
 php artisan app:builders:backfill_speciality_evidence --force
-php artisan app:builders:rebuild_author_specialities
+php artisan app:builders:rebuild_author_specialities --compare-csv=storage/app/author_spec_compare_v3.csv --changed-only
+# контроль оставшихся пустых:
+php artisan app:builders:author_specialities_export --lost-only --per-post --out=storage/app/lost_specialities_posts_v3.csv
 ```
 
 Либо точечно:
@@ -104,6 +111,28 @@ php artisan app:builders:rebuild_author_specialities
 php artisan app:builders:rematch_specialities --dry-run
 php artisan app:builders:rematch_specialities
 ```
+
+### Чистка проектировщиков/визуализаторов из builders
+
+Перед или после пересчёта специализаций убрать из `/builders` авторов с текстом проектирования/визуализации/дизайна:
+
+```bash
+php artisan app:catalog:redirect-non-field-builders-to-specialists --dry-run
+php artisan app:catalog:redirect-non-field-builders-to-specialists
+```
+
+Если автор уже в проектировщиках — все его builder-карточки удаляются; иначе создаётся Specialist и затем чистятся Builder.
+
+### Чистка проектировщиков/визуализаторов из builders
+
+Перед или после пересчёта специализаций убрать из `/builders` авторов с текстом проектирования/визуализации/дизайна:
+
+```bash
+php artisan app:catalog:redirect-non-field-builders-to-specialists --dry-run
+php artisan app:catalog:redirect-non-field-builders-to-specialists
+```
+
+Если автор уже в проектировщиках — все его builder-карточки удаляются; иначе создаётся Specialist и затем чистятся Builder.
 
 ### Проверки
 

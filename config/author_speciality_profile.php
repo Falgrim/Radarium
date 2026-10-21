@@ -16,7 +16,7 @@ return [
     'shadow' => (bool) env('AUTHOR_SPECIALITY_PROFILE_SHADOW', false),
 
     /** Версия матчера; при смене словаря/логики — увеличить и пересчитать evidence. */
-    'matcher_version' => (string) env('AUTHOR_SPECIALITY_MATCHER_VERSION', 'v2'),
+    'matcher_version' => (string) env('AUTHOR_SPECIALITY_MATCHER_VERSION', 'v3'),
 
     'max_specialities' => (int) env('AUTHOR_SPECIALITY_MAX', 3),
 
@@ -28,7 +28,16 @@ return [
     'support_combined_min' => 0.3,
 
     /** Минимальный суммарный score для основной специализации. */
-    'primary_score_min' => 0.25,
+    'primary_score_min' => 0.20,
+
+    /**
+     * Абсолютный пол: если пороги не дали отбора, но есть кандидат с score ≥ floor
+     * и хотя бы 1 support — взять топ-1 (спасает явные кейсы ~0.20–0.25).
+     */
+    'primary_score_floor' => 0.15,
+
+    /** IDF слабого ключа: одного hit достаточно для text_score (иначе нужно 2+ weak). */
+    'weak_single_idf_min' => 1.2,
 
     /** Доля от суммы для вторичной специализации. */
     'secondary_share_min' => 0.20,

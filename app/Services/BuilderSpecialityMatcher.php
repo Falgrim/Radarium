@@ -80,11 +80,13 @@ final class BuilderSpecialityMatcher
             $byId[$id]['combined'] = 1.0 - (1.0 - $t) * (1.0 - $a);
         }
 
-        // Leaf-first: обнулить группы, если есть лист с evidence у того же родителя или сама группа имеет детей с evidence.
-        $leafEvidence = [];
+        // Leaf-first: обнулить группу только если у ребёнка-листа достаточно сильный combined.
+        // Слабый шум листа не должен убивать сигнал родителя (часто точный AI title группы).
+        $leafSuppressMin = (float) config('author_speciality_profile.support_combined_min', 0.3);
+        $strongLeafEvidence = [];
         foreach ($byId as $id => $row) {
-            if ($row['is_leaf'] && $row['combined'] > 0) {
-                $leafEvidence[$id] = true;
+            if ($row['is_leaf'] && $row['combined'] >= $leafSuppressMin) {
+                $strongLeafEvidence[$id] = true;
             }
         }
         foreach ($byId as $id => $row) {
@@ -92,17 +94,40 @@ final class BuilderSpecialityMatcher
                 continue;
             }
             $children = $childIds[$id] ?? [];
-            $hasLeafChildEvidence = false;
+            $hasStrongLeafChild = false;
+            $bestWeakLeafId = null;
+            $bestWeakLeafCombined = 0.0;
             foreach ($children as $cid) {
-                if (isset($leafEvidence[$cid])) {
-                    $hasLeafChildEvidence = true;
+                if (isset($strongLeafEvidence[$cid])) {
+                    $hasStrongLeafChild = true;
                     break;
                 }
+                $childCombined = (float) ($byId[$cid]['combined'] ?? 0);
+                if ($childCombined > $bestWeakLeafCombined) {
+                    $bestWeakLeafCombined = $childCombined;
+                    $bestWeakLeafId = $cid;
+                }
             }
-            if ($hasLeafChildEvidence) {
+            if ($hasStrongLeafChild) {
                 $byId[$id]['combined'] = 0.0;
                 $byId[$id]['text_score'] = 0.0;
                 $byId[$id]['hits'][] = 'suppressed_parent';
+            } elseif ($bestWeakLeafId !== null && ($row['ai_score'] ?? 0) > 0) {
+                // Перенос AI-сигнала группы на лучший слабый лист, чтобы не терять специализацию.
+                $transfer = (float) $row['ai_score'];
+                $byId[$bestWeakLeafId]['ai_score'] = max(
+                    (float) $byId[$bestWeakLeafId]['ai_score'],
+                    $transfer
+                );
+                $t = (float) $byId[$bestWeakLeafId]['text_score'];
+                $a = (float) $byId[$bestWeakLeafId]['ai_score'];
+                $byId[$bestWeakLeafId]['combined'] = 1.0 - (1.0 - $t) * (1.0 - $a);
+                if (! in_array('ai_from_parent', $byId[$bestWeakLeafId]['hits'], true)) {
+                    $byId[$bestWeakLeafId]['hits'][] = 'ai_from_parent';
+                }
+                $byId[$id]['combined'] = 0.0;
+                $byId[$id]['text_score'] = 0.0;
+                $byId[$id]['hits'][] = 'transferred_to_leaf';
             }
         }
 
@@ -350,6 +375,7 @@ final class BuilderSpecialityMatcher
 
         $strongHits = 0;
         $weakHits = 0;
+        $bestWeakIdf = 0.0;
         foreach ($this->rowKeywords($item, true) as $kw) {
             $kwNorm = $this->normalizeFragment((string) $kw);
             if ($kwNorm === '' || ! $this->keywordMatches($normalizedText, $kwNorm)) {
@@ -366,13 +392,19 @@ final class BuilderSpecialityMatcher
                 continue;
             }
             ++$weakHits;
-            $w = ($idf[$kwNorm] ?? 0.6) * 0.45;
+            $kwIdf = $idf[$kwNorm] ?? 0.6;
+            $bestWeakIdf = max($bestWeakIdf, $kwIdf);
+            $w = $kwIdf * 0.45;
             $raw += max(0.15, min(0.6, $w));
         }
 
-        // Слабые ключи без сильных и без title — только при 2+ разных слабых.
-        if ($strongHits === 0 && ! $titleHit && $weakHits < 2) {
-            return 0.0;
+        // Слабые ключи без сильных и без title: 2+ hits, либо 1 distinctive (высокий IDF).
+        $weakSingleIdfMin = (float) config('author_speciality_profile.weak_single_idf_min', 1.2);
+        if ($strongHits === 0 && ! $titleHit) {
+            $oneDistinctiveWeak = $weakHits === 1 && $bestWeakIdf >= $weakSingleIdfMin;
+            if ($weakHits < 2 && ! $oneDistinctiveWeak) {
+                return 0.0;
+            }
         }
 
         if ($raw <= 0) {
@@ -391,6 +423,7 @@ final class BuilderSpecialityMatcher
         $scores = [];
         $fuzzyMin = (float) config('author_speciality_profile.ai_fuzzy_percent_min', 90.0);
         $fuzzyFactor = (float) config('author_speciality_profile.ai_fuzzy_score_factor', 0.5);
+        $childIds = $this->childIdsByParent($dict);
 
         foreach (array_values($aiSpecialities) as $idx => $aiValue) {
             $aiLower = mb_strtolower(trim((string) $aiValue));
@@ -405,15 +438,24 @@ final class BuilderSpecialityMatcher
             $rankBoost = max(0.35, 1.0 - min(0.65, (float) $idx * 0.12));
             $bestId = null;
             $bestScore = 0.0;
+            $bestIsLeaf = false;
 
             foreach ($dict as $item) {
                 $id = (int) $item->id;
-                $exact = $this->aiExactMatch($aiNorm, $item);
-                if ($exact) {
-                    $s = 1.0 * $rankBoost;
-                    if ($s > $bestScore) {
+                $isLeaf = ! isset($childIds[$id]) || $childIds[$id] === [];
+
+                $exactKind = $this->aiExactMatchKind($aiNorm, $item);
+                if ($exactKind !== null) {
+                    $s = match ($exactKind) {
+                        'title' => 1.0 * $rankBoost,
+                        'keyword' => 0.92 * $rankBoost,
+                        'weak' => 0.55 * $rankBoost,
+                        default => 0.0,
+                    };
+                    if ($this->isBetterAiCandidate($s, $isLeaf, $bestScore, $bestIsLeaf)) {
                         $bestScore = $s;
                         $bestId = $id;
+                        $bestIsLeaf = $isLeaf;
                     }
                     continue;
                 }
@@ -421,9 +463,10 @@ final class BuilderSpecialityMatcher
                 $fuzzy = $this->aiFuzzyMatchPercent($aiNorm, $item);
                 if ($fuzzy >= $fuzzyMin) {
                     $s = $fuzzyFactor * ($fuzzy / 100.0) * $rankBoost;
-                    if ($s > $bestScore) {
+                    if ($this->isBetterAiCandidate($s, $isLeaf, $bestScore, $bestIsLeaf)) {
                         $bestScore = $s;
                         $bestId = $id;
+                        $bestIsLeaf = $isLeaf;
                     }
                 }
             }
@@ -436,16 +479,67 @@ final class BuilderSpecialityMatcher
         return $scores;
     }
 
-    private function aiExactMatch(string $aiNorm, object $item): bool
+    private function isBetterAiCandidate(float $score, bool $isLeaf, float $bestScore, bool $bestIsLeaf): bool
+    {
+        if ($score > $bestScore + 1e-9) {
+            return true;
+        }
+        // При равном score предпочитаем лист (title группы = title листа «Отделочные работы»).
+        if (abs($score - $bestScore) <= 1e-9 && $isLeaf && ! $bestIsLeaf) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return 'title'|'keyword'|'weak'|null
+     */
+    private function aiExactMatchKind(string $aiNorm, object $item): ?string
     {
         foreach ([$item->title ?? '', $item->short_name ?? ''] as $c) {
             $cNorm = $this->normalizeFragment((string) $c);
             if ($cNorm !== '' && $aiNorm === $cNorm) {
-                return true;
+                return 'title';
             }
         }
 
-        return false;
+        foreach ($this->rowKeywords($item, true) as $kw) {
+            $kwNorm = $this->normalizeFragment((string) $kw);
+            if ($kwNorm === '') {
+                continue;
+            }
+            if ($aiNorm === $kwNorm || $this->aiContainsKeyword($aiNorm, $kwNorm)) {
+                return 'keyword';
+            }
+        }
+
+        foreach ($this->rowWeakKeywords($item) as $kw) {
+            $kwNorm = $this->normalizeFragment((string) $kw);
+            if ($kwNorm === '') {
+                continue;
+            }
+            if ($aiNorm === $kwNorm || $this->aiContainsKeyword($aiNorm, $kwNorm)) {
+                return 'weak';
+            }
+        }
+
+        return null;
+    }
+
+    private function aiContainsKeyword(string $aiNorm, string $kwNorm): bool
+    {
+        if (mb_strlen($kwNorm) < 4) {
+            return false;
+        }
+
+        // «электрик москва» / «электромонтажные работы» содержат keyword.
+        if (str_contains($aiNorm, $kwNorm)) {
+            return true;
+        }
+
+        // Обратное только для длинного AI-токена («электромонтаж» ⊂ keyword «электромонтажные»).
+        return mb_strlen($aiNorm) >= 6 && str_contains($kwNorm, $aiNorm);
     }
 
     private function aiFuzzyMatchPercent(string $aiNorm, object $item): float

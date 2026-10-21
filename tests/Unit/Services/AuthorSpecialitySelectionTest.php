@@ -15,12 +15,31 @@ final class AuthorSpecialitySelectionTest extends TestCase
     {
         parent::setUp();
         $this->thresholds = [
-            'primary_score_min' => 0.25,
+            'primary_score_min' => 0.20,
+            'primary_score_floor' => 0.15,
             'secondary_share_min' => 0.20,
             'secondary_vs_top_ratio' => 0.35,
             'secondary_support_min' => 2,
             'few_posts_combined_min' => 0.5,
         ];
+    }
+
+    public function test_score_around_0226_is_accepted_as_primary(): void
+    {
+        $agg = [
+            127 => ['score' => 0.226, 'share' => 1.0, 'support' => 1],
+        ];
+        $selected = AuthorSpecialitySelection::selectTop($agg, 3, 4, $this->thresholds);
+        $this->assertSame([127], $selected);
+    }
+
+    public function test_below_floor_still_empty(): void
+    {
+        $agg = [
+            127 => ['score' => 0.10, 'share' => 1.0, 'support' => 1],
+        ];
+        $selected = AuthorSpecialitySelection::selectTop($agg, 3, 4, $this->thresholds);
+        $this->assertSame([], $selected);
     }
 
     public function test_outlier_post_does_not_displace_primary(): void

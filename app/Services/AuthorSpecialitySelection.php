@@ -19,7 +19,8 @@ final class AuthorSpecialitySelection
             return [];
         }
 
-        $primaryMin = (float) ($thresholds['primary_score_min'] ?? config('author_speciality_profile.primary_score_min', 0.25));
+        $primaryMin = (float) ($thresholds['primary_score_min'] ?? config('author_speciality_profile.primary_score_min', 0.20));
+        $primaryFloor = (float) ($thresholds['primary_score_floor'] ?? config('author_speciality_profile.primary_score_floor', 0.15));
         $shareMin = (float) ($thresholds['secondary_share_min'] ?? config('author_speciality_profile.secondary_share_min', 0.20));
         $vsTop = (float) ($thresholds['secondary_vs_top_ratio'] ?? config('author_speciality_profile.secondary_vs_top_ratio', 0.35));
         $supportMin = (int) ($thresholds['secondary_support_min'] ?? config('author_speciality_profile.secondary_support_min', 2));
@@ -30,7 +31,10 @@ final class AuthorSpecialitySelection
         $topScore = (float) $agg[$topId]['score'];
 
         if ($topScore < $primaryMin) {
-            if (! ($postCount <= 2 && $topScore >= $fewCombined * 0.35)) {
+            $fewOk = $postCount <= 2 && $topScore >= $fewCombined * 0.35;
+            // support часто 0 при combined поста < support_combined_min — floor смотрит только на score.
+            $floorOk = $topScore >= $primaryFloor;
+            if (! $fewOk && ! $floorOk) {
                 return [];
             }
         }

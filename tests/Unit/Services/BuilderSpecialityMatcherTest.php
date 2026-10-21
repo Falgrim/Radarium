@@ -133,6 +133,43 @@ final class BuilderSpecialityMatcherTest extends TestCase
         $this->assertContains(20, $r['ids']);
     }
 
+    public function test_ai_list_matches_by_keyword_not_only_title(): void
+    {
+        $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
+        $r = $matcher->resolve('', ['каменщик']);
+
+        $this->assertContains(11, $r['ids']);
+    }
+
+    public function test_ai_prefers_leaf_when_title_equals_group(): void
+    {
+        $make = static fn (
+            int $id,
+            ?int $parentId,
+            string $title,
+            array $kw,
+        ): object => (object) [
+            'id' => $id,
+            'parent_id' => $parentId,
+            'title' => $title,
+            'short_name' => $title,
+            'group_title' => $title,
+            'key_words' => $kw,
+            'weak_key_words' => [],
+            'negative_key_words' => [],
+        ];
+        $dict = collect([
+            $make(40, null, 'Отделочные работы', ['отделочные работы']),
+            $make(44, 40, 'Отделочные работы', ['отделочные работы', 'комплексная отделка']),
+            $make(41, 40, 'Штукатурные работы', ['штукатурка']),
+        ]);
+        $matcher = new BuilderSpecialityMatcher($dict);
+        $r = $matcher->resolve('', ['Отделочные работы']);
+
+        $this->assertContains(44, $r['ids']);
+        $this->assertNotContains(40, $r['ids']);
+    }
+
     public function test_collect_evidence_has_combined_scores(): void
     {
         $matcher = new BuilderSpecialityMatcher($this->sampleDictionary());
