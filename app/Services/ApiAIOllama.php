@@ -176,8 +176,11 @@ class ApiAIOllama
             ],
             'temperature' => $this->temperature,
             'stream' => false,
-            // Qwen 3.5 по умолчанию пишет ход рассуждений; для разбора постов нужен сразу JSON.
+            // На /v1/chat/completions поле think игнорируется, и Qwen 3.5 думает в reasoning.
+            // content тогда пустой, а max_tokens Pass 1 обрезает рассуждение (finish_reason=length).
+            // reasoning_effort=none выключает этот канал и оставляет JSON в content.
             'think' => false,
+            'reasoning_effort' => 'none',
         ];
 
         if ($this->maxTokens !== null) {
