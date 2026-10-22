@@ -14,7 +14,7 @@ use Throwable;
 
 /**
  * Переносит активные карточки строителей с текстом проектирования/визуализации/дизайна
- * в каталог проектировщиков. Если автор уже есть в проектировщиках — удаляет все его Builder.
+ * в каталог проектировщиков. Если автор уже есть — сообщение дописывается в его корпус.
  */
 class RedirectNonFieldBuildersToSpecialistsCommand extends Command
 {
@@ -22,7 +22,7 @@ class RedirectNonFieldBuildersToSpecialistsCommand extends Command
                             {--dry-run : Только список совпадений, без записи в БД}
                             {--requeue-if-no-ai : При недоступности ИИ оставить builder и пост InQueue (без эвристического fallback)}';
 
-    protected $description = 'Перенести активные карточки строителей (проектирование/визуализация/дизайн) в каталог проектировщиков; при наличии Specialist — убрать Builder';
+    protected $description = 'Перенести проектные сообщения строителей в каталог проектировщиков; если автор уже есть — только дописать сообщение в его корпус';
 
     public function handle(
         CatalogPublicationBuilderNonServiceSignals $signals,
@@ -37,8 +37,6 @@ class RedirectNonFieldBuildersToSpecialistsCommand extends Command
         $requeued = 0;
         $failed = 0;
         $buildersRemoved = 0;
-        /** @var array<int, true> $processedAuthors авторы, уже обработанные (чтобы не гонять повторно после purge) */
-        $processedAuthors = [];
 
         $query = Builder::query()
             ->where('status', ApiPostAiStatusEnum::Active)
@@ -48,9 +46,6 @@ class RedirectNonFieldBuildersToSpecialistsCommand extends Command
 
         foreach ($query->cursor() as $builder) {
             $userId = (int) ($builder->api_post_user_id ?? 0);
-            if ($userId > 0 && isset($processedAuthors[$userId])) {
-                continue;
-            }
 
             $post = $builder->post;
             $text = trim((string) ($post?->post ?? ''));
@@ -71,10 +66,6 @@ class RedirectNonFieldBuildersToSpecialistsCommand extends Command
             ));
 
             if ($dryRun) {
-                if ($userId > 0) {
-                    $processedAuthors[$userId] = true;
-                }
-
                 continue;
             }
 
@@ -99,17 +90,13 @@ class RedirectNonFieldBuildersToSpecialistsCommand extends Command
             $removed = (int) ($result['builders_removed'] ?? 0);
             $buildersRemoved += $removed;
 
-            if ($userId > 0) {
-                $processedAuthors[$userId] = true;
-            }
-
             if ($result['redirected'] && $import !== null) {
                 $redirected++;
                 $status = (string) ($import['status'] ?? '');
                 if ($status === BuilderNonFieldSpecialistRedirect::STATUS_ALREADY_SPECIALIST) {
                     $alreadySpecialist++;
                     $this->info(sprintf(
-                        '  → уже проектировщик, удалено builder-карточек: %d (specialist_id=%d)',
+                        '  → автор уже в проектировщиках, сообщение добавлено в корпус, удалено builder-карточек: %d (specialist_id=%d)',
                         $removed,
                         (int) ($import['specialist_id'] ?? 0)
                     ));
@@ -143,7 +130,7 @@ class RedirectNonFieldBuildersToSpecialistsCommand extends Command
         }
 
         if ($dryRun) {
-            $this->info("Найдено совпадений (уник. авторов/карточек в проходе): {$matched} (запись не выполнялась, --dry-run).");
+            $this->info("Найдено совпадений: {$matched} (запись не выполнялась, --dry-run).");
 
             return self::SUCCESS;
         }

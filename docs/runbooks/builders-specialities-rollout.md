@@ -121,7 +121,7 @@ php artisan app:catalog:redirect-non-field-builders-to-specialists --dry-run
 php artisan app:catalog:redirect-non-field-builders-to-specialists
 ```
 
-Если автор уже в проектировщиках — все его builder-карточки удаляются; иначе создаётся Specialist и затем чистятся Builder.
+Если автора ещё нет в проектировщиках — создаётся Specialist, затем чистятся Builder. Если автор уже есть — сообщение дописывается в его корпус, новая карточка человека не создаётся.
 
 ### Чистка проектировщиков/визуализаторов из builders
 
@@ -132,7 +132,7 @@ php artisan app:catalog:redirect-non-field-builders-to-specialists --dry-run
 php artisan app:catalog:redirect-non-field-builders-to-specialists
 ```
 
-Если автор уже в проектировщиках — все его builder-карточки удаляются; иначе создаётся Specialist и затем чистятся Builder.
+Если автора ещё нет в проектировщиках — создаётся Specialist, затем чистятся Builder. Если автор уже есть — сообщение дописывается в его корпус, новая карточка человека не создаётся.
 
 ### Проверки
 

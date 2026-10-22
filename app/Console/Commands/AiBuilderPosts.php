@@ -429,7 +429,7 @@ class AiBuilderPosts extends Command
                 $status = (string) ($import['status'] ?? '');
                 if ($status === BuilderNonFieldSpecialistRedirect::STATUS_ALREADY_SPECIALIST) {
                     $this->info(sprintf(
-                        'Автор уже проектировщик — удалены builder (post_id=%d, removed=%d, specialist_id=%d, %s)',
+                        'Автор уже проектировщик — сообщение добавлено в корпус (post_id=%d, removed=%d, specialist_id=%d, %s)',
                         $post->id,
                         (int) ($result['builders_removed'] ?? 0),
                         (int) ($import['specialist_id'] ?? 0),
