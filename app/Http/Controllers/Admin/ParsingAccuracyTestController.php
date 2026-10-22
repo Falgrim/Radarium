@@ -23,4 +23,15 @@ final class ParsingAccuracyTestController extends \App\Http\Controllers\Controll
 
         return redirect()->to($pageUrl);
     }
+
+    public function cancel(ParsingAccuracyTestService $service): RedirectResponse
+    {
+        $pageUrl = moonshineRouter()->to_page(ParsingAccuracyTestPage::make());
+        $run = $service->activeRun();
+        if ($run !== null) {
+            $service->requestCancel($run);
+        }
+
+        return redirect()->to($pageUrl);
+    }
 }

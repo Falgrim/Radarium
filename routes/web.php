@@ -27,6 +27,8 @@ Route::middleware(['web', MoonShineAuthenticate::class])
             ->name('admin.active-authors-report.destroy');
         Route::post('/parsing-accuracy-test', [ParsingAccuracyTestController::class, 'start'])
             ->name('admin.parsing-accuracy-test.start');
+        Route::post('/parsing-accuracy-test/cancel', [ParsingAccuracyTestController::class, 'cancel'])
+            ->name('admin.parsing-accuracy-test.cancel');
     });
 
 Route::get('/', [IndexController::class, 'index'])->name('index');

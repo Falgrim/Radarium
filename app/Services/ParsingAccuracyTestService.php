@@ -73,10 +73,12 @@ final class ParsingAccuracyTestService
         $claimed = ParsingTestRun::query()
             ->whereKey($run->id)
             ->where('status', ParsingTestRunStatus::Queued)
+            ->whereNull('cancel_requested_at')
             ->update([
                 'status' => ParsingTestRunStatus::Running->value,
                 'started_at' => now(),
                 'error_message' => null,
+                'pid' => getmypid(),
             ]);
 
         if ($claimed !== 1) {
@@ -87,22 +89,31 @@ final class ParsingAccuracyTestService
 
         try {
             $this->process($run, $logger);
+            $this->finishRun($run);
             $run->refresh();
-            $run->update([
-                'status' => ParsingTestRunStatus::Completed,
-                'finished_at' => now(),
-            ]);
+            if ($run->status === ParsingTestRunStatus::Cancelled) {
+                $logger && $logger('Прогон прерван.');
+
+                return;
+            }
             $logger && $logger(sprintf(
                 'Готово. Целевых: %d из %d.',
                 $run->target_count,
                 $run->sampled_count
             ));
         } catch (Throwable $e) {
-            $run->refresh();
-            $run->update([
-                'status' => ParsingTestRunStatus::Failed,
+            if ($this->cancelRequested($run->id)) {
+                $this->markCancelled($run);
+                $logger && $logger('Прогон прерван.');
+
+                return;
+            }
+
+            ParsingTestRun::query()->whereKey($run->id)->update([
+                'status' => ParsingTestRunStatus::Failed->value,
                 'finished_at' => now(),
                 'error_message' => mb_substr($e->getMessage(), 0, 2000),
+                'pid' => null,
             ]);
             Log::error('[parsing-accuracy-test] прогон остановлен', [
                 'run_id' => $run->id,
@@ -110,6 +121,34 @@ final class ParsingAccuracyTestService
             ]);
             throw $e;
         }
+    }
+
+    public function requestCancel(ParsingTestRun $run): void
+    {
+        $closed = ParsingTestRun::query()
+            ->whereKey($run->id)
+            ->where('status', ParsingTestRunStatus::Queued)
+            ->update([
+                'status' => ParsingTestRunStatus::Cancelled->value,
+                'cancel_requested_at' => now(),
+                'finished_at' => now(),
+                'error_message' => 'Остановлен вручную',
+                'pid' => null,
+            ]);
+
+        if ($closed === 1) {
+            return;
+        }
+
+        ParsingTestRun::query()
+            ->whereKey($run->id)
+            ->where('status', ParsingTestRunStatus::Running)
+            ->update([
+                'cancel_requested_at' => now(),
+            ]);
+
+        $pid = (int) ParsingTestRun::query()->whereKey($run->id)->value('pid');
+        $this->signalProcess($pid);
     }
 
     public function activeRun(): ?ParsingTestRun
@@ -245,12 +284,27 @@ final class ParsingAccuracyTestService
                 'error_message' => mb_substr($message, 0, 2000),
             ]);
 
+        $stopping = ParsingTestRun::query()
+            ->where('status', ParsingTestRunStatus::Running)
+            ->whereNotNull('cancel_requested_at')
+            ->get();
+
+        foreach ($stopping as $stoppingRun) {
+            $requestedAt = $stoppingRun->cancel_requested_at;
+            $timedOut = $requestedAt !== null && $requestedAt->lte(now()->subMinutes(3));
+            if ($timedOut || $this->pidIsGone((int) $stoppingRun->pid)) {
+                $this->markCancelled($stoppingRun);
+            }
+        }
+
         ParsingTestRun::query()
             ->where('status', ParsingTestRunStatus::Running)
+            ->whereNull('cancel_requested_at')
             ->where('updated_at', '<', now()->subMinutes(30))
             ->update([
                 'status' => ParsingTestRunStatus::Failed->value,
                 'finished_at' => now(),
+                'pid' => null,
                 'error_message' => 'Процесс остановился: нет прогресса больше 30 минут.',
             ]);
     }
@@ -269,10 +323,15 @@ final class ParsingAccuracyTestService
             'sampled_count' => count($ids),
             'note' => $note,
         ]);
+        $run->sampled_count = count($ids);
 
         if ($ids === []) {
             $run->update(['note' => 'В базе нет текстовых сообщений Telegram.']);
 
+            return;
+        }
+
+        if ($this->cancelRequested($run->id)) {
             return;
         }
 
@@ -286,8 +345,7 @@ final class ParsingAccuracyTestService
 
         $ai = new ApiAIOllama;
         $ai->setConfig(is_array($run->provider_options) ? $run->provider_options : []);
-        $ai->setGenerationOptions();
-        $ai->setPromt($prompt);
+        $classifier = app(BuilderServiceOfferClassifier::class);
 
         $logger && $logger(sprintf('Модель %s, сообщений %d.', (string) $run->model, count($ids)));
         Log::info('[parsing-accuracy-test] старт обработки', [
@@ -298,15 +356,19 @@ final class ParsingAccuracyTestService
         ]);
 
         foreach ($ids as $index => $postId) {
+            if ($this->cancelRequested($run->id)) {
+                return;
+            }
+
             try {
-                $this->processPost($run, $ai, $postId);
+                $this->processPost($run, $ai, $classifier, $prompt, $postId);
             } catch (AiProviderUnavailableException $e) {
                 throw $e;
             } catch (Throwable $e) {
                 $run->error_count++;
                 $run->processed_count++;
                 $run->last_error = mb_substr($e->getMessage(), 0, 2000);
-                $run->save();
+                $this->persistProgress($run);
                 $logger && $logger('Ошибка поста '.$postId.': '.$e->getMessage());
             }
 
@@ -321,28 +383,64 @@ final class ParsingAccuracyTestService
         }
     }
 
-    private function processPost(ParsingTestRun $run, ApiAIOllama $ai, int $postId): void
-    {
+    private function processPost(
+        ParsingTestRun $run,
+        ApiAIOllama $ai,
+        BuilderServiceOfferClassifier $classifier,
+        string $prompt,
+        int $postId,
+    ): void {
         $post = ApiChannelPost::query()->with(['channel', 'apiPostUser'])->find($postId);
         if ($post === null) {
             $run->error_count++;
             $run->processed_count++;
             $run->last_error = 'Сообщение '.$postId.' не найдено.';
-            $run->save();
+            $this->persistProgress($run);
 
             return;
         }
 
         $text = trim((string) $post->post);
+        $pass1 = $classifier->classify($ai, $text);
+        $run->processed_count++;
+
+        if ($pass1['type'] !== BuilderServiceOfferClassifier::TYPE_SERVICE) {
+            $this->persistProgress($run);
+
+            return;
+        }
+
+        $ai->setGenerationOptions();
+        $ai->setPromt($prompt);
         $ai->setText($text);
-        $result = $ai->getResult(ApiDataTypeEnum::Builder);
+
+        try {
+            $result = $ai->getResult(ApiDataTypeEnum::Builder);
+        } catch (AiProviderUnavailableException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            $message = mb_substr($e->getMessage(), 0, 2000);
+            $run->target_count++;
+            $run->extraction_error_count++;
+            $run->last_error = $message;
+            $this->storeTarget(
+                $run,
+                $post,
+                BuilderServiceOfferClassifier::TYPE_SERVICE,
+                ['json' => ['ai_reason' => $pass1['reason']]],
+                $message,
+            );
+            $this->persistProgress($run);
+
+            return;
+        }
+
         $rawType = $result['json']['ai_type'] ?? '';
         $decision = BuilderTargetDecision::fromModelType(
             is_scalar($rawType) ? (string) $rawType : '',
             $text,
         );
 
-        $run->processed_count++;
         if ($decision['overridden_to_vacancy']) {
             $run->heuristic_reject_count++;
         }
@@ -350,21 +448,27 @@ final class ParsingAccuracyTestService
             $run->target_count++;
             $this->storeTarget($run, $post, $decision['ai_type'], $result);
         }
-        $run->save();
+        $this->persistProgress($run);
     }
 
     /**
      * @param  array{origin?: mixed, json?: array<string, mixed>}  $result
      */
-    private function storeTarget(ParsingTestRun $run, ApiChannelPost $post, string $aiType, array $result): void
-    {
+    private function storeTarget(
+        ParsingTestRun $run,
+        ApiChannelPost $post,
+        string $aiType,
+        array $result,
+        ?string $extractionError = null,
+    ): void {
         $user = $post->apiPostUser;
         $name = trim(implode(' ', array_filter([
             $user?->first_name,
             $user?->last_name,
         ], static fn ($part): bool => is_string($part) && trim($part) !== '')));
         $login = $user?->username ?: $post->user_login;
-        $reason = $result['json']['ai_reason'] ?? null;
+        $json = is_array($result['json'] ?? null) ? $result['json'] : [];
+        $reason = $json['ai_reason'] ?? null;
 
         ParsingTestMessage::query()->create([
             'parsing_test_run_id' => $run->id,
@@ -382,11 +486,95 @@ final class ParsingAccuracyTestService
             'ai_reason' => is_scalar($reason) && trim((string) $reason) !== ''
                 ? mb_substr(trim((string) $reason), 0, 5000)
                 : null,
-            'specialities' => $this->specialitiesText($result['json']['service_types'] ?? null),
+            'specialities' => $this->specialitiesText($json['service_types'] ?? null),
             'model_reply' => is_string($result['origin'] ?? null)
                 ? mb_substr($result['origin'], 0, 20000)
                 : null,
+            'extraction_error' => $extractionError !== null && $extractionError !== ''
+                ? mb_substr($extractionError, 0, 2000)
+                : null,
         ]);
+    }
+
+    private function persistProgress(ParsingTestRun $run): void
+    {
+        ParsingTestRun::query()->whereKey($run->id)->update([
+            'sampled_count' => $run->sampled_count,
+            'processed_count' => $run->processed_count,
+            'target_count' => $run->target_count,
+            'heuristic_reject_count' => $run->heuristic_reject_count,
+            'error_count' => $run->error_count,
+            'extraction_error_count' => $run->extraction_error_count,
+            'last_error' => $run->last_error,
+            'note' => $run->note,
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function finishRun(ParsingTestRun $run): void
+    {
+        if ($this->cancelRequested($run->id)) {
+            $this->markCancelled($run);
+
+            return;
+        }
+
+        $updated = ParsingTestRun::query()
+            ->whereKey($run->id)
+            ->where('status', ParsingTestRunStatus::Running->value)
+            ->whereNull('cancel_requested_at')
+            ->update([
+                'status' => ParsingTestRunStatus::Completed->value,
+                'finished_at' => now(),
+                'pid' => null,
+            ]);
+
+        if ($updated !== 1 && $this->cancelRequested($run->id)) {
+            $this->markCancelled($run);
+        }
+    }
+
+    private function markCancelled(ParsingTestRun $run): void
+    {
+        ParsingTestRun::query()->whereKey($run->id)->update([
+            'status' => ParsingTestRunStatus::Cancelled->value,
+            'finished_at' => now(),
+            'error_message' => 'Остановлен вручную',
+            'pid' => null,
+        ]);
+    }
+
+    private function cancelRequested(int $runId): bool
+    {
+        return ParsingTestRun::query()
+            ->whereKey($runId)
+            ->whereNotNull('cancel_requested_at')
+            ->exists();
+    }
+
+    private function signalProcess(int $pid): void
+    {
+        if ($pid <= 0 || $pid === getmypid() || ! function_exists('posix_kill')) {
+            return;
+        }
+
+        posix_kill($pid, SIGTERM);
+    }
+
+    private function pidIsGone(int $pid): bool
+    {
+        if ($pid <= 0 || ! function_exists('posix_kill')) {
+            return false;
+        }
+
+        if (posix_kill($pid, 0)) {
+            return false;
+        }
+
+        $error = function_exists('posix_get_last_error') ? posix_get_last_error() : 0;
+        $noSuchProcess = defined('ESRCH') ? ESRCH : 3;
+
+        return $error === $noSuchProcess;
     }
 
     private function specialitiesText(mixed $value): ?string
@@ -470,7 +658,7 @@ final class ParsingAccuracyTestService
             ->join(ApiChannel::table(), 'api_channels.id', '=', 'api_channel_posts.api_channel_id')
             ->where('api_channels.channel_source', ApiChannelSourceEnum::Telegram->value)
             ->whereNotNull('api_channel_posts.post')
-            ->whereRaw('CHAR_LENGTH(TRIM(api_channel_posts.post)) > 0');
+            ->whereRaw('LENGTH(TRIM(api_channel_posts.post)) > 0');
     }
 
     private function spawn(ParsingTestRun $run): void

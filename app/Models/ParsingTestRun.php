@@ -20,6 +20,7 @@ class ParsingTestRun extends Model
         'target_count',
         'heuristic_reject_count',
         'error_count',
+        'extraction_error_count',
         'model',
         'prompt_label',
         'prompt_body',
@@ -29,6 +30,8 @@ class ParsingTestRun extends Model
         'last_error',
         'started_at',
         'finished_at',
+        'cancel_requested_at',
+        'pid',
     ];
 
     /**
@@ -41,6 +44,7 @@ class ParsingTestRun extends Model
             'provider_options' => 'array',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
+            'cancel_requested_at' => 'datetime',
         ];
     }
 

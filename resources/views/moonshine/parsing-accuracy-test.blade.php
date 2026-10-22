@@ -2,6 +2,7 @@
     /** @var \App\Models\ParsingTestRun|null $run */
     /** @var \Illuminate\Contracts\Pagination\LengthAwarePaginator|null $messages */
     $isActive = $isActive ?? false;
+    $isStopping = $isStopping ?? false;
 @endphp
 
 <div class="space-y-6 p-4">
@@ -15,18 +16,30 @@
         <div class="px-5 py-4 space-y-4">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="max-w-4xl text-sm text-gray-700 dark:text-gray-200">
-                    Проверка отбора для строительной отрасли. Кнопка очищает таблицу, берёт до 300 случайных
-                    сырых сообщений Telegram — по одному у разных авторов — и отправляет каждое в локальную модель
-                    с текущим системным промптом строителей. В таблице остаются только сообщения, которые модель
-                    отнесла к предложению услуги. Исходные посты и каталог не меняются.
+                    Проверка отбора для строительной отрасли. Кнопка очищает таблицу и берёт до 300 случайных
+                    сырых сообщений Telegram — по одному у разных авторов. Сначала модель коротко решает,
+                    предложение ли это услуги. Полный разбор карточки запускается только для таких сообщений.
+                    Если карточку разобрать не удалось, строка всё равно остаётся в таблице с пометкой ошибки
+                    извлечения. Исходные посты и каталог не меняются.
                 </div>
-                <form method="post" action="{{ $startUrl }}"
-                      onsubmit="return confirm('Таблица результатов будет очищена. Запустить новый тест на 300 сообщениях?');">
-                    @csrf
-                    <button type="submit" class="btn btn-primary" @disabled($isActive)>
-                        {{ $isActive ? 'Тест выполняется' : 'Запустить тест' }}
-                    </button>
-                </form>
+                <div class="flex flex-wrap gap-2">
+                    <form method="post" action="{{ $startUrl }}"
+                          onsubmit="return confirm('Таблица результатов будет очищена. Запустить новый тест на 300 сообщениях?');">
+                        @csrf
+                        <button type="submit" class="btn btn-primary" @disabled($isActive)>
+                            {{ $isActive ? 'Тест выполняется' : 'Запустить тест' }}
+                        </button>
+                    </form>
+                    @if($isActive)
+                        <form method="post" action="{{ $cancelUrl }}"
+                              onsubmit="return confirm('Прервать текущий тест? Уже разобранные строки останутся.');">
+                            @csrf
+                            <button type="submit" class="btn btn-error" @disabled($isStopping)>
+                                {{ $isStopping ? 'Останавливается' : 'Прервать тест' }}
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
 
             @if($error)
@@ -36,10 +49,10 @@
             @endif
 
             @if($run)
-                <div class="grid gap-3 text-sm md:grid-cols-4">
+                <div class="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-5">
                     <div class="rounded-lg bg-gray-50 px-4 py-3 dark:bg-dark-900">
                         <div class="text-xs uppercase tracking-wide text-gray-500">Статус</div>
-                        <div class="font-semibold">{{ $run->status->label() }}</div>
+                        <div class="font-semibold">{{ $isStopping ? 'Останавливается' : $run->status->label() }}</div>
                     </div>
                     <div class="rounded-lg bg-gray-50 px-4 py-3 dark:bg-dark-900">
                         <div class="text-xs uppercase tracking-wide text-gray-500">Обработано</div>
@@ -52,6 +65,10 @@
                     <div class="rounded-lg bg-gray-50 px-4 py-3 dark:bg-dark-900">
                         <div class="text-xs uppercase tracking-wide text-gray-500">Ошибок разбора</div>
                         <div class="font-semibold">{{ $run->error_count }}</div>
+                    </div>
+                    <div class="rounded-lg bg-gray-50 px-4 py-3 dark:bg-dark-900">
+                        <div class="text-xs uppercase tracking-wide text-gray-500">Ошибок извлечения</div>
+                        <div class="font-semibold">{{ $run->extraction_error_count }}</div>
                     </div>
                 </div>
                 <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
@@ -66,8 +83,11 @@
                     @if($run->error_message)
                         <div class="text-red-700">{{ $run->error_message }}</div>
                     @endif
-                    @if($run->last_error && $run->status->value === 'failed')
-                        <div class="text-red-700">{{ $run->last_error }}</div>
+                    @if($run->last_error)
+                        <div class="text-red-700 whitespace-pre-wrap break-words">Последняя ошибка: {{ $run->last_error }}</div>
+                    @endif
+                    @if($isStopping)
+                        <div>Текущее сообщение ещё дочитывается, затем прогон остановится.</div>
                     @endif
                     @if($run->started_at)
                         <div>Старт: {{ $run->started_at->format('d.m.Y H:i:s') }}
@@ -121,6 +141,9 @@
                     </td>
                     <td class="px-3 py-3 min-w-52">
                         <div class="font-medium">{{ $row->ai_type }}</div>
+                        @if($row->extraction_error)
+                            <div class="mt-1 text-red-700 whitespace-pre-wrap break-words">Ошибка извлечения: {{ $row->extraction_error }}</div>
+                        @endif
                         @if($row->ai_reason)
                             <div class="mt-1 text-gray-600 whitespace-pre-wrap">{{ $row->ai_reason }}</div>
                         @endif

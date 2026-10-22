@@ -23,6 +23,7 @@ class ParsingTestMessage extends Model
         'ai_reason',
         'specialities',
         'model_reply',
+        'extraction_error',
     ];
 
     /**
