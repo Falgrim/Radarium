@@ -43,6 +43,8 @@ final class ParsingAccuracyTestPage extends Page
         $service->releaseStaleRuns();
 
         $run = ParsingTestRun::query()->latest('id')->first();
+        $isActive = $run?->status->isActive() ?? false;
+        $isStopping = $isActive && $run?->cancel_requested_at !== null;
         $messages = $run === null
             ? null
             : ParsingTestMessage::query()
@@ -60,9 +62,11 @@ final class ParsingAccuracyTestPage extends Page
             FlexibleRender::make(view('moonshine.parsing-accuracy-test', [
                 'run' => $run,
                 'messages' => $messages,
-                'isActive' => $run?->status->isActive() ?? false,
+                'isActive' => $isActive,
+                'isStopping' => $isStopping,
                 'error' => session('parsing_test_error'),
                 'startUrl' => route('admin.parsing-accuracy-test.start'),
+                'cancelUrl' => route('admin.parsing-accuracy-test.cancel'),
                 'postFormUrl' => static fn (int $postId): string => $postResource->formPageUrl($postId),
                 'authorDetailUrl' => static fn (int $authorId): string => $authorResource->detailPageUrl($authorId),
             ])),

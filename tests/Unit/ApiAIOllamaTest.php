@@ -110,6 +110,7 @@ class ApiAIOllamaTest extends TestCase
 
             return ($payload['model'] ?? null) === 'test-model'
                 && ($payload['think'] ?? null) === false
+                && ($payload['reasoning_effort'] ?? null) === 'none'
                 && ! $request->hasHeader('Host', '192.168.88.127:11434');
         });
 

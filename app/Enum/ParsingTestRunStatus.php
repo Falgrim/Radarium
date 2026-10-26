@@ -10,6 +10,7 @@ enum ParsingTestRunStatus: string
     case Running = 'running';
     case Completed = 'completed';
     case Failed = 'failed';
+    case Cancelled = 'cancelled';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum ParsingTestRunStatus: string
             self::Running => 'Выполняется',
             self::Completed => 'Завершён',
             self::Failed => 'Ошибка',
+            self::Cancelled => 'Прерван',
         };
     }
 
