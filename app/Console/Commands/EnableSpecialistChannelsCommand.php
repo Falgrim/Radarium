@@ -186,8 +186,8 @@ class EnableSpecialistChannelsCommand extends Command
                     $flags[] = 'ИИ отключён';
                     $warnings++;
                 }
-                if ($apiSource !== ApiAiSourceEnum::YandexGTP4) {
-                    $flags[] = 'не YandexGPT';
+                if (! in_array($apiSource, [ApiAiSourceEnum::YandexGTP4, ApiAiSourceEnum::OllamaQwen], true)) {
+                    $flags[] = 'неизвестный провайдер ИИ';
                     $warnings++;
                 }
             }

@@ -30,6 +30,8 @@ class AiProviderHealthCheck extends Command
         }
 
         $failures = 0;
+        // Как в проверке Яндекса: сбой подсчёта очереди не должен сорвать сам алерт.
+        $postsInQueue = (int) rescue(fn () => $alerts->countBuilderPostsInQueue(), 0, false);
 
         foreach ($endpoints as $item) {
             $label = $item['label'];
@@ -54,11 +56,11 @@ class AiProviderHealthCheck extends Command
                 $detail = 'HTTP '.$response->status()
                     .' (Host: '.($item['host_header'] ?? 'не задан').'): '
                     .$response->body();
-                $alerts->notifyUnavailable($label, $host, $detail);
+                $alerts->notifyUnavailable($label, $host, $detail, $postsInQueue);
                 $this->error("FAIL: {$label} ({$host}) — {$detail}");
             } catch (ConnectionException $e) {
                 $failures++;
-                $alerts->notifyUnavailable($label, $host, $e->getMessage());
+                $alerts->notifyUnavailable($label, $host, $e->getMessage(), $postsInQueue);
                 $this->error("FAIL: {$label} ({$host}) — ".$e->getMessage());
             }
         }
